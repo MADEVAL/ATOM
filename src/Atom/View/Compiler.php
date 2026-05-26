@@ -63,7 +63,7 @@ final class Compiler
 
     private function compileBody(string $src): string
     {
-        preg_match_all('#(\{\{.*?\}\}|\{%.*?%\})|([^{}]+|\{|\})#s', $src, $m, PREG_SET_ORDER);
+        $m = Regex::matchAll('#(\{\{.*?\}\}|\{%.*?%\})|([^{}]+|\{|\})#s', $src, PREG_SET_ORDER);
 
         $out = '';
         foreach ($m as $tok) {
@@ -102,7 +102,7 @@ final class Compiler
     private function compileVariable(string $v): string
     {
         $v = trim($v);
-        if (preg_match('#^([\'"]).*\1$#s', $v) || preg_match('#^-?\d+(\.\d+)?$#', $v) || in_array($v, ['true','false','null'], true)) {
+        if (Regex::match('#^([\'"]).*\1$#s', $v) !== null || Regex::match('#^-?\d+(\.\d+)?$#', $v) !== null || in_array($v, ['true','false','null'], true)) {
             return $v;
         }
         $parts = explode('.', $v, 2);
@@ -121,22 +121,22 @@ final class Compiler
     private function compileTag(string $tag): string
     {
         return match (true) {
-            (bool) preg_match('#^if\s+(.+)$#s', $tag, $m)    => '<?php if (' . $this->compileExpression($m[1]) . '): ?>',
-            (bool) preg_match('#^elseif\s+(.+)$#s', $tag, $m) => '<?php elseif (' . $this->compileExpression($m[1]) . '): ?>',
-            $tag === 'else'                                    => '<?php else: ?>',
-            $tag === 'endif'                                   => '<?php endif; ?>',
+            ($m = Regex::match('#^if\s+(.+)$#s', $tag)) !== null    => '<?php if (' . $this->compileExpression($m[1]) . '): ?>',
+            ($m = Regex::match('#^elseif\s+(.+)$#s', $tag)) !== null => '<?php elseif (' . $this->compileExpression($m[1]) . '): ?>',
+            $tag === 'else'                                           => '<?php else: ?>',
+            $tag === 'endif'                                          => '<?php endif; ?>',
 
-            (bool) preg_match('#^for\s+(\w+)\s+in\s+(.+)$#s', $tag, $m) => $this->compileFor($m[1], $m[2]),
-            (bool) preg_match('#^for\s+(\w+),\s*(\w+)\s+in\s+(.+)$#s', $tag, $m) => $this->compileForKeyVal($m[1], $m[2], $m[3]),
+            ($m = Regex::match('#^for\s+(\w+)\s+in\s+(.+)$#s', $tag)) !== null => $this->compileFor($m[1], $m[2]),
+            ($m = Regex::match('#^for\s+(\w+),\s*(\w+)\s+in\s+(.+)$#s', $tag)) !== null => $this->compileForKeyVal($m[1], $m[2], $m[3]),
             $tag === 'endfor' => $this->compileEndfor(),
 
-            (bool) preg_match('#^set\s+(\w+)\s*=\s*(.+)$#s', $tag, $m) =>
+            ($m = Regex::match('#^set\s+(\w+)\s*=\s*(.+)$#s', $tag)) !== null =>
                 '<?php $this->ctx[\'' . $m[1] . '\'] = ' . $this->compileExpression($m[2]) . '; ?>',
 
-            (bool) preg_match('#^include\s+[\'"]([^\'"]+)[\'"]#', $tag, $m) =>
+            ($m = Regex::match('#^include\s+[\'"]([^\'"]+)[\'"]#', $tag)) !== null =>
                 '<?= $this->renderInclude(' . var_export($m[1], true) . ') ?>',
 
-            (bool) preg_match('#^block\s+(\w+)$#', $tag, $m) => '<?= $this->renderBlock(' . var_export($m[1], true) . ') ?>',
+            ($m = Regex::match('#^block\s+(\w+)$#', $tag)) !== null => '<?= $this->renderBlock(' . var_export($m[1], true) . ') ?>',
             $tag === 'endblock' => '',
             $tag === 'raw' => '',
             $tag === 'endraw' => '',

@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace Atom\Validation;
 
+use Atom\Support\Regex as Pcre;
 use Attribute;
 use ReflectionClass;
 
@@ -59,7 +60,7 @@ final class Validator
             foreach ($prop->getAttributes(Regex::class) as $attr) {
                 /** @var Regex $r */
                 $r = $attr->newInstance();
-                if (!preg_match($r->pattern, (string) $value)) {
+                if (Pcre::match($r->pattern, (string) $value) === null) {
                     $errors[$name][] = $r->message;
                 }
             }
@@ -67,7 +68,7 @@ final class Validator
             foreach ($prop->getAttributes(Email::class) as $attr) {
                 /** @var Email $r */
                 $r = $attr->newInstance();
-                if (!preg_match('/^[^@\s]+@[^@\s]+\.[^@\s]+$/', (string) $value)) {
+                if (Pcre::match('/^[^@\s]+@[^@\s]+\.[^@\s]+$/', (string) $value) === null) {
                     $errors[$name][] = $r->message;
                 }
             }

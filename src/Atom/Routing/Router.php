@@ -110,7 +110,8 @@ final class Router
         }
         $uri = strtok($request->uri, '?') ?: '/';
 
-        if (!preg_match($compiled['regex'], $request->method . $uri, $m)) {
+        $m = Regex::match($compiled['regex'], $request->method . $uri);
+        if ($m === null) {
             return new Response('Not Found', StatusCode::NOT_FOUND);
         }
 
@@ -123,10 +124,7 @@ final class Router
         $action     = $meta['action'];
 
         $ref = new ReflectionMethod($controller, $action);
-        $hasRequest = false;
-        foreach ($ref->getParameters() as $p) {
-            if ($p->getName() === 'request') { $hasRequest = true; break; }
-        }
+        $hasRequest = array_any($ref->getParameters(), fn($p) => $p->getName() === 'request');
         $params = $hasRequest ? [...$named, 'request' => $request] : $named;
 
         $handler = fn() => $controller->{$action}(...$params)

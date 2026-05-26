@@ -40,7 +40,7 @@ final readonly class RouteCompiler
             // Escape PCRE meta-chars in literal parts (outside (?<name>...) groups)
             $segments = Regex::split('#(\(\?<[^>]+>[^)]*\)|\(\?:)#', $compiled, PREG_SPLIT_DELIM_CAPTURE);
             $compiled = implode(array_map(
-                fn(string $s, int $i): string => $i % 2 === 0 ? preg_quote($s, '#') : $s,
+                fn(string $s, int $i): string => $i % 2 === 0 ? Regex::quote($s) : $s,
                 $segments,
                 array_keys($segments),
             ));
