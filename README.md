@@ -32,7 +32,7 @@
 ## Install
 
 ```bash
-composer require atom/framework
+composer require globus-studio/atom
 ```
 
 ## Quick start
