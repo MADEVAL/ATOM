@@ -50,9 +50,6 @@ final readonly class Compiler
 
     private function compileBody(string $src): string
     {
-        // Разбиваем по тегам и выводам, оставляя текст
-        $tokens = Regex::split('#(\{\{.*?\}\}|\{%.*?%\})#s', $src);
-        // split с PREG_SPLIT_DELIM_CAPTURE нужен — используем preg_split напрямую
         preg_match_all('#(\{\{.*?\}\}|\{%.*?%\})|([^{}]+|\{|\})#s', $src, $m, PREG_SET_ORDER);
 
         $out = '';
