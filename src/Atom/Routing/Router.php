@@ -59,10 +59,10 @@ final class Router
         return $this;
     }
 
-    public function get(string $p, string $h, string $n = '', array $mw = []): self    { return $this->add('GET', $p, $h, $n, $mw); }
-    public function post(string $p, string $h, string $n = '', array $mw = []): self   { return $this->add('POST', $p, $h, $n, $mw); }
-    public function put(string $p, string $h, string $n = '', array $mw = []): self    { return $this->add('PUT', $p, $h, $n, $mw); }
-    public function patch(string $p, string $h, string $n = '', array $mw = []): self  { return $this->add('PATCH', $p, $h, $n, $mw); }
+    public function get(string $p, string $h, string $n = '', array $mw = []): self   { return $this->add('GET', $p, $h, $n, $mw); }
+    public function post(string $p, string $h, string $n = '', array $mw = []): self  { return $this->add('POST', $p, $h, $n, $mw); }
+    public function put(string $p, string $h, string $n = '', array $mw = []): self   { return $this->add('PUT', $p, $h, $n, $mw); }
+    public function patch(string $p, string $h, string $n = '', array $mw = []): self { return $this->add('PATCH', $p, $h, $n, $mw); }
     public function delete(string $p, string $h, string $n = '', array $mw = []): self { return $this->add('DELETE', $p, $h, $n, $mw); }
     public function any(string $p, string $h, string $n = '', array $mw = []): self   { return $this->match(['GET','POST','PUT','PATCH','DELETE','OPTIONS','HEAD'], $p, $h, $n, $mw); }
     /** @param string[] $methods */

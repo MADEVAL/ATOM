@@ -2,8 +2,6 @@
 declare(strict_types=1);
 namespace Atom\View;
 
-use Atom\Support\Regex;
-
 final class Engine
 {
     private string $cacheDir;

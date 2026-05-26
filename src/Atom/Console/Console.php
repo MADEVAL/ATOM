@@ -3,7 +3,6 @@ declare(strict_types=1);
 namespace Atom\Console;
 
 use Atom\Application;
-use Atom\Routing\Router;
 use ReflectionClass;
 
 final class Console
