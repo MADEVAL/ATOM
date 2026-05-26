@@ -5,49 +5,103 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Atom — PHP 8.5 micro‑framework</title>
 <style>
-:root{--bg:#111;--fg:#ccc;--accent:#0cf;--dim:#555;--code:#1a1a2e;--border:#333}
+:root{--bg:#0d0d0d;--fg:#bbb;--accent:#0cf;--dim:#555;--code:#151520;--border:#2a2a2a;--sidebar-w:220px}
 *,*::before,*::after{box-sizing:border-box;margin:0}
-body{background:var(--bg);color:var(--fg);font:15px/1.6 system-ui,sans-serif;max-width:860px;margin:0 auto;padding:40px 20px 80px}
-h1{font-size:2em;font-weight:700;color:#fff;letter-spacing:-.02em}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--fg);font:15px/1.65 system-ui,sans-serif}
+#sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:#0a0a0a;border-right:1px solid var(--border);overflow-y:auto;padding:28px 0;z-index:10}
+#sidebar h2{font-size:.85em;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;padding:0 22px;margin:20px 0 6px}
+#sidebar h2:first-child{margin-top:0}
+#sidebar a{display:block;padding:5px 22px;color:#999;text-decoration:none;font-size:.88em;border-left:2px solid transparent;transition:.15s}
+#sidebar a:hover,#sidebar a:focus{color:var(--accent);border-left-color:var(--accent);background:rgba(0,204,255,.04);outline:none}
+#sidebar a.active{color:var(--accent);border-left-color:var(--accent)}
+#main{margin-left:var(--sidebar-w);max-width:820px;padding:40px 48px 100px}
+h1{font-size:2em;font-weight:700;color:#fff;letter-spacing:-.02em;margin-bottom:6px}
 h1 span{color:var(--accent)}
-h2{font-size:1.25em;color:var(--accent);margin:48px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
-h3{font-size:1em;color:#ddd;margin:24px 0 8px}
+h2{font-size:1.2em;color:var(--accent);margin:52px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+h3{font-size:1em;color:#ddd;margin:28px 0 8px}
 p{margin:8px 0}
 a{color:var(--accent)}
-pre,code{font-family:'JetBrains Mono','Fira Code',Consolas,monospace;font-size:.88em}
+pre,code{font-family:'JetBrains Mono','Fira Code',Consolas,monospace;font-size:.86em}
 code{background:var(--code);padding:1px 5px;border-radius:3px;color:#e0e0e0}
-pre{background:var(--code);border:1px solid var(--border);border-radius:6px;padding:16px 20px;overflow-x:auto;margin:12px 0;line-height:1.5}
+pre{background:var(--code);border:1px solid var(--border);border-radius:6px;padding:16px 20px;overflow-x:auto;margin:12px 0 20px;line-height:1.5}
 pre code{background:none;padding:0;font-size:inherit}
 .kw{color:#c792ea}.str{color:#c3e88d}.cm{color:var(--dim)}.fn{color:#82aaff}.var{color:#f78c6c}.num{color:#f78c6c}
-ul{list-style:none;padding:0}
-li{margin:6px 0;padding-left:16px;position:relative}
-li::before{content:'—';position:absolute;left:0;color:var(--dim)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:12px 0}
-.card{background:var(--code);border:1px solid var(--border);border-radius:6px;padding:16px}
-.card h4{color:var(--accent);font-size:.9em;margin-bottom:4px}
-.card p{font-size:.85em;color:#999;margin:0}
-.badge{display:inline-block;background:var(--accent);color:#000;font-size:.7em;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle}
-table{width:100%;border-collapse:collapse;margin:12px 0}
-th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);font-size:.9em}
+table{width:100%;border-collapse:collapse;margin:12px 0 18px}
+th,td{text-align:left;padding:7px 12px;border-bottom:1px solid var(--border);font-size:.88em}
 th{color:var(--accent);font-weight:600}
-td code{font-size:.82em}
-.flex{display:flex;gap:8px;flex-wrap:wrap}
-.tag{font-size:.75em;background:#222;border:1px solid var(--border);border-radius:4px;padding:2px 8px;color:#aaa}
-hr{border:none;border-top:1px solid var(--border);margin:32px 0}
-footer{color:var(--dim);font-size:.8em;margin-top:60px}
+.flex{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}
+.tag{font-size:.75em;background:#1a1a2a;border:1px solid var(--border);border-radius:4px;padding:2px 8px;color:#aaa;white-space:nowrap}
+.badge{display:inline-block;background:var(--accent);color:#000;font-size:.7em;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:12px 0}
+.card{background:var(--code);border:1px solid var(--border);border-radius:6px;padding:14px}
+.card h4{color:var(--accent);font-size:.88em;margin-bottom:3px}
+.card p{font-size:.82em;color:#888;margin:0}
+hr{border:none;border-top:1px solid var(--border);margin:36px 0}
+footer{color:var(--dim);font-size:.82em;margin-top:60px}
+.meta{font-size:.88em;color:var(--dim);margin-bottom:24px}
+@media(max-width:860px){#sidebar{display:none}#main{margin-left:0;padding:24px 20px 60px}}
 </style>
 </head>
 <body>
 
-<h1>Atom <span>⚛</span></h1>
-<p>PHP 8.5 micro‑framework. <strong>388 lines</strong>, 15 classes, <strong>100% coverage</strong> (254 tests).</p>
-<p>Single‑regex router · PCRE template engine · minimal DI · PHP 8.5 property hooks & pipe operator.</p>
+<nav id="sidebar">
+<h2>Atom</h2>
+<a href="#quickstart">Quick start</a>
+<a href="#architecture">Architecture</a>
+<a href="#config">Config</a>
 
-<div class="flex" style="margin:16px 0">
+<h2>Routing</h2>
+<a href="#routing-routes">Route patterns</a>
+<a href="#routing-groups">Groups &amp; middleware</a>
+<a href="#routing-named">URL generation</a>
+<a href="#routing-attributes">Attribute routes</a>
+<a href="#routing-perf">Performance</a>
+
+<h2>HTTP</h2>
+<a href="#http-request">Request</a>
+<a href="#http-files">File uploads</a>
+<a href="#http-response">Response</a>
+<a href="#http-controllers">Controllers</a>
+<a href="#http-session">Session</a>
+
+<h2>Templates</h2>
+<a href="#tpl-syntax">Syntax &amp; filters</a>
+<a href="#tpl-control">Control flow</a>
+<a href="#tpl-raw">Raw blocks</a>
+<a href="#tpl-inherit">Inheritance</a>
+<a href="#tpl-custom">Custom filters</a>
+
+<h2>Validation</h2>
+<a href="#val-dto">DTO definition</a>
+<a href="#val-request">Request validation</a>
+
+<h2>Middleware</h2>
+<a href="#mw-pipeline">Pipeline</a>
+<a href="#mw-cors">CORS</a>
+<a href="#mw-csrf">CSRF</a>
+
+<h2>Container</h2>
+<a href="#di-bindings">Bindings</a>
+<a href="#di-autowire">Autowiring</a>
+
+<h2>Reference</h2>
+<a href="#ref-regex">Regex utility</a>
+<a href="#ref-status">Status codes</a>
+<a href="#ref-structure">Project structure</a>
+</nav>
+
+<div id="main">
+
+<h1>Atom <span>⚛</span></h1>
+<p class="meta">PHP 8.5 micro‑framework · <strong>493 LOC</strong> · 26 classes · <strong>100% coverage</strong> (315 tests) · PCRE‑powered</p>
+
+<div class="flex">
 <span class="tag">PHP 8.5</span><span class="tag">PCRE</span><span class="tag">JIT regex</span><span class="tag">100% tests</span>
+<span class="tag">Property hooks</span><span class="tag">DI</span><span class="tag">Twig-like</span><span class="tag">Middleware</span>
 </div>
 
-<h2>Quick start</h2>
+<h2 id="quickstart">Quick start</h2>
 <pre><code><span class="kw">use</span> Atom\{Application, Config};
 
 <span class="var">$app</span> = <span class="kw">new</span> Application(<span class="kw">new</span> Config(
@@ -63,7 +117,7 @@ footer{color:var(--dim);font-size:.8em;margin-top:60px}
 });
 <span class="var">$app</span>->run();</code></pre>
 
-<h2>Architecture</h2>
+<h2 id="architecture">Architecture</h2>
 <div class="grid">
 <div class="card"><h4>Config</h4><p><code>debug</code>, <code>cacheDir</code>, <code>viewsDir</code></p></div>
 <div class="card"><h4>Application</h4><p>Boot, container wiring, run loop</p></div>
@@ -71,29 +125,53 @@ footer{color:var(--dim);font-size:.8em;margin-top:60px}
 <div class="card"><h4>Router</h4><p>Single PCRE, groups, URL gen, cache</p></div>
 <div class="card"><h4>Request</h4><p>Hooks, JSON body, Bearer, _method</p></div>
 <div class="card"><h4>Response</h4><p>html/json/redirect, cookies, CRLF shield</p></div>
-<div class="card"><h4>Pipeline</h4><p>Onion middleware: closure|object|string</p></div>
-<div class="card"><h4>Engine</h4><p>Twig-like compile→PHP, filters, globals</p></div>
-<div class="card"><h4>Compiler</h4><p>PCRE tokenizer, auto‑escape, blocks</p></div>
+<div class="card"><h4>Pipeline</h4><p>Onion: closure | object | string</p></div>
+<div class="card"><h4>Engine</h4><p>Twig-like → PHP, filters, globals</p></div>
+<div class="card"><h4>Validator</h4><p>PCRE attributes: Required, Email, Min/Max</p></div>
+<div class="card"><h4>Session</h4><p>get/set, flash, regenerate</p></div>
+<div class="card"><h4>Cors</h4><p>Preflight + headers middleware</p></div>
 <div class="card"><h4>Regex</h4><p>PCRE wrapper: match/replace/split/quote</p></div>
 </div>
 
-<h2>Routing</h2>
+<h2 id="config">Config</h2>
+<pre><code><span class="var">$config</span> = <span class="kw">new</span> Config(
+    <span class="str">debug</span>: <span class="kw">false</span>, <span class="cm">// true = show stack traces on errors</span>
+    <span class="str">cacheDir</span>: <span class="str">'/tmp/atom'</span>,
+    <span class="str">viewsDir</span>: __DIR__ . <span class="str">'/templates'</span>,
+);
+<span class="var">$app</span> = <span class="kw">new</span> Application(<span class="var">$config</span>);</code></pre>
+<p>When <code>debug: false</code>, exceptions return empty 500 — no trace leakage.</p>
+<pre><code><span class="kw">public function</span> <span class="fn">run</span>(?Request <span class="var">$request</span> = <span class="kw">null</span>): <span class="kw">void</span>
+{
+    <span class="var">$req</span> = <span class="var">$request</span> ?? Request::capture();
+    <span class="kw">try</span> {
+        <span class="var">$response</span> = <span class="var">$this</span>->router->dispatch(<span class="var">$req</span>);
+    } <span class="kw">catch</span> (\Throwable <span class="var">$e</span>) {
+        <span class="var">$response</span> = <span class="var">$this</span>->config->debug
+            ? <span class="kw">new</span> Response(<span class="str">"Server Error: {$e->getMessage()}\n{$e->getTraceAsString()}"</span>, StatusCode::SERVER_ERROR)
+            : <span class="kw">new</span> Response(<span class="str">''</span>, StatusCode::SERVER_ERROR);
+    }
+    <span class="var">$response</span>->send();
+}</code></pre>
 
-<h3>Route patterns</h3>
+<h2 id="routing-routes">Route patterns</h2>
 <pre><code><span class="var">$app</span>->router->get(<span class="str">'/users/{id}'</span>, <span class="str">'UserController@show'</span>);
 <span class="var">$app</span>->router->post(<span class="str">'/posts/{slug}'</span>, <span class="str">'PostController@create'</span>);
 <span class="var">$app</span>->router->put(<span class="str">'/items/{id:\d+}'</span>, <span class="str">'ItemController@update'</span>);
-<span class="var">$app</span>->router->delete(<span class="str">'/files/{hash:[a-f0-9]{32}}'</span>, <span class="str">'FileController@remove'</span>);</code></pre>
+<span class="var">$app</span>->router->patch(<span class="str">'/users/{id}'</span>, <span class="str">'UserController@patch'</span>);
+<span class="var">$app</span>->router->delete(<span class="str">'/files/{hash:[a-f0-9]{32}}'</span>, <span class="str">'FileController@remove'</span>);
+<span class="var">$app</span>->router->any(<span class="str">'/webhook'</span>, <span class="str">'WebhookController@handle'</span>);
+<span class="var">$app</span>->router->match([<span class="str">'GET'</span>, <span class="str">'POST'</span>], <span class="str">'/multi'</span>, <span class="str">'MultiController@handle'</span>);</code></pre>
 <table>
 <tr><th>Token</th><th>PCRE</th><th>Matches</th></tr>
 <tr><td><code>{id}</code></td><td><code>[0-9]+</code></td><td><code>42</code></td></tr>
 <tr><td><code>{slug}</code></td><td><code>[a-z0-9\-]+</code></td><td><code>hello-world</code></td></tr>
 <tr><td><code>{any}</code></td><td><code>[^/]+</code></td><td><code>anything</code></td></tr>
 <tr><td><code>{all}</code></td><td><code>.+</code></td><td><code>path/to/file</code></td></tr>
-<tr><td colspan="3"><code>{name:custom-pcre}</code> — arbitrary inline regex</td></tr>
+<tr><td colspan="3"><code>{name:custom-pcre}</code> — inline regex; <code>addPattern()</code> for named</td></tr>
 </table>
 
-<h3>Groups &amp; middleware</h3>
+<h2 id="routing-groups">Groups &amp; middleware</h2>
 <pre><code><span class="var">$app</span>->router->group(<span class="str">'/admin'</span>, [<span class="str">'Auth'</span>, <span class="str">'AdminOnly'</span>], <span class="kw">fn</span>(<span class="var">$r</span>) => {
     <span class="var">$r</span>->get(<span class="str">'/dashboard'</span>, <span class="str">'AdminController@index'</span>);
     <span class="var">$r</span>->group(<span class="str">'/users'</span>, [<span class="str">'Throttle'</span>], <span class="kw">fn</span>(<span class="var">$r</span>) => {
@@ -101,11 +179,11 @@ footer{color:var(--dim);font-size:.8em;margin-top:60px}
     });
 });</code></pre>
 
-<h3>URL generation</h3>
+<h2 id="routing-named">URL generation</h2>
 <pre><code><span class="var">$app</span>->router->get(<span class="str">'/users/{id}'</span>, <span class="str">'UserController@show'</span>, <span class="str">'user.show'</span>);
 <span class="var">$app</span>->router->url(<span class="str">'user.show'</span>, [<span class="str">'id'</span> => <span class="num">42</span>]); <span class="cm">// → /users/42</span></code></pre>
 
-<h3>Attribute routes</h3>
+<h2 id="routing-attributes">Attribute routes</h2>
 <pre><code><span class="kw">use</span> Atom\Routing\Route;
 
 <span class="kw">class</span> ApiController {
@@ -116,33 +194,19 @@ footer{color:var(--dim);font-size:.8em;margin-top:60px}
 
 <span class="var">$app</span>->router->loadFromAttributes(__DIR__ . <span class="str">'/Controllers'</span>);</code></pre>
 
-<h3>Performance — single <code>preg_match</code></h3>
-<p>All routes compile into <strong>one</strong> PCRE regex using branch‑reset <code>(?|...)</code> and <code>(*MARK)</code>. 10 000 routes = one JIT‑compiled regex call.</p>
+<h2 id="routing-perf">Performance — single <code>preg_match</code></h2>
+<p>All routes compile into <strong>one</strong> PCRE regex using branch-reset <code>(?|...)</code> and <code>(*MARK)</code>. 10 000 routes = one JIT‑compiled regex call.</p>
 <pre><code><span class="cm">// Compiled: #^(?|(?&lt;METHOD&gt;GET)\/users\/(?&lt;id&gt;[0-9]+)(*:0)|...)$#xs</span>
 <span class="kw">if</span> (!preg_match(<span class="var">$compiled</span>[<span class="str">'regex'</span>], <span class="var">$method</span> . <span class="var">$uri</span>, <span class="var">$m</span>)) {
     <span class="kw">return</span> <span class="kw">new</span> Response(<span class="str">'Not Found'</span>, StatusCode::NOT_FOUND);
 }
 <span class="var">$id</span> = (<span class="kw">int</span>) <span class="var">$m</span>[<span class="str">'MARK'</span>]; <span class="cm">// → route index</span>
-<span class="var">$params</span> = array_filter(<span class="var">$m</span>, <span class="str">'is_string'</span>, ARRAY_FILTER_USE_KEY); <span class="cm">// → named captures</span></code></pre>
+<span class="var">$params</span> = array_filter(<span class="var">$m</span>, <span class="str">'is_string'</span>, ARRAY_FILTER_USE_KEY);</code></pre>
 
-<h2>Controllers</h2>
-<pre><code><span class="kw">use</span> Atom\Http\{Request, Response, StatusCode};
-
-<span class="kw">class</span> UserController {
-    <span class="kw">public function</span> <span class="fn">show</span>(<span class="kw">string</span> <span class="var">$id</span>, Request <span class="var">$request</span>): Response {
-        <span class="var">$user</span> = findUser(<span class="var">$id</span>);
-        <span class="kw">return</span> Response::json(<span class="var">$user</span>);
-    }
-
-    <span class="kw">public function</span> <span class="fn">__invoke</span>(): <span class="kw">string</span> {
-        <span class="kw">return</span> <span class="str">'Hello World'</span>; <span class="cm">// auto‑wrapped to HTML response</span>
-    }
-}</code></pre>
-
-<h2>Request</h2>
+<h2 id="http-request">Request</h2>
 <table>
 <tr><th>Property</th><th>Type</th><th>Description</th></tr>
-<tr><td><code>$req->method</code></td><td>string</td><td>GET|POST|PUT|DELETE <span class="badge">_method</span></td></tr>
+<tr><td><code>$req->method</code></td><td>string</td><td>GET|POST|PUT|PATCH|DELETE <span class="badge">_method</span></td></tr>
 <tr><td><code>$req->path</code></td><td>string</td><td>Path without query</td></tr>
 <tr><td><code>$req->uri</code></td><td>string</td><td>Full URI</td></tr>
 <tr><td><code>$req->scheme</code></td><td>string</td><td>http|https</td></tr>
@@ -150,72 +214,91 @@ footer{color:var(--dim);font-size:.8em;margin-top:60px}
 <tr><td><code>$req->ip</code></td><td>string</td><td>Client IP</td></tr>
 <tr><td><code>$req->isAjax</code></td><td>bool</td><td>X-Requested-With</td></tr>
 <tr><td><code>$req->accept</code></td><td>string</td><td>Accept header</td></tr>
-<tr><td><code>$req->bearer</code></td><td>string</td><td>Bearer token <span class="badge">new</span></td></tr>
+<tr><td><code>$req->bearer</code></td><td>string</td><td>Bearer token</td></tr>
 </table>
 <table>
 <tr><th>Method</th><th>Description</th></tr>
 <tr><td><code>$req->header('name')</code></td><td>Get header (case‑insensitive)</td></tr>
 <tr><td><code>$req->input('key', $default)</code></td><td>Body → query → default</td></tr>
 <tr><td><code>$req->wantsJson()</code></td><td>Check Accept header</td></tr>
+<tr><td><code>$req->validate(DTO::class)</code></td><td>Map body → DTO, validate, throw</td></tr>
 </table>
 
-<h3>JSON body <span class="badge">new</span></h3>
+<h3>JSON body auto‑parse</h3>
 <pre><code><span class="cm">// Content-Type: application/json  →  auto‑parsed</span>
 <span class="cm">// POST {"name":"Alice"}  →  $req->input('name') = 'Alice'</span></code></pre>
 
-<h3>Method spoofing <span class="badge">new</span></h3>
+<h3>Method spoofing</h3>
 <pre><code><span class="cm">// POST with _method=PUT  →  $req->method === 'PUT'</span>
 <span class="cm">// Works only from POST; GET+_method is ignored</span></code></pre>
 
-<h2>Response</h2>
+<h3>Bearer token</h3>
+<pre><code><span class="cm">// Authorization: Bearer abc123  →  $req->bearer === 'abc123'</span>
+<span class="cm">// Extracted via PCRE: /^Bearer\s+(.+)$/i</span></code></pre>
+
+<h3 id="http-files">File uploads</h3>
+<pre><code><span class="var">$file</span> = <span class="var">$req</span>->file(<span class="str">'avatar'</span>);
+<span class="kw">if</span> (<span class="var">$file</span>->ok) {
+    <span class="var">$file</span>->move(<span class="str">'/uploads/'</span> . <span class="var">$file</span>->name);
+}
+
+<span class="var">$file</span>->size;   <span class="cm">// bytes</span>
+<span class="var">$file</span>->type;   <span class="cm">// MIME type</span>
+<span class="var">$file</span>->ext;    <span class="cm">// extension via PCRE</span>
+<span class="var">$file</span>->error;  <span class="cm">// UPLOAD_ERR_*</span>
+<span class="var">$file</span>->tmp;    <span class="cm">// temp path</span></code></pre>
+
+<h2 id="http-response">Response</h2>
 <pre><code><span class="cm">// Factories</span>
 Response::html(<span class="str">'&lt;h1&gt;Hello&lt;/h1&gt;'</span>);
-Response::json([<span class="str">'key'</span> => <span class="str">'value'</span>], pretty: <span class="kw">true</span>);   <span class="cm">// JSON_PRETTY_PRINT</span>
-Response::redirect(<span class="str">'/login'</span>);                         <span class="cm">// 302</span>
-Response::redirect(<span class="str">'/new'</span>, StatusCode::MOVED);       <span class="cm">// 301</span>
+Response::json([<span class="str">'key'</span> => <span class="str">'value'</span>], pretty: <span class="kw">true</span>);
+Response::text(<span class="str">'plain text'</span>);
+Response::noContent();                          <span class="cm">// 204</span>
+Response::redirect(<span class="str">'/login'</span>);                     <span class="cm">// 302</span>
+Response::redirect(<span class="str">'/new'</span>, StatusCode::MOVED);   <span class="cm">// 301</span>
 
 <span class="cm">// Chaining</span>
 (<span class="kw">new</span> Response(<span class="str">'body'</span>, StatusCode::CREATED))
     ->withHeader(<span class="str">'X-Custom'</span>, <span class="str">'val'</span>)
     ->withCookie(<span class="str">'session'</span>, <span class="var">$token</span>, <span class="str">ttl</span>: <span class="num">7200</span>, <span class="str">path</span>: <span class="str">'/'</span>)
+    ->withCache(<span class="num">3600</span>)
     ->send();</code></pre>
+<p>Header injection blocked via <code>Regex::replace('#[\r\n]+#')</code>. Cookies default to <code>httponly: true, samesite: Lax</code>.</p>
 
-<h3>Security</h3>
-<p>Header injection blocked via <code>Regex::replace('#[\r\n]+#', ' ', $v)</code>. Cookies default to <code>httponly: true, samesite: Lax</code>.</p>
+<h2 id="http-controllers">Controllers</h2>
+<pre><code><span class="kw">use</span> Atom\Http\{Request, Response, StatusCode};
 
-<h2>Middleware</h2>
-<pre><code><span class="kw">class</span> Auth <span class="kw">implements</span> MiddlewareInterface {
-    <span class="kw">public function</span> <span class="fn">handle</span>(Request <span class="var">$req</span>, Closure <span class="var">$next</span>): Response {
-        <span class="kw">if</span> (!<span class="var">$req</span>->bearer) {
-            <span class="kw">return new</span> Response(<span class="str">'Unauthorized'</span>, StatusCode::UNAUTHORIZED);
-        }
-        <span class="kw">return</span> <span class="var">$next</span>(<span class="var">$req</span>);
+<span class="kw">class</span> UserController {
+    <span class="kw">public function</span> <span class="fn">show</span>(<span class="kw">string</span> <span class="var">$id</span>, Request <span class="var">$request</span>): Response {
+        <span class="kw">return</span> Response::json(findUser(<span class="var">$id</span>));
     }
-}
+    <span class="kw">public function</span> <span class="fn">__invoke</span>(): <span class="kw">string</span> {
+        <span class="kw">return</span> <span class="str">'Hello World'</span>; <span class="cm">// auto‑wrapped to HTML</span>
+    }
+}</code></pre>
 
-<span class="cm">// Object, string (DI-resolved), or Closure — all supported</span>
-<span class="var">$r</span>->get(<span class="str">'/secure'</span>, <span class="str">'Controller@action'</span>, <span class="str">''</span>, [<span class="str">'Auth'</span>]);
-<span class="var">$r</span>->get(<span class="str">'/debug'</span>, <span class="str">'DebugController@index'</span>, <span class="str">''</span>, [
-    <span class="kw">fn</span>(Request <span class="var">$req</span>, Closure <span class="var">$next</span>) => <span class="var">$next</span>(<span class="var">$req</span>)->withHeader(<span class="str">'X-Debug'</span>, <span class="str">'1'</span>)
-]);</code></pre>
+<h2 id="http-session">Session</h2>
+<pre><code><span class="var">$session</span> = <span class="var">$app</span>->container->make(Session::<span class="kw">class</span>); <span class="cm">// auto‑started, singleton</span>
+<span class="var">$session</span>->set(<span class="str">'user_id'</span>, <span class="num">42</span>);
+<span class="var">$session</span>->get(<span class="str">'user_id'</span>);           <span class="cm">// 42</span>
+<span class="var">$session</span>->has(<span class="str">'user_id'</span>);           <span class="cm">// true</span>
+<span class="var">$session</span>->remove(<span class="str">'user_id'</span>);
+<span class="var">$session</span>->flash(<span class="str">'success'</span>, <span class="str">'Saved!'</span>); <span class="cm">// one request only</span>
+<span class="var">$session</span>->regenerate();             <span class="cm">// rotate session ID</span></code></pre>
 
-<h2>Templates</h2>
-
-<h3>Output &amp; filters</h3>
+<h2 id="tpl-syntax">Template syntax &amp; filters</h2>
 <pre><code><span class="cm">{# comment #}</span>
 {{ user.name | e }}              <span class="cm"># escape</span>
 {{ html | raw }}                 <span class="cm"># raw (no escape)</span>
 {{ title | upper | raw }}        <span class="cm"># chained</span>
 {{ count | default(0) }}         <span class="cm"># with args</span>
-{{ data | json }}                <span class="cm"># JSON encode</span>
+{{ data | json }}                <span class="cm"># JSON</span>
 {{ items.0 }}                    <span class="cm"># numeric index</span></code></pre>
-
-<h3>Built‑in filters</h3>
 <div class="flex">
 <span class="tag">escape</span><span class="tag">e</span><span class="tag">upper</span><span class="tag">lower</span><span class="tag">trim</span><span class="tag">length</span><span class="tag">nl2br</span><span class="tag">json</span><span class="tag">default</span><span class="tag">raw</span>
 </div>
 
-<h3>Control flow</h3>
+<h2 id="tpl-control">Control flow</h2>
 <pre><code>{% if user.admin %}
   &lt;p&gt;Admin&lt;/p&gt;
 {% elseif user.active %}
@@ -233,10 +316,12 @@ Response::redirect(<span class="str">'/new'</span>, StatusCode::MOVED);       <s
 {% endfor %}
 
 {% set total = price * qty %}
-
 {% include "partials/nav.twig" %}</code></pre>
 
-<h3>Inheritance</h3>
+<h3 id="tpl-raw">Raw blocks</h3>
+<pre><code>{% raw %}&lt;script&gt;{{ not_parsed }}&lt;/script&gt;{% endraw %}</code></pre>
+
+<h2 id="tpl-inherit">Inheritance</h2>
 <pre><code><span class="cm">{# layout.twig #}</span>
 &lt;html&gt;
 &lt;head&gt;&lt;title&gt;{% block title %}Default{% endblock %}&lt;/title&gt;&lt;/head&gt;
@@ -248,31 +333,102 @@ Response::redirect(<span class="str">'/new'</span>, StatusCode::MOVED);       <s
 {% block title %}{{ page.title | e }}{% endblock %}
 {% block body %}&lt;p&gt;{{ page.content | raw }}&lt;/p&gt;{% endblock %}</code></pre>
 
-<h3>Custom filters &amp; globals</h3>
+<h2 id="tpl-custom">Custom filters &amp; globals</h2>
 <pre><code><span class="var">$app</span>->view->addFilter(<span class="str">'markdown'</span>, <span class="kw">fn</span>(<span class="var">$v</span>) => parseMarkdown(<span class="var">$v</span>));
 <span class="var">$app</span>->view->addGlobal(<span class="str">'app_name'</span>, <span class="str">'MyApp'</span>);
 <span class="var">$app</span>->view->addGlobal(<span class="str">'year'</span>, date(<span class="str">'Y'</span>));</code></pre>
 
-<h2>Container (DI)</h2>
+<h2 id="val-dto">Validation — DTO definition</h2>
+<pre><code><span class="kw">use</span> Atom\Validation\{Required, Email, Min, Max, Regex};
+
+<span class="kw">final class</span> CreateUser {
+    <span class="kw">#[</span><span class="fn">Required</span><span class="kw">]</span> <span class="kw">public</span> <span class="kw">string</span> <span class="var">$name</span> = <span class="str">''</span>;
+    <span class="kw">#[</span><span class="fn">Required</span><span class="kw">]</span> <span class="kw">#[</span><span class="fn">Email</span><span class="kw">]</span> <span class="kw">public</span> <span class="kw">string</span> <span class="var">$email</span> = <span class="str">''</span>;
+    <span class="kw">#[</span><span class="fn">Min</span>(<span class="num">8</span>)<span class="kw">]</span> <span class="kw">public</span> <span class="kw">string</span> <span class="var">$password</span> = <span class="str">''</span>;
+    <span class="kw">#[</span><span class="fn">Regex</span>(<span class="str">'/^[a-z0-9_]{3,20}$/'</span>)<span class="kw">]</span> <span class="kw">public</span> <span class="kw">string</span> <span class="var">$username</span> = <span class="str">''</span>;
+}</code></pre>
+<table>
+<tr><th>Attribute</th><th>Logic</th></tr>
+<tr><td><code>#[Required]</code></td><td>Non‑empty string/array</td></tr>
+<tr><td><code>#[Regex('/pat/')]</code></td><td>PCRE match</td></tr>
+<tr><td><code>#[Email]</code></td><td>Valid email format</td></tr>
+<tr><td><code>#[Min(N)]</code></td><td>Min length or numeric value</td></tr>
+<tr><td><code>#[Max(N)]</code></td><td>Max length or numeric value</td></tr>
+<tr><td colspan="2">Custom: <code>#[Required('Field is required')]</code></td></tr>
+</table>
+
+<h2 id="val-request">Request validation</h2>
+<pre><code><span class="kw">try</span> {
+    <span class="var">$dto</span> = <span class="var">$request</span>->validate(CreateUser::<span class="kw">class</span>);
+    <span class="cm">// $dto is populated with validated body data</span>
+} <span class="kw">catch</span> (ValidationException <span class="var">$e</span>) {
+    Response::json(<span class="var">$e</span>->errors, StatusCode::BAD_REQUEST)->send();
+}</code></pre>
+
+<h2 id="mw-pipeline">Middleware pipeline</h2>
+<pre><code><span class="kw">class</span> Auth <span class="kw">implements</span> MiddlewareInterface {
+    <span class="kw">public function</span> <span class="fn">handle</span>(Request <span class="var">$req</span>, Closure <span class="var">$next</span>): Response {
+        <span class="kw">if</span> (!<span class="var">$req</span>->bearer) {
+            <span class="kw">return new</span> Response(<span class="str">'Unauthorized'</span>, StatusCode::UNAUTHORIZED);
+        }
+        <span class="kw">return</span> <span class="var">$next</span>(<span class="var">$req</span>);
+    }
+}
+
+<span class="cm">// Object, string (DI-resolved), or Closure — all supported</span>
+<span class="var">$r</span>->get(<span class="str">'/secure'</span>, <span class="str">'Controller@action'</span>, <span class="str">''</span>, [<span class="str">'Auth'</span>]);
+<span class="var">$r</span>->get(<span class="str">'/debug'</span>, <span class="str">'DebugController@index'</span>, <span class="str">''</span>, [
+    <span class="kw">fn</span>(Request <span class="var">$req</span>, Closure <span class="var">$next</span>) => <span class="var">$next</span>(<span class="var">$req</span>)->withHeader(<span class="str">'X-Debug'</span>, <span class="str">'1'</span>)
+]);</code></pre>
+
+<h2 id="mw-cors">CORS middleware</h2>
+<pre><code><span class="kw">use</span> Atom\Middleware\Cors;
+
+<span class="cm">// Default: allow *, all methods, Content-Type + Authorization</span>
+<span class="var">$app</span>->router->group(<span class="str">'/api'</span>, [Cors::<span class="kw">class</span>], <span class="kw">fn</span>(<span class="var">$r</span>) => { ... });
+
+<span class="cm">// Custom</span>
+<span class="var">$app</span>->router->group(<span class="str">'/api'</span>, [<span class="kw">new</span> Cors(
+    <span class="str">allowOrigin</span>: <span class="str">'https://example.com'</span>,
+    <span class="str">allowMethods</span>: <span class="str">'GET,POST,PATCH'</span>,
+    <span class="str">allowHeaders</span>: <span class="str">'X-API-Key,Content-Type'</span>,
+)], <span class="kw">fn</span>(<span class="var">$r</span>) => { ... });</code></pre>
+
+<h2 id="mw-csrf">CSRF middleware</h2>
+<pre><code><span class="kw">use</span> Atom\Middleware\Csrf;
+
+<span class="cm">// Autowires Session via DI — add to root group</span>
+<span class="var">$app</span>->router->group(<span class="str">''</span>, [Csrf::<span class="kw">class</span>], <span class="kw">fn</span>(<span class="var">$r</span>) => { ... });
+
+<span class="cm">// Template: &lt;input type="hidden" name="_csrf" value="{{ _csrf }}"&gt;</span>
+<span class="cm">// Or header: X-CSRF-Token: &lt;token&gt;</span>
+<span class="cm">// Validated on POST/PUT/PATCH/DELETE — 403 on mismatch</span>
+
+<span class="var">$token</span> = <span class="var">$session</span>->csrfToken();    <span class="cm">// generates once, persists</span>
+<span class="var">$session</span>->validateCsrf(<span class="var">$token</span>);  <span class="cm">// constant-time comparison</span></code></pre>
+
+<h2 id="di-bindings">Container bindings</h2>
 <pre><code><span class="cm">// Interface binding</span>
 <span class="var">$app</span>->container->bind(LoggerInterface::<span class="kw">class</span>, FileLogger::<span class="kw">class</span>);
 
-<span class="cm">// Singleton (same instance every time)</span>
+<span class="cm">// Singleton</span>
 <span class="var">$app</span>->container->singleton(Database::<span class="kw">class</span>, <span class="kw">fn</span>(<span class="var">$c</span>) => <span class="kw">new</span> Database(<span class="var">$c</span>[<span class="str">'config'</span>][<span class="str">'db'</span>]));
 
 <span class="cm">// Pre‑built instance</span>
-<span class="var">$app</span>->container->instance(<span class="str">'config'</span>, [<span class="str">'db'</span> => [<span class="str">'host'</span> => <span class="str">'localhost'</span>]]);
+<span class="var">$app</span>->container->instance(<span class="str">'config'</span>, [<span class="str">'db'</span> => [<span class="str">'host'</span> => <span class="str">'localhost'</span>]]);</code></pre>
 
-<span class="cm">// Autowiring — recursive constructor resolution</span>
-<span class="kw">class</span> UserService {
+<h2 id="di-autowire">Autowiring</h2>
+<pre><code><span class="kw">class</span> UserService {
     <span class="kw">public function</span> <span class="fn">__construct</span>(
         <span class="kw">private</span> Database <span class="var">$db</span>,
         <span class="kw">private</span> LoggerInterface <span class="var">$log</span>,
     ) {}
 }
-<span class="var">$service</span> = <span class="var">$app</span>->container->make(UserService::<span class="kw">class</span>);</code></pre>
+<span class="var">$service</span> = <span class="var">$app</span>->container->make(UserService::<span class="kw">class</span>);
+<span class="cm">// Database and LoggerInterface auto‑resolved recursively</span></code></pre>
+<p>Built‑in: <code>Application</code>, <code>Container</code>, <code>Router</code>, <code>ViewEngine</code>, <code>Config</code>, <code>Session</code>, <code>Request</code>.</p>
 
-<h2>Regex utility</h2>
+<h2 id="ref-regex">Regex utility</h2>
 <pre><code><span class="kw">use</span> Atom\Support\Regex;
 
 Regex::match(<span class="str">'#(\d+)#'</span>, <span class="str">'abc123'</span>);          <span class="cm">// → ['123'] | null</span>
@@ -282,58 +438,36 @@ Regex::split(<span class="str">'#,#'</span>, <span class="str">'a,b,c'</span>); 
 Regex::quote(<span class="str">'foo.bar'</span>);                    <span class="cm">// → 'foo\.bar'</span>
 Regex::assert(<span class="str">'#valid_pattern#'</span>);           <span class="cm">// throws on bad regex</span></code></pre>
 
-<h2>Config</h2>
-<pre><code><span class="var">$config</span> = <span class="kw">new</span> Config(
-    <span class="str">debug</span>: <span class="kw">false</span>,                        <span class="cm">// true = show stack traces</span>
-    <span class="str">cacheDir</span>: <span class="str">'/tmp/atom'</span>,
-    <span class="str">viewsDir</span>: __DIR__ . <span class="str">'/templates'</span>,
-);
-<span class="var">$app</span> = <span class="kw">new</span> Application(<span class="var">$config</span>);</code></pre>
-<p>When <code>debug: false</code>, exceptions return empty 500 — no trace leakage.</p>
-
-<h2>Error handling</h2>
-<pre><code><span class="kw">public function</span> <span class="fn">run</span>(?Request <span class="var">$request</span> = <span class="kw">null</span>): <span class="kw">void</span>
-{
-    <span class="var">$req</span> = <span class="var">$request</span> ?? Request::capture();
-    <span class="kw">try</span> {
-        <span class="var">$response</span> = <span class="var">$this</span>->router->dispatch(<span class="var">$req</span>);
-    } <span class="kw">catch</span> (\Throwable <span class="var">$e</span>) {
-        <span class="var">$response</span> = <span class="var">$this</span>->config->debug
-            ? <span class="kw">new</span> Response(<span class="str">"Server Error: {$e->getMessage()}\n{$e->getTraceAsString()}"</span>, StatusCode::SERVER_ERROR)
-            : <span class="kw">new</span> Response(<span class="str">''</span>, StatusCode::SERVER_ERROR);
-    }
-    <span class="var">$response</span>->send();
-}</code></pre>
-
-<h2>Status codes</h2>
+<h2 id="ref-status">Status codes</h2>
 <div class="flex">
 <span class="tag">200 OK</span><span class="tag">201 CREATED</span><span class="tag">204 NO_CONTENT</span><span class="tag">301 MOVED</span>
 <span class="tag">302 FOUND</span><span class="tag">304 NOT_MODIFIED</span><span class="tag">400 BAD_REQUEST</span><span class="tag">401 UNAUTHORIZED</span>
 <span class="tag">403 FORBIDDEN</span><span class="tag">404 NOT_FOUND</span><span class="tag">405 METHOD_NOT_ALLOWED</span><span class="tag">500 SERVER_ERROR</span>
 </div>
 
-<hr>
-
-<h2>Project structure</h2>
+<h2 id="ref-structure">Project structure</h2>
 <pre><code>atom/
 ├── src/Atom/
 │   ├── Config.php
 │   ├── Application.php
 │   ├── Container/Container.php
-│   ├── Http/{Request,Response,StatusCode}.php
-│   ├── Middleware/Pipeline.php
+│   ├── Http/{Request,Response,Session,StatusCode,UploadedFile}.php
+│   ├── Middleware/{Pipeline,Cors,Csrf}.php
 │   ├── Routing/{Route,CompiledRoute,MatchedRoute,RouteCompiler,Router}.php
 │   ├── Support/Regex.php
+│   ├── Validation/Validator.php (+ 5 attribute classes)
 │   └── View/{Compiler,Engine,Template}.php
-├── tests/                    <span class="cm"># 254 tests, 100% coverage</span>
+├── tests/                    <span class="cm"># 315 tests, 100% coverage</span>
 ├── public/index.php          <span class="cm"># front controller</span>
 ├── views/                    <span class="cm"># .twig templates</span>
-├── storage/cache/            <span class="cm"># compiled routes & views</span>
+├── docs/index.html           <span class="cm"># documentation</span>
+├── storage/cache/            <span class="cm"># compiled routes &amp; views</span>
 └── composer.json</code></pre>
 
 <footer>
-<p>Atom · PHP 8.5 · <a href="https://github.com">GitHub</a> · 388 LOC · 100% test coverage · PCRE‑powered</p>
+<p>Atom · PHP 8.5 · 493 LOC · 100% coverage · PCRE‑powered · Sidebar documentation</p>
 </footer>
 
+</div>
 </body>
 </html>

@@ -428,4 +428,53 @@ final class RouterTest extends TestCase
         $url = $this->router->url('item.show', ['id' => '7']);
         $this->assertSame('/items/7', $url);
     }
+
+    #[Test]
+    public function patch_method_adds_patch_route(): void
+    {
+        $this->router->patch('/resource/{id}', 'ResourceController@patch');
+
+        $this->container->bind('ResourceController', fn() => new class {
+            public function patch(string $id): string { return "patched {$id}"; }
+        });
+
+        $req = new Request(server: ['REQUEST_METHOD' => 'PATCH', 'REQUEST_URI' => '/resource/99']);
+        $response = $this->router->dispatch($req);
+        $this->assertStringContainsString('patched 99', $response->getContent());
+    }
+
+    #[Test]
+    public function any_matches_all_http_methods(): void
+    {
+        $this->router->any('/webhook', 'WebhookController@handle');
+
+        $this->container->bind('WebhookController', fn() => new class {
+            public function handle(): string { return 'webhook'; }
+        });
+
+        foreach (['GET','POST','PUT','PATCH','DELETE'] as $method) {
+            $req = new Request(server: ['REQUEST_METHOD' => $method, 'REQUEST_URI' => '/webhook']);
+            $res = $this->router->dispatch($req);
+            $this->assertStringContainsString('webhook', $res->getContent(), "{$method} should match");
+        }
+    }
+
+    #[Test]
+    public function match_specific_methods(): void
+    {
+        $this->router->match(['GET', 'POST'], '/multi', 'MultiController@handle');
+
+        $this->container->bind('MultiController', fn() => new class {
+            public function handle(): string { return 'multi'; }
+        });
+
+        $reqGet = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/multi']);
+        $this->assertStringContainsString('multi', $this->router->dispatch($reqGet)->getContent());
+
+        $reqPost = new Request(server: ['REQUEST_METHOD' => 'POST', 'REQUEST_URI' => '/multi']);
+        $this->assertStringContainsString('multi', $this->router->dispatch($reqPost)->getContent());
+
+        $reqPut = new Request(server: ['REQUEST_METHOD' => 'PUT', 'REQUEST_URI' => '/multi']);
+        $this->assertSame(404, $this->router->dispatch($reqPut)->getStatusCode());
+    }
 }

@@ -252,4 +252,20 @@ final class CompilerTest extends TestCase
         $result = $this->engine->render('test.twig', ['data' => ['a' => 1]]);
         $this->assertStringContainsString('axy', $result);
     }
+
+    #[Test]
+    public function raw_block_preserves_twig_syntax(): void
+    {
+        file_put_contents($this->tmpViewsDir . '/test.twig', '{% raw %}<script>{{ x }}</script>{% endraw %}');
+        $result = $this->engine->render('test.twig', []);
+        $this->assertStringContainsString('<script>{{ x }}</script>', $result);
+    }
+
+    #[Test]
+    public function raw_block_inside_template(): void
+    {
+        file_put_contents($this->tmpViewsDir . '/test.twig', 'before {% raw %}{{ verbatim }}{% endraw %} after');
+        $result = $this->engine->render('test.twig', []);
+        $this->assertStringContainsString('before {{ verbatim }} after', $result);
+    }
 }

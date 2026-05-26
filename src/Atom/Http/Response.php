@@ -29,6 +29,16 @@ final class Response
         return new self(json_encode($data, $flags), $s, ['Content-Type' => 'application/json']);
     }
 
+    public static function text(string $body, StatusCode $s = StatusCode::OK): self
+    {
+        return new self($body, $s, ['Content-Type' => 'text/plain; charset=utf-8']);
+    }
+
+    public static function noContent(): self
+    {
+        return new self('', StatusCode::NO_CONTENT);
+    }
+
     public static function redirect(string $url, StatusCode $s = StatusCode::FOUND): self
     {
         return new self('', $s, ['Location' => $url]);
@@ -53,6 +63,11 @@ final class Response
         $clone = clone $this;
         $clone->cookies[] = [$name, $value, $ttl, $path];
         return $clone;
+    }
+
+    public function withCache(int $ttl): self
+    {
+        return $this->withHeader('Cache-Control', "public, max-age={$ttl}");
     }
 
     public function send(): void

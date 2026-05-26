@@ -13,7 +13,19 @@ final class Compiler
 
     public function compile(string $source, string $className, string $selfName): string
     {
-        $src = Regex::replace('~\{#.*?#\}~s', '', $source);
+        // Extract {% raw %}...{% endraw %} blocks before any processing
+        $rawMap = [];
+        $src = Regex::replace(
+            '#\{%\s*raw\s*%\}(.*?)\{%\s*endraw\s*%\}#s',
+            function (array $m) use (&$rawMap): string {
+                $k = "\x00RAW" . count($rawMap) . "\x00";
+                $rawMap[$k] = $m[1];
+                return $k;
+            },
+            $source,
+        );
+
+        $src = Regex::replace('~\{#.*?#\}~s', '', $src);
 
         $parent = null;
         if ($m = Regex::match('#\{%\s*extends\s+[\'"]([^\'"]+)[\'"]\s*%\}#', $src)) {
@@ -32,6 +44,7 @@ final class Compiler
         );
 
         $body = $this->compileBody($src);
+        $body = $rawMap !== [] ? strtr($body, $rawMap) : $body;
 
         $parentExpr = $parent === null ? 'null' : var_export($parent, true);
         $blocksPhp  = var_export($blocks, true);
@@ -125,6 +138,8 @@ final class Compiler
 
             (bool) preg_match('#^block\s+(\w+)$#', $tag, $m) => '<?= $this->renderBlock(' . var_export($m[1], true) . ') ?>',
             $tag === 'endblock' => '',
+            $tag === 'raw' => '',
+            $tag === 'endraw' => '',
 
             default => throw new \RuntimeException("Unknown tag: {$tag}"),
         };

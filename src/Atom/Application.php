@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace Atom;
 
 use Atom\Container\Container;
-use Atom\Http\{Request, Response, StatusCode};
+use Atom\Http\{Request, Response, Session, StatusCode};
 use Atom\Routing\Router;
 use Atom\View\Engine as ViewEngine;
 
@@ -28,6 +28,7 @@ final class Application
         $this->container->instance(Router::class, $this->router);
         $this->container->instance(ViewEngine::class, $this->view);
         $this->container->instance(Config::class, $config);
+        $this->container->instance(Session::class, new Session());
     }
 
     public function run(?Request $request = null): void

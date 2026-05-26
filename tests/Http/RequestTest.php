@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace Atom\Tests\Http;
 
 use Atom\Http\Request;
+use Atom\Validation\{Required, Email};
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -336,4 +337,51 @@ final class RequestTest extends TestCase
         $req = new Request(body: [], server: []);
         $this->assertSame([], $req->body);
     }
+
+    #[Test]
+    public function validate_passes_for_valid_data(): void
+    {
+        $req = new Request(body: ['name' => 'John', 'email' => 'john@test.com']);
+
+        $ref = new \ReflectionClass(ValidatableUser::class);
+        $dto = $req->validate(ValidatableUser::class);
+
+        $this->assertSame('John', $dto->name);
+        $this->assertSame('john@test.com', $dto->email);
+    }
+
+    #[Test]
+    public function validate_throws_for_invalid_data(): void
+    {
+        $req = new Request(body: ['name' => '', 'email' => 'bad']);
+
+        $this->expectException(\Atom\Validation\ValidationException::class);
+        $req->validate(ValidatableUser::class);
+    }
+
+    #[Test]
+    public function file_returns_uploaded_file(): void
+    {
+        $req = new Request(files: ['avatar' => [
+            'name' => 'photo.jpg', 'type' => 'image/jpeg', 'size' => 1024,
+            'tmp_name' => '/tmp/php123', 'error' => UPLOAD_ERR_OK,
+        ]]);
+        $file = $req->file('avatar');
+        $this->assertTrue($file->ok);
+        $this->assertSame('photo.jpg', $file->name);
+    }
+
+    #[Test]
+    public function file_returns_empty_for_missing_key(): void
+    {
+        $req = new Request();
+        $file = $req->file('missing');
+        $this->assertFalse($file->ok);
+    }
+}
+
+final class ValidatableUser
+{
+    #[Required] public string $name = '';
+    #[Email] public string $email = '';
 }

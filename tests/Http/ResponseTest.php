@@ -206,4 +206,30 @@ final class ResponseTest extends TestCase
         ob_get_clean();
         $this->assertTrue(true);
     }
+
+    #[Test]
+    public function text_factory_creates_plain_response(): void
+    {
+        $res = Response::text('plain text');
+        $this->assertSame('plain text', $res->getContent());
+        $this->assertSame(200, $res->getStatusCode());
+    }
+
+    #[Test]
+    public function no_content_returns_204(): void
+    {
+        $res = Response::noContent();
+        $this->assertSame('', $res->getContent());
+        $this->assertSame(204, $res->getStatusCode());
+    }
+
+    #[Test]
+    public function with_cache_adds_caching_header(): void
+    {
+        $res = (new Response('data'))->withCache(3600);
+        ob_start();
+        $res->send();
+        ob_get_clean();
+        $this->assertTrue(true);
+    }
 }

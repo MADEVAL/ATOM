@@ -64,6 +64,35 @@ final class Request
         return $this->body[$key] ?? $this->query[$key] ?? $default;
     }
 
+    public function file(string $key): UploadedFile
+    {
+        return isset($this->files[$key]) && $this->files[$key]['error'] !== UPLOAD_ERR_NO_FILE
+            ? UploadedFile::fromFileArray($this->files[$key])
+            : UploadedFile::empty();
+    }
+
+    /**
+     * @template T of object
+     * @param class-string<T> $dtoClass
+     * @return T
+     */
+    public function validate(string $dtoClass): object
+    {
+        $ref = new \ReflectionClass($dtoClass);
+        $dto = $ref->newInstanceWithoutConstructor();
+        foreach ($ref->getProperties(\ReflectionProperty::IS_PUBLIC) as $prop) {
+            $name = $prop->getName();
+            if (array_key_exists($name, $this->body)) {
+                $prop->setValue($dto, $this->body[$name]);
+            }
+        }
+        $errors = \Atom\Validation\Validator::validate($dto);
+        if ($errors !== []) {
+            throw new \Atom\Validation\ValidationException($errors);
+        }
+        return $dto;
+    }
+
     private function extractHeaders(array $server): array
     {
         $out = [];
