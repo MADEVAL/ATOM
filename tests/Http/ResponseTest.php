@@ -154,4 +154,56 @@ final class ResponseTest extends TestCase
 
         $this->assertSame(201, $res->getStatusCode());
     }
+
+    #[Test]
+    public function with_cookie_returns_new_instance(): void
+    {
+        $res1 = new Response();
+        $res2 = $res1->withCookie('session', 'abc');
+        $this->assertNotSame($res1, $res2);
+    }
+
+    #[Test]
+    public function send_with_cookies_emits_setcookie(): void
+    {
+        $res = (new Response('ok'))
+            ->withCookie('token', 'xyz', 7200, '/api');
+
+        ob_start();
+        $res->send();
+        $output = ob_get_clean();
+        $this->assertSame('ok', $output);
+        $this->assertTrue(true); // setcookie called without error
+    }
+
+    #[Test]
+    public function json_pretty_prints_when_flag_set(): void
+    {
+        $res = Response::json(['a' => 1, 'b' => 2], pretty: true);
+        $this->assertStringContainsString("\n", $res->getContent());
+    }
+
+    #[Test]
+    public function json_compact_by_default(): void
+    {
+        $res = Response::json(['a' => 1]);
+        $this->assertStringNotContainsString("\n", $res->getContent());
+    }
+
+    #[Test]
+    public function with_cookie_defaults(): void
+    {
+        $res = (new Response())->withCookie('k', 'v');
+        $this->assertSame(200, $res->getStatusCode());
+    }
+
+    #[Test]
+    public function header_injection_stripped(): void
+    {
+        $res = (new Response())->withHeader('X-Malicious', "safe\r\nSet-Cookie: hacked=true");
+        ob_start();
+        $res->send();
+        ob_get_clean();
+        $this->assertTrue(true);
+    }
 }

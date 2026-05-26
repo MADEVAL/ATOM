@@ -4,16 +4,17 @@ namespace Atom\View;
 
 use Atom\Support\Regex;
 
-final readonly class Compiler
+final class Compiler
 {
+    /** @var list<array{0:string,1:string|null}> */
+    private array $forStack = [];
+
     public function __construct(private Engine $engine) {}
 
     public function compile(string $source, string $className, string $selfName): string
     {
-        // 1. Удаляем комментарии {# ... #}
         $src = Regex::replace('~\{#.*?#\}~s', '', $source);
 
-        // 2. Вытаскиваем extends и блоки
         $parent = null;
         if ($m = Regex::match('#\{%\s*extends\s+[\'"]([^\'"]+)[\'"]\s*%\}#', $src)) {
             $parent = $m[1];
@@ -30,7 +31,6 @@ final readonly class Compiler
             $src,
         );
 
-        // 3. Компилируем оставшееся тело (для шаблонов без extends)
         $body = $this->compileBody($src);
 
         $parentExpr = $parent === null ? 'null' : var_export($parent, true);
@@ -69,20 +69,17 @@ final readonly class Compiler
 
     private function compileExpression(string $expr, bool $autoEscape = false): string
     {
-        // Фильтры через "|" — транслируем в цепочку вызовов (pipe-like)
         $parts = Regex::split('#\s*\|\s*#', $expr);
         $head  = array_shift($parts);
         $code  = $this->compileVariable($head);
 
         foreach ($parts as $filter) {
-            // filter или filter(arg1,arg2)
             if ($fm = Regex::match('#^([a-zA-Z_][a-zA-Z0-9_]*)(?:\((.*)\))?$#s', trim($filter))) {
                 $name = $fm[1];
                 $args = isset($fm[2]) && $fm[2] !== '' ? ',' . $fm[2] : '';
                 $code = "\$this->engine->getFilter('{$name}')({$code}{$args})";
             }
         }
-        // Авто-экранирование только для вывода и только если нет фильтров
         if ($autoEscape && empty($parts)) {
             $code = "htmlspecialchars((string)({$code}), ENT_QUOTES, 'UTF-8')";
         }
@@ -95,8 +92,6 @@ final readonly class Compiler
         if (preg_match('#^([\'"]).*\1$#s', $v) || preg_match('#^-?\d+(\.\d+)?$#', $v) || in_array($v, ['true','false','null'], true)) {
             return $v;
         }
-        // a.b.c -> $this->ctx['a']['b']['c']
-        // a.0 -> $this->ctx['a'][0]
         $parts = explode('.', $v, 2);
         if (count($parts) === 1) {
             return "\$this->ctx['{$parts[0]}']";
@@ -118,11 +113,9 @@ final readonly class Compiler
             $tag === 'else'                                    => '<?php else: ?>',
             $tag === 'endif'                                   => '<?php endif; ?>',
 
-            (bool) preg_match('#^for\s+(\w+)\s+in\s+(.+)$#s', $tag, $m) =>
-                '<?php foreach ((' . $this->compileExpression($m[2]) . ') ?? [] as $' . $m[1] . '): $this->ctx[\'' . $m[1] . '\'] = $' . $m[1] . '; ?>',
-            (bool) preg_match('#^for\s+(\w+),\s*(\w+)\s+in\s+(.+)$#s', $tag, $m) =>
-                '<?php foreach ((' . $this->compileExpression($m[3]) . ') ?? [] as $' . $m[1] . ' => $' . $m[2] . '): $this->ctx[\'' . $m[1] . '\'] = $' . $m[1] . '; $this->ctx[\'' . $m[2] . '\'] = $' . $m[2] . '; ?>',
-            $tag === 'endfor' => '<?php endforeach; ?>',
+            (bool) preg_match('#^for\s+(\w+)\s+in\s+(.+)$#s', $tag, $m) => $this->compileFor($m[1], $m[2]),
+            (bool) preg_match('#^for\s+(\w+),\s*(\w+)\s+in\s+(.+)$#s', $tag, $m) => $this->compileForKeyVal($m[1], $m[2], $m[3]),
+            $tag === 'endfor' => $this->compileEndfor(),
 
             (bool) preg_match('#^set\s+(\w+)\s*=\s*(.+)$#s', $tag, $m) =>
                 '<?php $this->ctx[\'' . $m[1] . '\'] = ' . $this->compileExpression($m[2]) . '; ?>',
@@ -135,6 +128,28 @@ final readonly class Compiler
 
             default => throw new \RuntimeException("Unknown tag: {$tag}"),
         };
+    }
+
+    private function compileFor(string $var, string $expr): string
+    {
+        $this->forStack[] = [$var, null];
+        return '<?php foreach ((' . $this->compileExpression($expr) . ') ?? [] as $' . $var . '): $this->ctx[\'' . $var . '\'] = $' . $var . '; ?>';
+    }
+
+    private function compileForKeyVal(string $key, string $val, string $expr): string
+    {
+        $this->forStack[] = [$key, $val];
+        return '<?php foreach ((' . $this->compileExpression($expr) . ') ?? [] as $' . $key . ' => $' . $val . '): $this->ctx[\'' . $key . '\'] = $' . $key . '; $this->ctx[\'' . $val . '\'] = $' . $val . '; ?>';
+    }
+
+    private function compileEndfor(): string
+    {
+        $vars = $this->forStack !== [] ? array_pop($this->forStack) : [null, null];
+        $cleanup = '';
+        foreach ($vars as $v) {
+            if ($v !== null) $cleanup .= "unset(\$this->ctx['{$v}']);";
+        }
+        return '<?php endforeach; ' . $cleanup . ' ?>';
     }
 
     private function q(string $s): string { return var_export($s, true); }

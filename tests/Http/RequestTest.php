@@ -251,4 +251,89 @@ final class RequestTest extends TestCase
         $this->assertInstanceOf(Request::class, $req);
         $this->assertIsString($req->method);
     }
+
+    #[Test]
+    public function bearer_token_extracted_from_header(): void
+    {
+        $req = new Request(headers: ['authorization' => 'Bearer abc123xyz']);
+        $this->assertSame('abc123xyz', $req->bearer);
+    }
+
+    #[Test]
+    public function bearer_token_case_insensitive(): void
+    {
+        $req = new Request(server: ['HTTP_AUTHORIZATION' => 'bearer TOKEN456']);
+        $this->assertSame('TOKEN456', $req->bearer);
+    }
+
+    #[Test]
+    public function bearer_token_empty_without_header(): void
+    {
+        $req = new Request();
+        $this->assertSame('', $req->bearer);
+    }
+
+    #[Test]
+    public function bearer_token_empty_for_basic_auth(): void
+    {
+        $req = new Request(server: ['HTTP_AUTHORIZATION' => 'Basic dXNlcjpwYXNz']);
+        $this->assertSame('', $req->bearer);
+    }
+
+    #[Test]
+    public function method_spoofing_via_method_field(): void
+    {
+        $req = new Request(
+            body: ['_method' => 'PUT'],
+            server: ['REQUEST_METHOD' => 'POST'],
+        );
+        $this->assertSame('PUT', $req->method);
+    }
+
+    #[Test]
+    public function method_spoofing_only_for_post(): void
+    {
+        $req = new Request(
+            body: ['_method' => 'DELETE'],
+            server: ['REQUEST_METHOD' => 'GET'],
+        );
+        $this->assertSame('GET', $req->method);
+    }
+
+    #[Test]
+    public function json_body_not_parsed_when_body_provided(): void
+    {
+        $req = new Request(
+            body: ['name' => 'explicit'],
+            server: ['HTTP_CONTENT_TYPE' => 'application/json'],
+        );
+        $this->assertSame(['name' => 'explicit'], $req->body);
+    }
+
+    #[Test]
+    public function empty_body_with_json_ctype_triggers_parse(): void
+    {
+        $req = new Request(
+            body: [],
+            server: ['HTTP_CONTENT_TYPE' => 'application/json; charset=utf-8'],
+        );
+        $this->assertIsArray($req->body);
+    }
+
+    #[Test]
+    public function body_not_parsed_for_non_json_ctype(): void
+    {
+        $req = new Request(
+            body: ['field' => 'value'],
+            server: ['HTTP_CONTENT_TYPE' => 'application/x-www-form-urlencoded'],
+        );
+        $this->assertSame(['field' => 'value'], $req->body);
+    }
+
+    #[Test]
+    public function empty_body_without_json_ctype_returns_empty(): void
+    {
+        $req = new Request(body: [], server: []);
+        $this->assertSame([], $req->body);
+    }
 }

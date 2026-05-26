@@ -13,7 +13,9 @@ final class Request
     public array $server;
     public array $headers;
 
-    public string $method  { get => strtoupper($this->server['REQUEST_METHOD'] ?? 'GET'); }
+    public string $method  { get => ($this->server['REQUEST_METHOD'] ?? 'GET') === 'POST'
+        ? strtoupper($this->body['_method'] ?? 'POST')
+        : strtoupper($this->server['REQUEST_METHOD'] ?? 'GET'); }
     public string $path    { get => $this->server['PATH_INFO'] ?? parse_url($this->uri, PHP_URL_PATH) ?: '/'; }
     public string $uri     { get => $this->server['REQUEST_URI'] ?? '/'; }
     public string $scheme  { get => ($this->server['HTTPS'] ?? '') === 'on' ? 'https' : 'http'; }
@@ -21,6 +23,7 @@ final class Request
     public string $ip      { get => (string)($this->server['REMOTE_ADDR'] ?? '127.0.0.1'); }
     public bool   $isAjax  { get => ($this->server['HTTP_X_REQUESTED_WITH'] ?? '') === 'XMLHttpRequest'; }
     public string $accept  { get => (string)($this->server['HTTP_ACCEPT'] ?? '*/*'); }
+    public string $bearer  { get => Regex::match('/^Bearer\s+(.+)$/i', $this->header('Authorization'))[1] ?? ''; }
 
     public function __construct(
         array $query   = [],
@@ -31,7 +34,7 @@ final class Request
         ?array $headers = null,
     ) {
         $this->query   = $query;
-        $this->body    = $body;
+        $this->body    = $body ?: $this->parseJsonBody($server);
         $this->cookies = $cookies;
         $this->files   = $files;
         $this->server  = $server ?: $_SERVER;
@@ -45,10 +48,10 @@ final class Request
 
     public function header(string $name, string $default = ''): string
     {
-        $key = strtoupper($name);
-        $key = str_replace('-', '_', $key);
+        $low = strtolower($name);
+        $key = strtoupper(str_replace('-', '_', $low));
         $key = "HTTP_{$key}";
-        return (string)($this->headers[$name] ?? $this->server[$key] ?? $default);
+        return (string)($this->headers[$low] ?? $this->server[$key] ?? $default);
     }
 
     public function wantsJson(): bool
@@ -70,5 +73,14 @@ final class Request
             }
         }
         return $out;
+    }
+
+    private function parseJsonBody(array $server): array
+    {
+        if (!isset($server['HTTP_CONTENT_TYPE']) || !str_starts_with($server['HTTP_CONTENT_TYPE'], 'application/json')) {
+            return [];
+        }
+        $raw = file_get_contents('php://input');
+        return $raw !== false ? (json_decode($raw, true) ?: []) : [];
     }
 }

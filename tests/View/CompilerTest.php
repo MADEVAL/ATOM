@@ -236,4 +236,20 @@ final class CompilerTest extends TestCase
         $result = $this->engine->render('test.twig', []);
         $this->assertStringContainsString('42', trim($result));
     }
+
+    #[Test]
+    public function for_loop_cleans_up_ctx_after_endfor(): void
+    {
+        file_put_contents($this->tmpViewsDir . '/test.twig', '{% for x in items %}{{ x }}{% endfor %}{{ x | default("gone") }}');
+        $result = $this->engine->render('test.twig', ['items' => ['a']]);
+        $this->assertStringContainsString('agone', $result);
+    }
+
+    #[Test]
+    public function for_keyval_cleans_up_ctx(): void
+    {
+        file_put_contents($this->tmpViewsDir . '/test.twig', '{% for k, v in data %}{{ k }}{% endfor %}{{ k | default("x") }}{{ v | default("y") }}');
+        $result = $this->engine->render('test.twig', ['data' => ['a' => 1]]);
+        $this->assertStringContainsString('axy', $result);
+    }
 }

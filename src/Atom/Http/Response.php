@@ -9,6 +9,7 @@ final class Response
     private string $content = '';
     private StatusCode $status = StatusCode::OK;
     private array $headers = [];
+    private array $cookies = [];
 
     public function __construct(string $content = '', StatusCode|int $status = StatusCode::OK, array $headers = [])
     {
@@ -22,10 +23,10 @@ final class Response
         return new self($body, $s, ['Content-Type' => 'text/html; charset=utf-8']);
     }
 
-    public static function json(mixed $data, StatusCode $s = StatusCode::OK): self
+    public static function json(mixed $data, StatusCode $s = StatusCode::OK, bool $pretty = false): self
     {
-        $json = json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
-        return new self($json, $s, ['Content-Type' => 'application/json']);
+        $flags = JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | ($pretty ? JSON_PRETTY_PRINT : 0);
+        return new self(json_encode($data, $flags), $s, ['Content-Type' => 'application/json']);
     }
 
     public static function redirect(string $url, StatusCode $s = StatusCode::FOUND): self
@@ -47,6 +48,13 @@ final class Response
         return $clone;
     }
 
+    public function withCookie(string $name, string $value, int $ttl = 3600, string $path = '/'): self
+    {
+        $clone = clone $this;
+        $clone->cookies[] = [$name, $value, $ttl, $path];
+        return $clone;
+    }
+
     public function send(): void
     {
         if (!headers_sent()) {
@@ -54,6 +62,14 @@ final class Response
             foreach ($this->headers as $k => $v) {
                 $v = Regex::replace('#[\r\n]+#', ' ', $v);
                 header("{$k}: {$v}");
+            }
+            foreach ($this->cookies as [$name, $value, $ttl, $path]) {
+                setcookie($name, $value, [
+                    'expires'  => time() + $ttl,
+                    'path'     => $path,
+                    'httponly' => true,
+                    'samesite' => 'Lax',
+                ]);
             }
         }
         echo $this->content;
