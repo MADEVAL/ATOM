@@ -57,7 +57,7 @@ POST with `_method=PUT` → `$req->method === 'PUT'`. Works only from POST.
 
 ```php
 // Authorization: Bearer abc123
-$req->bearer  // 'abc123' — extracted via PCRE
+$req->bearer  // 'abc123' - extracted via PCRE
 ```
 
 ## Response

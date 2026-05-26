@@ -1,6 +1,6 @@
 {
     "name": "atom/framework",
-    "description": "Atom — PHP 8.5 micro-framework. Single PCRE router, template engine, DI, validation, sessions, CLI.",
+    "description": "Atom - PHP 8.5 micro-framework. Single PCRE router, template engine, DI, validation, sessions, CLI.",
     "type": "library",
     "keywords": ["framework", "micro-framework", "php", "router", "pcre", "template"],
     "license": "GPL-3.0-or-later",

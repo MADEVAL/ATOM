@@ -36,7 +36,7 @@ final readonly class Regex
     public static function assert(string $pattern): void
     {
         if (@preg_match($pattern, '') === false) {
-            throw new \InvalidArgumentException("Bad regex: {$pattern} — " . preg_last_error_msg());
+            throw new \InvalidArgumentException("Bad regex: {$pattern} - " . preg_last_error_msg());
         }
     }
 }

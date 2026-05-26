@@ -306,11 +306,11 @@ final class RouterTest extends TestCase
             public function go(): string { return 'from-cache'; }
         });
 
-        // First dispatch — compiles and caches
+        // First dispatch - compiles and caches
         $req1 = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/cache-test']);
         $this->router->dispatch($req1);
 
-        // Second dispatch — should load from cache
+        // Second dispatch - should load from cache
         $req2 = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/cache-test']);
         $res2 = $this->router->dispatch($req2);
         $this->assertStringContainsString('from-cache', $res2->getContent());
@@ -332,7 +332,7 @@ final class RouterTest extends TestCase
         $req1 = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/disk-cache']);
         $router1->dispatch($req1);
 
-        // Create a fresh router with same cache dir — should load from disk
+        // Create a fresh router with same cache dir - should load from disk
         $container2 = new Container();
         $router2 = new Router($container2, $this->tmpCacheDir);
         $container2->bind('DiskCacheController', fn() => new class {

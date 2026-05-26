@@ -156,7 +156,7 @@ final class Router
         }
         $this->compiled = (new RouteCompiler())->compile($this->routes, $this->patterns);
         $export = $this->compiled;
-        // Strip route objects from map — not serializable, not needed for dispatch
+        // Strip route objects from map - not serializable, not needed for dispatch
         foreach ($export['map'] as &$entry) unset($entry['route']);
         @file_put_contents(
             $this->cacheFile,

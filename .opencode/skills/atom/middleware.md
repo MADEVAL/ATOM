@@ -23,11 +23,11 @@ class Auth implements MiddlewareInterface {
 // Object instance
 $app->router->get('/admin', 'AdminController@index', '', [new AuthMiddleware]);
 
-// String name — resolved via DI container
+// String name - resolved via DI container
 $app->container->bind('Auth', fn() => new AuthMiddleware);
 $app->router->get('/secure', 'Controller@action', '', ['Auth']);
 
-// Closure — inline
+// Closure - inline
 $app->router->get('/debug', 'Controller@action', '', [
     fn(Request $req, Closure $next) => $next($req)->withHeader('X-Debug', '1')
 ]);
@@ -61,5 +61,5 @@ $app->router->group('', [Csrf::class], fn($r) => { ... });
 
 // In template: <input type="hidden" name="_csrf" value="{{ _csrf }}">
 // Or header: X-CSRF-Token: <token>
-// Validated on POST/PUT/PATCH/DELETE — returns 403 on mismatch
+// Validated on POST/PUT/PATCH/DELETE - returns 403 on mismatch
 ```

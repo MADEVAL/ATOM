@@ -79,7 +79,7 @@ final class SessionTest extends TestCase
         $session2 = new Session();
         $this->assertSame('hello', $session2->get('info'));
 
-        // Following request (no flash) — gone
+        // Following request (no flash) - gone
         $_SESSION = [];
         $session3 = new Session();
         $this->assertNull($session3->get('info'));

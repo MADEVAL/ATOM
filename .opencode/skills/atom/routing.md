@@ -1,6 +1,6 @@
 # Routing
 
-Single `preg_match` dispatch — all routes compile into one PCRE regex using branch-reset `(?|...)` and `(*MARK)`.
+Single `preg_match` dispatch - all routes compile into one PCRE regex using branch-reset `(?|...)` and `(*MARK)`.
 
 ## Route definitions
 

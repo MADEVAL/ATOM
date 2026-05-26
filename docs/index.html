@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Atom — PHP 8.5 micro‑framework</title>
+<title>Atom - PHP 8.5 micro‑framework</title>
 <style>
 :root{--bg:#0d0d0d;--fg:#bbb;--accent:#0cf;--dim:#555;--code:#151520;--border:#2a2a2a;--sidebar-w:220px}
 *,*::before,*::after{box-sizing:border-box;margin:0}
@@ -144,7 +144,7 @@ footer{color:var(--dim);font-size:.82em;margin-top:60px}
     <span class="str">viewsDir</span>: __DIR__ . <span class="str">'/templates'</span>,
 );
 <span class="var">$app</span> = <span class="kw">new</span> Application(<span class="var">$config</span>);</code></pre>
-<p>When <code>debug: false</code>, exceptions return empty 500 — no trace leakage.</p>
+<p>When <code>debug: false</code>, exceptions return empty 500 - no trace leakage.</p>
 <pre><code><span class="kw">public function</span> <span class="fn">run</span>(?Request <span class="var">$request</span> = <span class="kw">null</span>): <span class="kw">void</span>
 {
     <span class="var">$req</span> = <span class="var">$request</span> ?? Request::capture();
@@ -172,7 +172,7 @@ footer{color:var(--dim);font-size:.82em;margin-top:60px}
 <tr><td><code>{slug}</code></td><td><code>[a-z0-9\-]+</code></td><td><code>hello-world</code></td></tr>
 <tr><td><code>{any}</code></td><td><code>[^/]+</code></td><td><code>anything</code></td></tr>
 <tr><td><code>{all}</code></td><td><code>.+</code></td><td><code>path/to/file</code></td></tr>
-<tr><td colspan="3"><code>{name:custom-pcre}</code> — inline regex; <code>addPattern()</code> for named</td></tr>
+<tr><td colspan="3"><code>{name:custom-pcre}</code> - inline regex; <code>addPattern()</code> for named</td></tr>
 </table>
 
 <h2 id="routing-groups">Groups &amp; middleware</h2>
@@ -198,7 +198,7 @@ footer{color:var(--dim);font-size:.82em;margin-top:60px}
 
 <span class="var">$app</span>->router->loadFromAttributes(__DIR__ . <span class="str">'/Controllers'</span>);</code></pre>
 
-<h2 id="routing-perf">Performance — single <code>preg_match</code></h2>
+<h2 id="routing-perf">Performance - single <code>preg_match</code></h2>
 <p>All routes compile into <strong>one</strong> PCRE regex using branch-reset <code>(?|...)</code> and <code>(*MARK)</code>. 10 000 routes = one JIT‑compiled regex call.</p>
 <pre><code><span class="cm">// Compiled: #^(?|(?&lt;METHOD&gt;GET)\/users\/(?&lt;id&gt;[0-9]+)(*:0)|...)$#xs</span>
 <span class="kw">if</span> (!preg_match(<span class="var">$compiled</span>[<span class="str">'regex'</span>], <span class="var">$method</span> . <span class="var">$uri</span>, <span class="var">$m</span>)) {
@@ -342,7 +342,7 @@ Response::redirect(<span class="str">'/new'</span>, StatusCode::MOVED);   <span 
 <span class="var">$app</span>->view->addGlobal(<span class="str">'app_name'</span>, <span class="str">'MyApp'</span>);
 <span class="var">$app</span>->view->addGlobal(<span class="str">'year'</span>, date(<span class="str">'Y'</span>));</code></pre>
 
-<h2 id="val-dto">Validation — DTO definition</h2>
+<h2 id="val-dto">Validation - DTO definition</h2>
 <pre><code><span class="kw">use</span> Atom\Validation\{Required, Email, Min, Max, Regex};
 
 <span class="kw">final class</span> CreateUser {
@@ -379,7 +379,7 @@ Response::redirect(<span class="str">'/new'</span>, StatusCode::MOVED);   <span 
     }
 }
 
-<span class="cm">// Object, string (DI-resolved), or Closure — all supported</span>
+<span class="cm">// Object, string (DI-resolved), or Closure - all supported</span>
 <span class="var">$r</span>->get(<span class="str">'/secure'</span>, <span class="str">'Controller@action'</span>, <span class="str">''</span>, [<span class="str">'Auth'</span>]);
 <span class="var">$r</span>->get(<span class="str">'/debug'</span>, <span class="str">'DebugController@index'</span>, <span class="str">''</span>, [
     <span class="kw">fn</span>(Request <span class="var">$req</span>, Closure <span class="var">$next</span>) => <span class="var">$next</span>(<span class="var">$req</span>)->withHeader(<span class="str">'X-Debug'</span>, <span class="str">'1'</span>)
@@ -401,12 +401,12 @@ Response::redirect(<span class="str">'/new'</span>, StatusCode::MOVED);   <span 
 <h2 id="mw-csrf">CSRF middleware</h2>
 <pre><code><span class="kw">use</span> Atom\Middleware\Csrf;
 
-<span class="cm">// Autowires Session via DI — add to root group</span>
+<span class="cm">// Autowires Session via DI - add to root group</span>
 <span class="var">$app</span>->router->group(<span class="str">''</span>, [Csrf::<span class="kw">class</span>], <span class="kw">fn</span>(<span class="var">$r</span>) => { ... });
 
 <span class="cm">// Template: &lt;input type="hidden" name="_csrf" value="{{ _csrf }}"&gt;</span>
 <span class="cm">// Or header: X-CSRF-Token: &lt;token&gt;</span>
-<span class="cm">// Validated on POST/PUT/PATCH/DELETE — 403 on mismatch</span>
+<span class="cm">// Validated on POST/PUT/PATCH/DELETE - 403 on mismatch</span>
 
 <span class="var">$token</span> = <span class="var">$session</span>->csrfToken();    <span class="cm">// generates once, persists</span>
 <span class="var">$session</span>->validateCsrf(<span class="var">$token</span>);  <span class="cm">// constant-time comparison</span></code></pre>

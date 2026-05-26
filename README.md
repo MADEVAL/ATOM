@@ -15,15 +15,15 @@
 
 ## Why Atom
 
-**Zero dependencies.** Just PHP 8.5. No ORM, no HTTP factory, no annotations — pure PHP with PCRE at its core.
+**Zero dependencies.** Just PHP 8.5. No ORM, no HTTP factory, no annotations - pure PHP with PCRE at its core.
 
-**571 lines.** Read the entire framework in 20 minutes. Every line tested to death — 347 tests, 99%+ coverage.
+**571 lines.** Read the entire framework in 20 minutes. Every line tested to death - 347 tests, 99%+ coverage.
 
 **One regex dispatches all routes.** 10 000 routes = one `preg_match` via `(?|...(*:N))` branch-reset + MARK. JIT-compiled, O(1) per request.
 
-**Batteries included.** Validation on PCRE-attributes, Twig-like templates, sessions with CSRF, CORS, file uploads, database, logger, CLI — things you'd otherwise compose from 5 packages.
+**Batteries included.** Validation on PCRE-attributes, Twig-like templates, sessions with CSRF, CORS, file uploads, database, logger, CLI - things you'd otherwise compose from 5 packages.
 
-**Built for APIs and full-stack.** JSON body parsing, Bearer token extraction, method spoofing, cache headers — everything you need for a REST API. Templates with inheritance, blocks, filters — everything you need for server-rendered pages.
+**Built for APIs and full-stack.** JSON body parsing, Bearer token extraction, method spoofing, cache headers - everything you need for a REST API. Templates with inheritance, blocks, filters - everything you need for server-rendered pages.
 
 **Use it for:** REST APIs, microservices, admin panels, static-site backends, MVPs, prototyping, educational projects, anything where you want full control without a framework fighting you.
 

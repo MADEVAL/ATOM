@@ -5,7 +5,7 @@
   {% if users %}
     <ul>
     {% for u in users %}
-      <li>{{ u.name | e }} — {{ u.email | default("n/a") }}</li>
+      <li>{{ u.name | e }} - {{ u.email | default("n/a") }}</li>
     {% endfor %}
     </ul>
   {% else %}

@@ -250,7 +250,7 @@ final class EngineTest extends TestCase
     {
         file_put_contents($this->tmpViewsDir . '/cache.twig', 'cached-content');
 
-        // First render — compiles and caches
+        // First render - compiles and caches
         $r1 = $this->engine->render('cache.twig', []);
         $this->assertStringContainsString('cached-content', $r1);
 
@@ -258,7 +258,7 @@ final class EngineTest extends TestCase
         $cacheFiles = glob($this->tmpCacheDir . '/*.php');
         $this->assertNotEmpty($cacheFiles, 'Cache file should exist after compilation');
 
-        // Second render — from cache
+        // Second render - from cache
         $r2 = $this->engine->render('cache.twig', []);
         $this->assertSame($r1, $r2);
     }
