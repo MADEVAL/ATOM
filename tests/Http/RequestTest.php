@@ -1,0 +1,254 @@
+<?php
+declare(strict_types=1);
+namespace Atom\Tests\Http;
+
+use Atom\Http\Request;
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+
+#[CoversClass(Request::class)]
+final class RequestTest extends TestCase
+{
+    #[Test]
+    public function construct_with_defaults(): void
+    {
+        $req = new Request();
+        $this->assertSame('GET', $req->method);
+        $this->assertSame('/', $req->path);
+        $this->assertSame('localhost', $req->host);
+    }
+
+    #[Test]
+    public function construct_with_custom_server(): void
+    {
+        $req = new Request(server: [
+            'REQUEST_METHOD' => 'POST',
+            'REQUEST_URI'    => '/api/users?id=1',
+            'HTTP_HOST'      => 'example.com',
+            'HTTPS'          => 'on',
+            'REMOTE_ADDR'    => '192.168.1.1',
+            'HTTP_ACCEPT'    => 'application/json',
+            'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
+        ]);
+
+        $this->assertSame('POST', $req->method);
+        $this->assertSame('/api/users', $req->path);
+        $this->assertSame('/api/users?id=1', $req->uri);
+        $this->assertSame('https', $req->scheme);
+        $this->assertSame('example.com', $req->host);
+        $this->assertSame('192.168.1.1', $req->ip);
+        $this->assertSame('application/json', $req->accept);
+        $this->assertTrue($req->isAjax);
+    }
+
+    #[Test]
+    public function method_converts_to_uppercase(): void
+    {
+        $req = new Request(server: ['REQUEST_METHOD' => 'post']);
+        $this->assertSame('POST', $req->method);
+    }
+
+    #[Test]
+    public function path_uses_path_info_if_available(): void
+    {
+        $req = new Request(server: [
+            'PATH_INFO'    => '/custom/path',
+            'REQUEST_URI'  => '/other',
+        ]);
+        $this->assertSame('/custom/path', $req->path);
+    }
+
+    #[Test]
+    public function path_falls_back_to_parsed_uri(): void
+    {
+        $req = new Request(server: ['REQUEST_URI' => '/foo/bar?x=1']);
+        $this->assertSame('/foo/bar', $req->path);
+    }
+
+    #[Test]
+    public function path_defaults_to_slash(): void
+    {
+        $req = new Request(server: []);
+        $this->assertSame('/', $req->path);
+    }
+
+    #[Test]
+    public function scheme_detects_https_on(): void
+    {
+        $req = new Request(server: ['HTTPS' => 'on']);
+        $this->assertSame('https', $req->scheme);
+    }
+
+    #[Test]
+    public function scheme_defaults_to_http(): void
+    {
+        $req = new Request(server: []);
+        $this->assertSame('http', $req->scheme);
+    }
+
+    #[Test]
+    public function host_defaults_to_localhost(): void
+    {
+        $req = new Request(server: []);
+        $this->assertSame('localhost', $req->host);
+    }
+
+    #[Test]
+    public function ip_defaults_to_localhost(): void
+    {
+        $req = new Request(server: []);
+        $this->assertSame('127.0.0.1', $req->ip);
+    }
+
+    #[Test]
+    public function is_ajax_detects_xmlhttprequest(): void
+    {
+        $req = new Request(server: ['HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest']);
+        $this->assertTrue($req->isAjax);
+    }
+
+    #[Test]
+    public function is_ajax_false_without_header(): void
+    {
+        $req = new Request(server: []);
+        $this->assertFalse($req->isAjax);
+    }
+
+    #[Test]
+    public function accept_defaults_to_any(): void
+    {
+        $req = new Request(server: []);
+        $this->assertSame('*/*', $req->accept);
+    }
+
+    #[Test]
+    public function header_gets_from_headers_array(): void
+    {
+        $req = new Request(headers: ['content-type' => 'application/json']);
+        $this->assertSame('application/json', $req->header('content-type'));
+    }
+
+    #[Test]
+    public function header_falls_back_to_server(): void
+    {
+        $req = new Request(server: ['HTTP_ACCEPT' => 'text/html']);
+        $this->assertSame('text/html', $req->header('accept'));
+    }
+
+    #[Test]
+    public function header_returns_default_when_not_found(): void
+    {
+        $req = new Request();
+        $this->assertSame('default-val', $req->header('x-custom', 'default-val'));
+    }
+
+    #[Test]
+    public function header_returns_empty_string_by_default(): void
+    {
+        $req = new Request();
+        $this->assertSame('', $req->header('x-nonexistent'));
+    }
+
+    #[Test]
+    public function wants_json_returns_true_for_application_json(): void
+    {
+        $req = new Request(server: ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertTrue($req->wantsJson());
+    }
+
+    #[Test]
+    public function wants_json_returns_true_for_vendor_json(): void
+    {
+        $req = new Request(server: ['HTTP_ACCEPT' => 'application/vnd.api+json']);
+        $this->assertTrue($req->wantsJson());
+    }
+
+    #[Test]
+    public function wants_json_returns_false_for_html(): void
+    {
+        $req = new Request(server: ['HTTP_ACCEPT' => 'text/html']);
+        $this->assertFalse($req->wantsJson());
+    }
+
+    #[Test]
+    public function input_from_body_first(): void
+    {
+        $req = new Request(body: ['name' => 'body-val'], query: ['name' => 'query-val']);
+        $this->assertSame('body-val', $req->input('name'));
+    }
+
+    #[Test]
+    public function input_falls_back_to_query(): void
+    {
+        $req = new Request(body: [], query: ['page' => '2']);
+        $this->assertSame('2', $req->input('page'));
+    }
+
+    #[Test]
+    public function input_returns_default(): void
+    {
+        $req = new Request();
+        $this->assertNull($req->input('nonexistent'));
+        $this->assertSame('fallback', $req->input('nonexistent', 'fallback'));
+    }
+
+    #[Test]
+    public function construct_stores_all_properties(): void
+    {
+        $req = new Request(
+            query: ['q' => 'search'],
+            body: ['data' => 'value'],
+            cookies: ['session' => 'abc'],
+            files: ['avatar' => ['name' => 'pic.jpg']],
+            server: ['HTTP_HOST' => 'test.com'],
+        );
+
+        $this->assertSame(['q' => 'search'], $req->query);
+        $this->assertSame(['data' => 'value'], $req->body);
+        $this->assertSame(['session' => 'abc'], $req->cookies);
+        $this->assertSame(['avatar' => ['name' => 'pic.jpg']], $req->files);
+    }
+
+    #[Test]
+    public function extract_headers_parses_http_prefix(): void
+    {
+        $req = new Request(server: [
+            'HTTP_CONTENT_TYPE' => 'text/plain',
+            'HTTP_X_CUSTOM'     => 'value',
+            'SERVER_PROTOCOL'   => 'HTTP/1.1',
+        ]);
+
+        $this->assertSame('text/plain', $req->header('content-type'));
+        $this->assertSame('value', $req->header('x-custom'));
+    }
+
+    #[Test]
+    public function extract_headers_ignores_non_http_keys(): void
+    {
+        $req = new Request(server: [
+            'SERVER_PROTOCOL' => 'HTTP/1.1',
+            'DOCUMENT_ROOT'   => '/var/www',
+        ]);
+        $headers = $req->headers;
+        $this->assertArrayNotHasKey('server-protocol', $headers);
+        $this->assertArrayNotHasKey('document-root', $headers);
+    }
+
+    #[Test]
+    public function capture_uses_globals(): void
+    {
+        $_GET['test'] = 'captured';
+        $req = Request::capture();
+        $this->assertSame('captured', $req->query['test']);
+        unset($_GET['test']);
+    }
+
+    #[Test]
+    public function capture_creates_usable_request(): void
+    {
+        $req = Request::capture();
+        $this->assertInstanceOf(Request::class, $req);
+        $this->assertIsString($req->method);
+    }
+}

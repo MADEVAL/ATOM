@@ -1,0 +1,15 @@
+{% extends "layout.twig" %}
+
+{% block content %}
+  <h1>{{ title | upper }}</h1>
+  {% if users %}
+    <ul>
+    {% for u in users %}
+      <li>{{ u.name | e }} — {{ u.email | default("n/a") }}</li>
+    {% endfor %}
+    </ul>
+  {% else %}
+    <p>No users yet.</p>
+  {% endif %}
+  {% include "partials/footer.twig" %}
+{% endblock %}
