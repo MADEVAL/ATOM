@@ -1,1 +1,9 @@
-vendor
+/vendor/
+/storage/cache/*
+/storage/views/*
+/storage/coverage/*
+/.phpunit.cache/
+.env
+*.log
+.DS_Store
+Thumbs.db
