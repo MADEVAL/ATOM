@@ -58,10 +58,15 @@ final class Response
         return $clone;
     }
 
-    public function withCookie(string $name, string $value, int $ttl = 3600, string $path = '/'): self
+    /** @param array{ttl?:int, path?:string, secure?:bool, httponly?:bool, samesite?:string, domain?:string} $options */
+    public function withCookie(string $name, string $value, int|array $ttl_or_options = 3600, string $path = '/'): self
     {
         $clone = clone $this;
-        $clone->cookies[] = [$name, $value, $ttl, $path];
+        if (is_array($ttl_or_options)) {
+            $clone->cookies[] = ['name' => $name, 'value' => $value, ...$ttl_or_options];
+        } else {
+            $clone->cookies[] = ['name' => $name, 'value' => $value, 'ttl' => $ttl_or_options, 'path' => $path];
+        }
         return $clone;
     }
 
@@ -79,14 +84,20 @@ final class Response
                 $v = Regex::replace('#[\r\n]+#', ' ', $v);
                 header("{$k}: {$v}");
             }
-            foreach ($this->cookies as [$name, $value, $ttl, $path]) {
-                setcookie($name, $value, [
-                    'expires'  => time() + $ttl,
-                    'path'     => $path,
-                    'httponly' => true,
-                    'samesite' => 'Lax',
-                    'secure'   => true,
-                ]);
+            foreach ($this->cookies as $cookie) {
+                $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+                setcookie(
+                    $cookie['name'],
+                    $cookie['value'] ?? '',
+                    [
+                        'expires'  => time() + ($cookie['ttl'] ?? 3600),
+                        'path'     => $cookie['path'] ?? '/',
+                        'domain'   => $cookie['domain'] ?? '',
+                        'httponly' => $cookie['httponly'] ?? true,
+                        'samesite' => $cookie['samesite'] ?? 'Lax',
+                        'secure'   => $cookie['secure'] ?? $isHttps,
+                    ],
+                );
             }
         }
         echo $this->content;

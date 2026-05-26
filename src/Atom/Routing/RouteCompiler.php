@@ -6,7 +6,7 @@ use Atom\Support\Regex;
 
 final readonly class RouteCompiler
 {
-    private const DEFAULT_PATTERNS = [
+    public const DEFAULT_PATTERNS = [
         'id'   => '[0-9]+',
         'slug' => '[a-z0-9\-]+',
         'any'  => '[^/]+',
@@ -60,7 +60,11 @@ final readonly class RouteCompiler
         }
 
         $regex = '#^(?|' . implode('|', $parts) . ')$#xs';
-        Regex::assert($regex);
+        try {
+            Regex::assert($regex);
+        } catch (\InvalidArgumentException $e) {
+            throw new \InvalidArgumentException("Bad compiled route regex (check your custom parameter patterns or paths): {$e->getMessage()}", 0, $e);
+        }
 
         return ['regex' => $regex, 'map' => $map];
     }

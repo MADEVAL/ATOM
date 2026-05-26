@@ -107,7 +107,7 @@ final class StatusCodeTest extends TestCase
     public function all_cases_exist(): void
     {
         $cases = StatusCode::cases();
-        $this->assertCount(12, $cases);
+        $this->assertCount(19, $cases);
     }
 
     #[Test]

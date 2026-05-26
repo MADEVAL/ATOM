@@ -131,6 +131,11 @@ final class Router
 
         $m = Regex::match($compiled['regex'], $request->method . $uri);
         if ($m === null) {
+            $allowed = $this->getAllowedMethods($uri);
+            if ($allowed !== []) {
+                return (new Response('Method Not Allowed', StatusCode::METHOD_NOT_ALLOWED))
+                    ->withHeader('Allow', implode(', ', $allowed));
+            }
             return new Response('Not Found', StatusCode::NOT_FOUND);
         }
 
@@ -143,13 +148,43 @@ final class Router
         $action     = $meta['action'];
 
         $ref = new ReflectionMethod($controller, $action);
+        if (!$ref->isPublic()) {
+            return new Response('Internal Server Error', StatusCode::SERVER_ERROR);
+        }
         $hasRequest = array_any($ref->getParameters(), fn($p) => $p->getName() === 'request');
-        $params = $hasRequest ? [...$named, 'request' => $request] : $named;
+        $params = $hasRequest ? ['request' => $request, ...$named] : $named;
 
         $handler = fn() => $controller->{$action}(...$params)
             |> (fn($r) => $r instanceof Response ? $r : Response::html((string) $r));
 
         return Pipeline::run($meta['middleware'], $request, $handler, $this->container);
+    }
+
+    private function getPatternForParam(string $name, string $customPattern = ''): string
+    {
+        if ($customPattern !== '') return $customPattern;
+        return $this->patterns[$name] ?? RouteCompiler::DEFAULT_PATTERNS[$name] ?? '[^/]+';
+    }
+
+    private function getAllowedMethods(string $uri): array
+    {
+        $methods = [];
+        foreach ($this->routes as $route) {
+            $pattern = Regex::replace(
+                '#\{([a-zA-Z_][a-zA-Z0-9_]*)(?::([^}]+))?\}#',
+                function (array $m): string {
+                    return $this->getPatternForParam($m[1], $m[2] ?? '');
+                },
+                $route->path,
+            );
+            $pattern = '#^' . Regex::quote($pattern) . '$#';
+            if (Regex::match($pattern, $uri) !== null) {
+                foreach ($route->methods as $m) {
+                    $methods[$m] = true;
+                }
+            }
+        }
+        return array_keys($methods);
     }
 
     public function url(string $name, array $params = []): string
@@ -175,10 +210,13 @@ final class Router
         }
         $this->compiled = (new RouteCompiler())->compile($this->routes, $this->patterns);
         $export = $this->compiled;
-        // Strip route objects from map - not serializable, not needed for dispatch
         foreach ($export['map'] as &$entry) unset($entry['route']);
         unset($entry);
-        @file_put_contents(
+        $dir = dirname($this->cacheFile);
+        if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
+            return $this->compiled;
+        }
+        file_put_contents(
             $this->cacheFile,
             "<?php\nreturn " . var_export($export, true) . ";\n",
         );

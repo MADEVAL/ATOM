@@ -40,7 +40,7 @@ final class Application
             $response = $this->router->dispatch($req);
         } catch (\Exception $e) {
             $response = $this->config->debug
-                ? new Response("Error: {$e->getMessage()}", StatusCode::SERVER_ERROR)
+                ? new Response(get_class($e) . ': ' . $e->getMessage(), StatusCode::SERVER_ERROR)
                 : new Response('', StatusCode::SERVER_ERROR);
         } catch (\Error $e) {
             if ($this->config->debug) throw $e;

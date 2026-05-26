@@ -12,7 +12,7 @@ final readonly class Csrf implements MiddlewareInterface
     {
         if (in_array($req->method, ['POST','PUT','PATCH','DELETE'], true)) {
             $token = $req->body['_csrf'] ?? $req->header('X-CSRF-Token');
-            if ($token === null || !$this->session->validateCsrf($token)) {
+            if (!is_string($token) || !$this->session->validateCsrf($token)) {
                 return new Response('Invalid CSRF token', StatusCode::FORBIDDEN);
             }
         }

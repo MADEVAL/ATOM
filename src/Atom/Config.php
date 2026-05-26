@@ -23,7 +23,13 @@ final readonly class Config
                 if ($line === '' || $line[0] === '#') continue;
                 if ($m = Regex::match('#^([A-Z_][A-Z0-9_]*)\s*=\s*(.*)$#', $line)) {
                     $v = trim($m[2]);
-                    $v = Regex::replace('#^["\'](.*)["\']$#', '$1', $v);
+                    $dq = Regex::match('#^"((?:[^"\\\\]|\\\\.)*)"$#', $v);
+                    if ($dq !== null) {
+                        $v = stripcslashes($dq[1]);
+                    } else {
+                        $sq = Regex::match("#^'([^']*)'$#", $v);
+                        if ($sq !== null) $v = $sq[1];
+                    }
                     $env[$m[1]] = $v;
                     if ($setGlobal) {
                         $_ENV[$m[1]] = $v;
@@ -39,6 +45,6 @@ final readonly class Config
 
     public function get(string $key, string $default = ''): string
     {
-        return $this->env[$key] ?? getenv($key) ?: $default;
+        return $this->env[$key] ?? getenv($key, true) ?: $default;
     }
 }

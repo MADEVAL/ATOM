@@ -475,7 +475,8 @@ final class RouterTest extends TestCase
         $this->assertStringContainsString('multi', $this->router->dispatch($reqPost)->getContent());
 
         $reqPut = new Request(server: ['REQUEST_METHOD' => 'PUT', 'REQUEST_URI' => '/multi']);
-        $this->assertSame(404, $this->router->dispatch($reqPut)->getStatusCode());
+        $res = $this->router->dispatch($reqPut);
+        $this->assertSame(405, $res->getStatusCode());
     }
 
     #[Test]

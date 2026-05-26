@@ -109,7 +109,12 @@ final class Request
         if (!isset($server['HTTP_CONTENT_TYPE']) || !str_starts_with($server['HTTP_CONTENT_TYPE'], 'application/json')) {
             return [];
         }
-        $raw = file_get_contents('php://input');
+        $maxLength = (int) (ini_get('post_max_size') ?: 8_388_608); // default 8MB
+        $contentLength = (int) ($server['HTTP_CONTENT_LENGTH'] ?? $server['CONTENT_LENGTH'] ?? 0);
+        if ($contentLength > $maxLength) {
+            return [];
+        }
+        $raw = file_get_contents('php://input', false, null, 0, $maxLength);
         return $raw !== false ? (json_decode($raw, true) ?? []) : [];
     }
 }

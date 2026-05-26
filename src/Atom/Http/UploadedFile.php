@@ -33,6 +33,14 @@ final class UploadedFile
 
     public function move(string $dest): bool
     {
-        return $this->ok && move_uploaded_file($this->tmp, $dest);
+        if (!$this->ok) return false;
+        if (str_contains($dest, "\0")) return false;
+        $normalized = str_replace('\\', '/', $dest);
+        if (str_contains($normalized, '../') || str_ends_with($normalized, '/..')) return false;
+        $dir = dirname($dest);
+        if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
+            return false;
+        }
+        return move_uploaded_file($this->tmp, $dest);
     }
 }

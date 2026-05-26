@@ -33,6 +33,9 @@ abstract class Template
         } catch (\ParseError $e) {
             ob_get_clean();
             throw new \RuntimeException("Template compilation error: {$e->getMessage()}", 0, $e);
+        } catch (\Throwable $e) {
+            ob_end_clean();
+            throw $e;
         }
         return ob_get_clean();
     }
@@ -46,6 +49,9 @@ abstract class Template
         } catch (\ParseError $e) {
             ob_get_clean();
             throw new \RuntimeException("Template block '{$name}' compilation error: {$e->getMessage()}", 0, $e);
+        } catch (\Throwable $e) {
+            ob_end_clean();
+            throw $e;
         }
         return ob_get_clean();
     }

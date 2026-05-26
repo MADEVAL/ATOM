@@ -18,6 +18,9 @@ final readonly class Pipeline
             $m instanceof \Closure     => $m,
             $m instanceof MiddlewareInterface => $m,
             is_string($m)              => $c->make($m),
+            default => throw new \InvalidArgumentException(
+                'Middleware must be a Closure, MiddlewareInterface, or class name'
+            ),
         };
         $pipeline = array_reduce(
             array_reverse($layers),

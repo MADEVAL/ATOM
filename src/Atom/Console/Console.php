@@ -91,10 +91,13 @@ final class Console
             $this->out('yellow', "No cache dir configured.\n");
             return 1;
         }
+        $files = glob($dir . '/*.php');
         $count = 0;
-        foreach ((array) glob($dir . '/*.php') as $f) {
-            unlink($f);
-            $count++;
+        if ($files !== false) {
+            foreach ($files as $f) {
+                unlink($f);
+                $count++;
+            }
         }
         $this->out('green', "Cleared {$count} cached file(s).\n");
         return 0;
@@ -106,7 +109,8 @@ final class Console
             $this->out('red', "Unknown command: {$name}\n");
             return 1;
         }
-        return ($this->commands[$name])($args, $options) ?? 0;
+        $result = ($this->commands[$name])($args, $options);
+        return is_int($result) ? $result : 0;
     }
 
     private function color(string $c, string $text): string

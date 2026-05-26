@@ -36,9 +36,14 @@ final class Engine
 
     public function load(string $template): string
     {
+        $viewsReal = realpath($this->viewsDir);
+        if ($viewsReal === false) {
+            throw new \RuntimeException("View Engine: views directory not found: {$this->viewsDir}");
+        }
+        $viewsReal = strtr($viewsReal, '\\', '/');
         $src  = $this->viewsDir . '/' . ltrim($template, '/');
         $real = realpath($src);
-        if ($real === false || !str_starts_with(strtr($real, '\\', '/'), strtr(realpath($this->viewsDir), '\\', '/') . '/')) {
+        if ($real === false || !str_starts_with(strtr($real, '\\', '/'), $viewsReal . '/')) {
             throw new \RuntimeException("Template not found: {$template}");
         }
         $hash = sha1($real);

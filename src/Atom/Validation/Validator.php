@@ -115,7 +115,7 @@ final class Validator
             foreach ($prop->getAttributes(Integer::class) as $attr) {
                 /** @var Integer $r */
                 $r = $attr->newInstance();
-                if (Pcre::match('/^-?\d+$/', (string) $value) === null) {
+                if (Pcre::match('/^[+-]?\d+$/', (string) $value) === null) {
                     $errors[$name][] = $r->message;
                 }
             }
@@ -156,7 +156,7 @@ final class Validator
             foreach ($prop->getAttributes(Url::class) as $attr) {
                 /** @var Url $r */
                 $r = $attr->newInstance();
-                if (Pcre::match('~^https?://[^\s/$.?#].[^\s]*$~i', (string) $value) === null) {
+                if (Pcre::match('~^https?://[^\s/$.?#]+\.[^\s/$.?#]+[^\s]*$~i', (string) $value) === null) {
                     $errors[$name][] = $r->message;
                 }
             }
@@ -182,8 +182,8 @@ final class Validator
 final class ValidationException extends \RuntimeException
 {
     /** @param array<string,list<string>> $errors */
-    public function __construct(public readonly array $errors)
+    public function __construct(public readonly array $errors, string $message = 'Validation failed')
     {
-        parent::__construct('Validation failed');
+        parent::__construct($message);
     }
 }

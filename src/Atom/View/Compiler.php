@@ -161,7 +161,10 @@ final class Compiler
 
     private function compileEndfor(): string
     {
-        $vars = $this->forStack !== [] ? array_pop($this->forStack) : [null, null];
+        if ($this->forStack === []) {
+            throw new \RuntimeException('Unexpected {% endfor %} without matching {% for %}');
+        }
+        $vars = array_pop($this->forStack);
         $cleanup = '';
         foreach ($vars as $v) {
             if ($v !== null) $cleanup .= "unset(\$this->ctx['{$v}']);";

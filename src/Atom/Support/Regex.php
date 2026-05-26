@@ -13,7 +13,8 @@ final readonly class Regex
 
     public static function matchAll(string $pattern, string $subject, int $flags = 0): array
     {
-        preg_match_all($pattern, $subject, $m, $flags);
+        $r = preg_match_all($pattern, $subject, $m, $flags);
+        if ($r === false) throw new \RuntimeException('PCRE error: ' . preg_last_error_msg());
         return $m;
     }
 
@@ -27,7 +28,9 @@ final readonly class Regex
 
     public static function split(string $pattern, string $subject, int $flags = PREG_SPLIT_NO_EMPTY): array
     {
-        return preg_split($pattern, $subject, -1, $flags) ?: [];
+        $r = preg_split($pattern, $subject, -1, $flags);
+        if ($r === false) throw new \RuntimeException('PCRE error: ' . preg_last_error_msg());
+        return $r;
     }
 
     public static function quote(string $str): string

@@ -26,12 +26,16 @@ final class Database
     /** @return array<string,mixed>|null */
     public function one(string $sql, array $params = []): ?array
     {
-        return $this->execute($sql, $params)->fetch() ?: null;
+        $stmt = $this->execute($sql, $params);
+        $row = $stmt->fetch();
+        return $row !== false ? $row : null;
     }
 
     public function single(string $sql, array $params = []): mixed
     {
-        return $this->execute($sql, $params)->fetchColumn();
+        $stmt = $this->execute($sql, $params);
+        $row = $stmt->fetch(PDO::FETCH_NUM);
+        return $row !== false ? $row[0] : null;
     }
 
     public function run(string $sql, array $params = []): int

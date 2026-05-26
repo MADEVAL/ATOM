@@ -119,10 +119,10 @@ final class DatabaseTest extends TestCase
     }
 
     #[Test]
-    public function single_returns_false_when_empty(): void
+    public function single_returns_null_when_empty(): void
     {
         $result = $this->db->single('SELECT name FROM users WHERE name = ?', ['Nobody']);
-        $this->assertFalse($result);
+        $this->assertNull($result);
     }
 
     #[Test]

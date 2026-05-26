@@ -9,6 +9,7 @@ final class Container
     private array $bindings = [];
     private array $singletons = [];
     private array $instances = [];
+    private array $resolving = [];
 
     public function bind(string $abstract, mixed $concrete): void
     {
@@ -20,7 +21,7 @@ final class Container
         $this->singletons[$abstract] = $concrete;
     }
 
-    public function instance(string $abstract, mixed $value): void
+    public function instance(string $abstract, object $value): void
     {
         $this->instances[$abstract] = $value;
     }
@@ -29,16 +30,26 @@ final class Container
     {
         if (isset($this->instances[$abstract])) return $this->instances[$abstract];
 
-        $concrete = $this->singletons[$abstract] ?? $this->bindings[$abstract] ?? $abstract;
+        if (isset($this->resolving[$abstract])) {
+            $chain = implode(' -> ', array_keys($this->resolving)) . " -> {$abstract}";
+            throw new \RuntimeException("Circular dependency detected: {$chain}");
+        }
+        $this->resolving[$abstract] = true;
 
-        $obj = match (true) {
-            is_callable($concrete) && !is_string($concrete) => $concrete($this, $params),
-            is_string($concrete) && class_exists($concrete) => $this->autowire($concrete, $params),
-            default => throw new \RuntimeException("Cannot resolve {$abstract}"),
-        };
+        try {
+            $concrete = $this->singletons[$abstract] ?? $this->bindings[$abstract] ?? $abstract;
 
-        if (isset($this->singletons[$abstract])) $this->instances[$abstract] = $obj;
-        return $obj;
+            $obj = match (true) {
+                is_callable($concrete) && !is_string($concrete) => $concrete($this, $params),
+                is_string($concrete) && class_exists($concrete) => $this->autowire($concrete, $params),
+                default => throw new \RuntimeException("Cannot resolve {$abstract}"),
+            };
+
+            if (isset($this->singletons[$abstract])) $this->instances[$abstract] = $obj;
+            return $obj;
+        } finally {
+            unset($this->resolving[$abstract]);
+        }
     }
 
     private function autowire(string $class, array $params): object
