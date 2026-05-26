@@ -127,7 +127,7 @@ final class Router
         if (empty($compiled['map'])) {
             return new Response('Not Found', StatusCode::NOT_FOUND);
         }
-        $uri = strtok($request->uri, '?') ?: '/';
+        $uri = parse_url($request->uri, PHP_URL_PATH) ?: '/';
 
         $m = Regex::match($compiled['regex'], $request->method . $uri);
         if ($m === null) {

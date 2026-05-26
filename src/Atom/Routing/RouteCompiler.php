@@ -20,7 +20,7 @@ final readonly class RouteCompiler
      */
     public function compile(array $routes, array $extraPatterns = []): array
     {
-        $patterns = self::DEFAULT_PATTERNS + $extraPatterns;
+        $patterns = array_merge(self::DEFAULT_PATTERNS, $extraPatterns);
         $parts = [];
         $map   = [];
         $id    = 0;

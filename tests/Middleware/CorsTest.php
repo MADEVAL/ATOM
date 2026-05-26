@@ -32,12 +32,12 @@ final class CorsTest extends TestCase
     #[Test]
     public function preflight_includes_cors_headers(): void
     {
-        $cors = new Cors();
+        $cors = new Cors(allowOrigin: 'https://example.com');
         $req = new Request(server: ['REQUEST_METHOD' => 'OPTIONS', 'REQUEST_URI' => '/api']);
         $response = $cors->handle($req, fn() => new Response(''));
         $headers = $this->getHeaders($response);
 
-        $this->assertSame('*', $headers['Access-Control-Allow-Origin']);
+        $this->assertSame('https://example.com', $headers['Access-Control-Allow-Origin']);
         $this->assertStringContainsString('GET', $headers['Access-Control-Allow-Methods']);
         $this->assertStringContainsString('Content-Type', $headers['Access-Control-Allow-Headers']);
         $this->assertSame('86400', $headers['Access-Control-Max-Age']);
@@ -58,7 +58,7 @@ final class CorsTest extends TestCase
     #[Test]
     public function custom_allow_methods(): void
     {
-        $cors = new Cors(allowMethods: 'GET,POST');
+        $cors = new Cors(allowOrigin: '*', allowMethods: 'GET,POST');
         $req = new Request(server: ['REQUEST_METHOD' => 'OPTIONS', 'REQUEST_URI' => '/']);
         $response = $cors->handle($req, fn() => new Response(''));
         $headers = $this->getHeaders($response);
@@ -69,7 +69,7 @@ final class CorsTest extends TestCase
     #[Test]
     public function custom_allow_headers(): void
     {
-        $cors = new Cors(allowHeaders: 'X-Custom');
+        $cors = new Cors(allowOrigin: '*', allowHeaders: 'X-Custom');
         $req = new Request(server: ['REQUEST_METHOD' => 'OPTIONS', 'REQUEST_URI' => '/']);
         $response = $cors->handle($req, fn() => new Response(''));
         $headers = $this->getHeaders($response);
@@ -78,14 +78,14 @@ final class CorsTest extends TestCase
     }
 
     #[Test]
-    public function default_allow_origin_is_wildcard(): void
+    public function default_allow_origin_is_empty(): void
     {
         $cors = new Cors();
         $req = new Request(server: ['REQUEST_METHOD' => 'OPTIONS', 'REQUEST_URI' => '/']);
         $response = $cors->handle($req, fn() => new Response(''));
         $headers = $this->getHeaders($response);
 
-        $this->assertSame('*', $headers['Access-Control-Allow-Origin']);
+        $this->assertSame('', $headers['Access-Control-Allow-Origin']);
     }
 
     #[Test]

@@ -40,7 +40,7 @@ final class Database
         return $stmt->rowCount();
     }
 
-    public function lastId(): string
+    public function lastId(): string|false
     {
         return $this->pdo->lastInsertId();
     }

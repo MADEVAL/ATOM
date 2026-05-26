@@ -38,7 +38,7 @@ final class Logger
             $ctx !== [] ? json_encode($ctx, JSON_UNESCAPED_SLASHES) : '',
         );
         $dir = dirname($this->file);
-        if (!is_dir($dir) && !@mkdir($dir, 0777, true) && !is_dir($dir)) {
+        if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
             throw new \RuntimeException("Logger: cannot create directory '{$dir}'");
         }
         if (file_put_contents($this->file, $line, FILE_APPEND | LOCK_EX) === false) {

@@ -164,10 +164,14 @@ final class Validator
             foreach ($prop->getAttributes(Confirmed::class) as $attr) {
                 /** @var Confirmed $r */
                 $r = $attr->newInstance();
-                $confirmProp = $ref->getProperty($name . '_confirmation');
-                $confirmVal  = $confirmProp->getValue($dto);
-                if ($value !== $confirmVal) {
-                    $errors[$name][] = $r->message;
+                try {
+                    $confirmProp = $ref->getProperty($name . '_confirmation');
+                    $confirmVal  = $confirmProp->getValue($dto);
+                    if ($value !== $confirmVal) {
+                        $errors[$name][] = $r->message;
+                    }
+                } catch (\ReflectionException) {
+                    $errors[$name][] = "Missing confirmation field: {$name}_confirmation";
                 }
             }
         }

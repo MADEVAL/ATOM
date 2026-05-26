@@ -140,12 +140,17 @@ final class ApplicationTest extends TestCase
             public function index(): string { return 'home'; }
         });
 
+        $prevMethod = $_SERVER['REQUEST_METHOD'] ?? null;
+        $prevUri = $_SERVER['REQUEST_URI'] ?? null;
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/';
 
         ob_start();
         $app->run();
         $output = ob_get_clean();
+
+        if ($prevMethod === null) { unset($_SERVER['REQUEST_METHOD']); } else { $_SERVER['REQUEST_METHOD'] = $prevMethod; }
+        if ($prevUri === null) { unset($_SERVER['REQUEST_URI']); } else { $_SERVER['REQUEST_URI'] = $prevUri; }
 
         $this->assertStringContainsString('home', $output);
     }
@@ -165,7 +170,7 @@ final class ApplicationTest extends TestCase
         $app->run($req);
         $output = ob_get_clean();
 
-        $this->assertStringContainsString('Server Error', $output);
+        $this->assertStringContainsString('Test crash', $output);
         $this->assertStringContainsString('Test crash', $output);
     }
 
@@ -280,8 +285,42 @@ final class ApplicationTest extends TestCase
 
         ob_start();
         $app->run($req);
-        ob_get_clean();
+        $output = ob_get_clean();
+        $this->assertStringContainsString('Not here', $output);
+    }
 
-        $this->assertTrue(true);
+    #[Test]
+    public function run_error_in_production_returns_empty_500(): void
+    {
+        $app = $this->makeApp(debug: false);
+        $app->router->get('/boom', 'BoomController@explode');
+        $app->container->bind('BoomController', fn() => new class {
+            public function explode(): never { throw new \RuntimeException('Boom'); }
+        });
+        $req = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/boom']);
+
+        ob_start();
+        $app->run($req);
+        $output = ob_get_clean();
+        $this->assertEmpty($output);
+    }
+
+    #[Test]
+    public function run_php_error_rethrows_in_debug(): void
+    {
+        $app = $this->makeApp(debug: true);
+        $app->router->get('/type', 'TypeController@fail');
+        $app->container->bind('TypeController', fn() => new class {
+            public function fail(): never { throw new \TypeError('Type mismatch'); }
+        });
+        $req = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/type']);
+
+        $this->expectException(\TypeError::class);
+        ob_start();
+        try {
+            $app->run($req);
+        } finally {
+            ob_end_clean();
+        }
     }
 }

@@ -6,7 +6,9 @@ final readonly class Regex
 {
     public static function match(string $pattern, string $subject, int $flags = 0): ?array
     {
-        return preg_match($pattern, $subject, $m, $flags) === 1 ? $m : null;
+        $r = preg_match($pattern, $subject, $m, $flags);
+        if ($r === false) throw new \RuntimeException('PCRE error: ' . preg_last_error_msg());
+        return $r === 1 ? $m : null;
     }
 
     public static function matchAll(string $pattern, string $subject, int $flags = 0): array

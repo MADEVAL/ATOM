@@ -7,7 +7,7 @@ use Atom\Http\{Request, Response, StatusCode};
 final readonly class Cors implements MiddlewareInterface
 {
     public function __construct(
-        private string $allowOrigin = '*',
+        private string $allowOrigin = '',
         private string $allowMethods = 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
         private string $allowHeaders = 'Content-Type,Authorization',
     ) {}

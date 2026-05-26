@@ -75,6 +75,7 @@ final class Response
         if (!headers_sent()) {
             http_response_code($this->status->value);
             foreach ($this->headers as $k => $v) {
+                $k = Regex::replace('#[\r\n]+#', '', $k);
                 $v = Regex::replace('#[\r\n]+#', ' ', $v);
                 header("{$k}: {$v}");
             }
@@ -84,6 +85,7 @@ final class Response
                     'path'     => $path,
                     'httponly' => true,
                     'samesite' => 'Lax',
+                    'secure'   => true,
                 ]);
             }
         }

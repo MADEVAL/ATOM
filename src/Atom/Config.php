@@ -27,7 +27,6 @@ final readonly class Config
                     $env[$m[1]] = $v;
                     if ($setGlobal) {
                         $_ENV[$m[1]] = $v;
-                        putenv("{$m[1]}={$v}");
                     }
                 }
             }

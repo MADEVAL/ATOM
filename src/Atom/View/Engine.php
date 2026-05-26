@@ -49,7 +49,7 @@ final class Engine
             $compiler = new Compiler($this);
             $code = $compiler->compile(file_get_contents($real), $cls, $template);
             $fileDir = dirname($file);
-            if (!is_dir($fileDir) && !@mkdir($fileDir, 0777, true) && !is_dir($fileDir)) {
+            if (!is_dir($fileDir) && !@mkdir($fileDir, 0755, true) && !is_dir($fileDir)) {
                 throw new \RuntimeException("View Engine: cannot create cache directory '{$fileDir}'");
             }
             if (file_put_contents($file, $code) === false) {
@@ -71,7 +71,7 @@ final class Engine
             'length' => fn($v) => is_countable($v) ? count($v) : mb_strlen((string) $v),
             'nl2br'  => fn($v) => nl2br(htmlspecialchars((string) $v)),
             'json'   => fn($v) => json_encode($v, JSON_UNESCAPED_UNICODE),
-            'default'=> fn($v, $d = '') => $v ?: $d,
+            'default'=> fn($v, $d = '') => ($v ?? '') !== '' ? $v : $d,
             'raw'    => fn($v) => $v,
         ];
     }

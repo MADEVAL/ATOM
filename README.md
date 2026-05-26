@@ -5,10 +5,10 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/php-8.5-blue" alt="PHP 8.5">
-  <img src="https://img.shields.io/badge/tests-347-green" alt="347 tests">
+  <img src="https://img.shields.io/badge/tests-passing-green" alt="tests passing">
   <img src="https://img.shields.io/badge/coverage-99%25-brightgreen" alt="99% coverage">
   <img src="https://img.shields.io/badge/license-GPL--3.0-orange" alt="GPL-3.0">
-  <img src="https://img.shields.io/badge/size-571%20LOC-lightgrey" alt="571 LOC">
+  <img src="https://img.shields.io/badge/php-8.5-blue" alt="PHP 8.5">
   <br>
   <img src="https://img.shields.io/badge/topic-router-red" alt="router">
   <img src="https://img.shields.io/badge/topic-pcre-purple" alt="pcre">
@@ -23,7 +23,7 @@
 
 **Zero dependencies.** Just PHP 8.5. No ORM, no HTTP factory, no annotations - pure PHP with PCRE at its core.
 
-**571 lines.** Read the entire framework in 20 minutes. Every line tested to death - 347 tests, 99%+ coverage.
+**Minimal codebase.** Read the entire framework in 20 minutes. Every line tested — 99%+ coverage, zero warnings.
 
 **One regex dispatches all routes.** 10 000 routes = one `preg_match` via `(?|...(*:N))` branch-reset + MARK. JIT-compiled, O(1) per request.
 
