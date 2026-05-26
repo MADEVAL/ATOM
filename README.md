@@ -9,6 +9,12 @@
   <img src="https://img.shields.io/badge/coverage-99%25-brightgreen" alt="99% coverage">
   <img src="https://img.shields.io/badge/license-GPL--3.0-orange" alt="GPL-3.0">
   <img src="https://img.shields.io/badge/size-571%20LOC-lightgrey" alt="571 LOC">
+  <br>
+  <img src="https://img.shields.io/badge/topic-router-red" alt="router">
+  <img src="https://img.shields.io/badge/topic-pcre-purple" alt="pcre">
+  <img src="https://img.shields.io/badge/topic-microframework-yellow" alt="microframework">
+  <img src="https://img.shields.io/badge/topic-templates-teal" alt="templates">
+  <img src="https://img.shields.io/badge/topic-validation-cyan" alt="validation">
 </p>
 
 ---
@@ -163,6 +169,12 @@ src/Atom/
 composer test
 composer test-coverage
 ```
+
+## Docs & resources
+
+- [Full documentation](docs/index.html) — sidebar, all components, code examples
+- [Skill set](.opencode/skills/atom/) — AI‑assistant knowledge: routing, HTTP, templates, validation, DI, CLI, middleware
+- [License](LICENSE) — GPL-3.0-or-later
 
 ## License
 
