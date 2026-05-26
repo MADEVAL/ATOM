@@ -11,7 +11,7 @@ use PHPUnit\Framework\Attributes\Test;
 #[CoversClass(Database::class)]
 final class DatabaseTest extends TestCase
 {
-    private Database $db;
+    private ?Database $db = null;
     private string $tmpFile;
 
     protected function setUp(): void
@@ -25,7 +25,8 @@ final class DatabaseTest extends TestCase
 
     protected function tearDown(): void
     {
-        unlink($this->tmpFile);
+        $this->db = null;
+        if (is_file($this->tmpFile)) unlink($this->tmpFile);
     }
 
     #[Test]

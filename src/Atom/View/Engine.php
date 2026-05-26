@@ -48,8 +48,13 @@ final class Engine
         if (!is_file($file) || filemtime($file) < filemtime($real)) {
             $compiler = new Compiler($this);
             $code = $compiler->compile(file_get_contents($real), $cls, $template);
-            @mkdir(dirname($file), 0777, true);
-            file_put_contents($file, $code);
+            $fileDir = dirname($file);
+            if (!is_dir($fileDir) && !@mkdir($fileDir, 0777, true) && !is_dir($fileDir)) {
+                throw new \RuntimeException("View Engine: cannot create cache directory '{$fileDir}'");
+            }
+            if (file_put_contents($file, $code) === false) {
+                throw new \RuntimeException("View Engine: failed to write compiled template '{$file}'");
+            }
         }
         require_once $file;
         return $cls;

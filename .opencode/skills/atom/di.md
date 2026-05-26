@@ -17,13 +17,13 @@ $app->container->bind('mailer', fn(Container $c, array $params) => new Mailer(..
 Same instance every time:
 
 ```php
-$app->container->singleton(Database::class, fn($c) => new Database($c['config']['db']));
+$app->container->singleton(Database::class, fn() => new Database($config->get('DB_DSN')));
 ```
 
 ## Pre-built instances
 
 ```php
-$app->container->instance('config', ['db' => ['host' => 'localhost']]);
+$app->container->instance('config', $config);
 $app->container->instance(Request::class, $request);
 ```
 

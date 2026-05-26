@@ -148,6 +148,7 @@ footer{color:var(--dim);font-size:.82em;margin-top:60px}
 <pre><code><span class="kw">public function</span> <span class="fn">run</span>(?Request <span class="var">$request</span> = <span class="kw">null</span>): <span class="kw">void</span>
 {
     <span class="var">$req</span> = <span class="var">$request</span> ?? Request::capture();
+    <span class="var">$this</span>->container->instance(Request::<span class="kw">class</span>, <span class="var">$req</span>);
     <span class="kw">try</span> {
         <span class="var">$response</span> = <span class="var">$this</span>->router->dispatch(<span class="var">$req</span>);
     } <span class="kw">catch</span> (\Throwable <span class="var">$e</span>) {
@@ -416,10 +417,10 @@ Response::redirect(<span class="str">'/new'</span>, StatusCode::MOVED);   <span 
 <span class="var">$app</span>->container->bind(LoggerInterface::<span class="kw">class</span>, FileLogger::<span class="kw">class</span>);
 
 <span class="cm">// Singleton</span>
-<span class="var">$app</span>->container->singleton(Database::<span class="kw">class</span>, <span class="kw">fn</span>(<span class="var">$c</span>) => <span class="kw">new</span> Database(<span class="var">$c</span>[<span class="str">'config'</span>][<span class="str">'db'</span>]));
+<span class="var">$app</span>->container->singleton(Database::<span class="kw">class</span>, <span class="kw">fn</span>() => <span class="kw">new</span> Database(<span class="var">$config</span>->get(<span class="str">'DB_DSN'</span>)));
 
 <span class="cm">// Pre‑built instance</span>
-<span class="var">$app</span>->container->instance(<span class="str">'config'</span>, [<span class="str">'db'</span> => [<span class="str">'host'</span> => <span class="str">'localhost'</span>]]);</code></pre>
+<span class="var">$app</span>->container->instance(<span class="str">'config'</span>, <span class="var">$config</span>);</code></pre>
 
 <h2 id="di-autowire">Autowiring</h2>
 <pre><code><span class="kw">class</span> UserService {

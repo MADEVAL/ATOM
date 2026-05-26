@@ -3,7 +3,7 @@
 PHP 8.5 micro-framework. Single-regex router, PCRE template engine, DI, validation, sessions, database, logger, CLI, .env.
 571 lines, 29 classes, 99%+ coverage (347 tests).
 
-> Topic files: `routing.md`, `http.md`, `templates.md`, `validation.md`, `middleware.md`, `di.md`, `database.md`, `cli.md`
+> Topic files: `routing.md`, `http.md`, `templates.md`, `validation.md`, `middleware.md`, `di.md`, `database.md`, `cli.md`, `logger.md`
 
 ## Project structure
 

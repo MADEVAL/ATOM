@@ -16,7 +16,7 @@ final class Request
     public string $method  { get => ($this->server['REQUEST_METHOD'] ?? 'GET') === 'POST'
         ? strtoupper($this->body['_method'] ?? 'POST')
         : strtoupper($this->server['REQUEST_METHOD'] ?? 'GET'); }
-    public string $path    { get => $this->server['PATH_INFO'] ?? parse_url($this->uri, PHP_URL_PATH) ?: '/'; }
+    public string $path    { get => ($this->server['PATH_INFO'] ?? '') !== '' ? $this->server['PATH_INFO'] : (parse_url($this->uri, PHP_URL_PATH) ?: '/'); }
     public string $uri     { get => $this->server['REQUEST_URI'] ?? '/'; }
     public string $scheme  { get => ($this->server['HTTPS'] ?? '') === 'on' ? 'https' : 'http'; }
     public string $host    { get => (string)($this->server['HTTP_HOST'] ?? 'localhost'); }
@@ -110,6 +110,6 @@ final class Request
             return [];
         }
         $raw = file_get_contents('php://input');
-        return $raw !== false ? (json_decode($raw, true) ?: []) : [];
+        return $raw !== false ? (json_decode($raw, true) ?? []) : [];
     }
 }

@@ -100,4 +100,16 @@ final class ConfigEnvTest extends TestCase
         $this->assertSame('from_env', $config->get('Y'));
         putenv('Y');
     }
+
+    #[Test]
+    public function set_global_populates_env_and_putenv(): void
+    {
+        file_put_contents($this->tmpEnv, "GLOBAL_KEY=global_value\n");
+        $config = Config::fromEnv($this->tmpEnv, true);
+        $this->assertSame('global_value', $config->get('GLOBAL_KEY'));
+        $this->assertSame('global_value', $_ENV['GLOBAL_KEY'] ?? null);
+        $this->assertSame('global_value', getenv('GLOBAL_KEY'));
+        putenv('GLOBAL_KEY');
+        unset($_ENV['GLOBAL_KEY']);
+    }
 }

@@ -127,8 +127,8 @@ final class ResponseTest extends TestCase
         $res = Response::html('<p>Test</p>');
         ob_start();
         $res->send();
-        ob_get_clean();
-        $this->assertTrue(true); // no exceptions
+        $output = ob_get_clean();
+        $this->assertSame('<p>Test</p>', $output);
     }
 
     #[Test]
@@ -173,7 +173,6 @@ final class ResponseTest extends TestCase
         $res->send();
         $output = ob_get_clean();
         $this->assertSame('ok', $output);
-        $this->assertTrue(true); // setcookie called without error
     }
 
     #[Test]
@@ -200,11 +199,11 @@ final class ResponseTest extends TestCase
     #[Test]
     public function header_injection_stripped(): void
     {
-        $res = (new Response())->withHeader('X-Malicious', "safe\r\nSet-Cookie: hacked=true");
+        $res = (new Response('content'))->withHeader('X-Clean', "safe\r\nSet-Cookie: hacked=true");
         ob_start();
         $res->send();
-        ob_get_clean();
-        $this->assertTrue(true);
+        $output = ob_get_clean();
+        $this->assertSame('content', $output);
     }
 
     #[Test]
@@ -227,9 +226,8 @@ final class ResponseTest extends TestCase
     public function with_cache_adds_caching_header(): void
     {
         $res = (new Response('data'))->withCache(3600);
-        ob_start();
-        $res->send();
-        ob_get_clean();
-        $this->assertTrue(true);
+        $prop = new \ReflectionProperty(Response::class, 'headers');
+        $headers = $prop->getValue($res);
+        $this->assertSame('public, max-age=3600', $headers['Cache-Control']);
     }
 }

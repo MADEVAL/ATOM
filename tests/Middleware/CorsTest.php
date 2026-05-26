@@ -7,10 +7,17 @@ use Atom\Middleware\Cors;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use ReflectionProperty;
 
 #[CoversClass(Cors::class)]
 final class CorsTest extends TestCase
 {
+    private function getHeaders(Response $response): array
+    {
+        $prop = new ReflectionProperty(Response::class, 'headers');
+        return $prop->getValue($response);
+    }
+
     #[Test]
     public function options_request_returns_preflight(): void
     {
@@ -27,11 +34,13 @@ final class CorsTest extends TestCase
     {
         $cors = new Cors();
         $req = new Request(server: ['REQUEST_METHOD' => 'OPTIONS', 'REQUEST_URI' => '/api']);
+        $response = $cors->handle($req, fn() => new Response(''));
+        $headers = $this->getHeaders($response);
 
-        ob_start();
-        $cors->handle($req, fn() => new Response(''))->send();
-        ob_get_clean();
-        $this->assertTrue(true);
+        $this->assertSame('*', $headers['Access-Control-Allow-Origin']);
+        $this->assertStringContainsString('GET', $headers['Access-Control-Allow-Methods']);
+        $this->assertStringContainsString('Content-Type', $headers['Access-Control-Allow-Headers']);
+        $this->assertSame('86400', $headers['Access-Control-Max-Age']);
     }
 
     #[Test]
@@ -40,7 +49,10 @@ final class CorsTest extends TestCase
         $cors = new Cors(allowOrigin: 'https://example.com');
         $req = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/api']);
         $response = $cors->handle($req, fn() => new Response('ok'));
+        $headers = $this->getHeaders($response);
+
         $this->assertStringContainsString('ok', $response->getContent());
+        $this->assertSame('https://example.com', $headers['Access-Control-Allow-Origin']);
     }
 
     #[Test]
@@ -48,11 +60,10 @@ final class CorsTest extends TestCase
     {
         $cors = new Cors(allowMethods: 'GET,POST');
         $req = new Request(server: ['REQUEST_METHOD' => 'OPTIONS', 'REQUEST_URI' => '/']);
+        $response = $cors->handle($req, fn() => new Response(''));
+        $headers = $this->getHeaders($response);
 
-        ob_start();
-        $cors->handle($req, fn() => new Response(''))->send();
-        ob_get_clean();
-        $this->assertTrue(true);
+        $this->assertSame('GET,POST', $headers['Access-Control-Allow-Methods']);
     }
 
     #[Test]
@@ -60,11 +71,10 @@ final class CorsTest extends TestCase
     {
         $cors = new Cors(allowHeaders: 'X-Custom');
         $req = new Request(server: ['REQUEST_METHOD' => 'OPTIONS', 'REQUEST_URI' => '/']);
+        $response = $cors->handle($req, fn() => new Response(''));
+        $headers = $this->getHeaders($response);
 
-        ob_start();
-        $cors->handle($req, fn() => new Response(''))->send();
-        ob_get_clean();
-        $this->assertTrue(true);
+        $this->assertSame('X-Custom', $headers['Access-Control-Allow-Headers']);
     }
 
     #[Test]
@@ -72,10 +82,23 @@ final class CorsTest extends TestCase
     {
         $cors = new Cors();
         $req = new Request(server: ['REQUEST_METHOD' => 'OPTIONS', 'REQUEST_URI' => '/']);
+        $response = $cors->handle($req, fn() => new Response(''));
+        $headers = $this->getHeaders($response);
 
-        ob_start();
-        $cors->handle($req, fn() => new Response(''))->send();
-        ob_get_clean();
-        $this->assertTrue(true);
+        $this->assertSame('*', $headers['Access-Control-Allow-Origin']);
+    }
+
+    #[Test]
+    public function csrf_state_changing_methods_handled(): void
+    {
+        $cors = new Cors(allowOrigin: 'https://example.com');
+        foreach (['PUT', 'PATCH', 'DELETE'] as $method) {
+            $req = new Request(server: ['REQUEST_METHOD' => $method, 'REQUEST_URI' => '/api']);
+            $response = $cors->handle($req, fn() => new Response('ok'));
+            $headers = $this->getHeaders($response);
+
+            $this->assertSame('ok', $response->getContent());
+            $this->assertSame('https://example.com', $headers['Access-Control-Allow-Origin']);
+        }
     }
 }

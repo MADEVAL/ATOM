@@ -76,7 +76,7 @@ final class Validator
             foreach ($prop->getAttributes(Min::class) as $attr) {
                 /** @var Min $r */
                 $r = $attr->newInstance();
-                if (strlen((string) $value) < $r->value || (is_numeric($value) && (float) $value < $r->value)) {
+                if (is_numeric($value) ? (float) $value < $r->value : strlen((string) $value) < $r->value) {
                     $errors[$name][] = $r->message;
                 }
             }
@@ -84,7 +84,7 @@ final class Validator
             foreach ($prop->getAttributes(Max::class) as $attr) {
                 /** @var Max $r */
                 $r = $attr->newInstance();
-                if (strlen((string) $value) > $r->value || (is_numeric($value) && (float) $value > $r->value)) {
+                if (is_numeric($value) ? (float) $value > $r->value : strlen((string) $value) > $r->value) {
                     $errors[$name][] = $r->message;
                 }
             }

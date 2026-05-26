@@ -44,8 +44,13 @@ final class Console
 
     private function listRoutes(): int
     {
-        $ref = new ReflectionClass($this->app->router);
-        $routes = $ref->getProperty('routes')->getValue($this->app->router);
+        try {
+            $ref = new ReflectionClass($this->app->router);
+            $routes = $ref->getProperty('routes')->getValue($this->app->router);
+        } catch (\ReflectionException $e) {
+            echo "Error: cannot read routes - {$e->getMessage()}\n";
+            return 1;
+        }
         if ($routes === []) { echo "No routes registered.\n"; return 0; }
 
         foreach ($routes as $r) {

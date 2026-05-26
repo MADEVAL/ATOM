@@ -86,14 +86,16 @@ final class Compiler
         $head  = array_shift($parts);
         $code  = $this->compileVariable($head);
 
+        $filterNames = [];
         foreach ($parts as $filter) {
             if ($fm = Regex::match('#^([a-zA-Z_][a-zA-Z0-9_]*)(?:\((.*)\))?$#s', trim($filter))) {
                 $name = $fm[1];
+                $filterNames[] = $name;
                 $args = isset($fm[2]) && $fm[2] !== '' ? ',' . $fm[2] : '';
                 $code = "\$this->engine->getFilter('{$name}')({$code}{$args})";
             }
         }
-        if ($autoEscape && empty($parts)) {
+        if ($autoEscape && !array_intersect($filterNames, ['raw', 'escape', 'e', 'json', 'nl2br'])) {
             $code = "htmlspecialchars((string)({$code}), ENT_QUOTES, 'UTF-8')";
         }
         return $code;
@@ -107,7 +109,7 @@ final class Compiler
         }
         $parts = explode('.', $v, 2);
         if (count($parts) === 1) {
-            return "\$this->ctx['{$parts[0]}']";
+            return "(\$this->ctx['{$parts[0]}'] ?? null)";
         }
         $result = "\$this->ctx['{$parts[0]}']";
         $result .= Regex::replace(

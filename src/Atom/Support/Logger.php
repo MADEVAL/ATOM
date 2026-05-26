@@ -31,6 +31,12 @@ final class Logger
             $msg,
             $ctx !== [] ? json_encode($ctx, JSON_UNESCAPED_SLASHES) : '',
         );
-        @file_put_contents($this->file, $line, FILE_APPEND | LOCK_EX);
+        $dir = dirname($this->file);
+        if (!is_dir($dir) && !@mkdir($dir, 0777, true) && !is_dir($dir)) {
+            throw new \RuntimeException("Logger: cannot create directory '{$dir}'");
+        }
+        if (file_put_contents($this->file, $line, FILE_APPEND | LOCK_EX) === false) {
+            throw new \RuntimeException("Logger: failed to write to '{$this->file}'");
+        }
     }
 }

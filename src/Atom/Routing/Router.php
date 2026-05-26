@@ -158,6 +158,7 @@ final class Router
         $export = $this->compiled;
         // Strip route objects from map - not serializable, not needed for dispatch
         foreach ($export['map'] as &$entry) unset($entry['route']);
+        unset($entry);
         @file_put_contents(
             $this->cacheFile,
             "<?php\nreturn " . var_export($export, true) . ";\n",
