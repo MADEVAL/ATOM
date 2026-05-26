@@ -1,0 +1,22 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types=1);
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use Atom\{Application, Config, Console\Console};
+
+$app = new Application(new Config(cacheDir: sys_get_temp_dir() . '/atom'));
+
+// Register custom console commands from the app's command dir
+$console = new Console($app);
+
+// Auto-discover: if app has console/ directory, load it
+$cmdDir = getcwd() . '/console';
+if (is_dir($cmdDir)) {
+    foreach (glob($cmdDir . '/*.php') as $f) {
+        require_once $f;
+    }
+}
+
+exit($console->run($argv));

@@ -86,6 +86,10 @@ footer{color:var(--dim);font-size:.82em;margin-top:60px}
 <a href="#di-autowire">Autowiring</a>
 
 <h2>Reference</h2>
+<a href="#ref-database">Database</a>
+<a href="#ref-logger">Logger</a>
+<a href="#ref-cli">CLI Console</a>
+<a href="#ref-env">.env</a>
 <a href="#ref-regex">Regex utility</a>
 <a href="#ref-status">Status codes</a>
 <a href="#ref-structure">Project structure</a>
@@ -94,7 +98,7 @@ footer{color:var(--dim);font-size:.82em;margin-top:60px}
 <div id="main">
 
 <h1>Atom <span>⚛</span></h1>
-<p class="meta">PHP 8.5 micro‑framework · <strong>493 LOC</strong> · 26 classes · <strong>100% coverage</strong> (315 tests) · PCRE‑powered</p>
+<p class="meta">PHP 8.5 micro‑framework · <strong>571 LOC</strong> · 29 classes · <strong>99%+ coverage</strong> (347 tests) · PCRE‑powered</p>
 
 <div class="flex">
 <span class="tag">PHP 8.5</span><span class="tag">PCRE</span><span class="tag">JIT regex</span><span class="tag">100% tests</span>
@@ -426,6 +430,52 @@ Response::redirect(<span class="str">'/new'</span>, StatusCode::MOVED);   <span 
 }
 <span class="var">$service</span> = <span class="var">$app</span>->container->make(UserService::<span class="kw">class</span>);
 <span class="cm">// Database and LoggerInterface auto‑resolved recursively</span></code></pre>
+
+<h2 id="ref-database">Database</h2>
+<pre><code><span class="kw">use</span> Atom\Database\Database;
+
+<span class="var">$db</span> = <span class="kw">new</span> Database(<span class="var">$config</span>->get(<span class="str">'DB_DSN'</span>));
+<span class="cm">// SQLite: 'sqlite:/path/to/db.sqlite'</span>
+<span class="cm">// MySQL:  'mysql:host=localhost;dbname=app;charset=utf8mb4', user, pass</span>
+
+<span class="var">$db</span>->all(<span class="str">'SELECT * FROM users WHERE active = ?'</span>, [<span class="num">1</span>]);    <span class="cm">// list</span>
+<span class="var">$db</span>->one(<span class="str">'SELECT * FROM users WHERE id = ?'</span>, [<span class="var">$id</span>]); <span class="cm">// row|null</span>
+<span class="var">$db</span>->single(<span class="str">'SELECT COUNT(*) FROM users'</span>);              <span class="cm">// scalar</span>
+<span class="var">$db</span>->run(<span class="str">'UPDATE users SET name = ? WHERE id = ?'</span>, [...] ); <span class="cm">// execute</span>
+<span class="var">$db</span>->lastId();                                        <span class="cm">// last insert ID</span></code></pre>
+
+<h2 id="ref-logger">Logger</h2>
+<pre><code><span class="kw">use</span> Atom\Support\Logger;
+
+<span class="var">$log</span> = <span class="kw">new</span> Logger(<span class="str">'/var/log/app.log'</span>);
+<span class="var">$log</span>->debug(<span class="str">'query'</span>, [<span class="str">'sql'</span> => <span class="var">$sql</span>, <span class="str">'ms'</span> => <span class="num">12.5</span>]);
+<span class="var">$log</span>->info(<span class="str">'login'</span>, [<span class="str">'user'</span> => <span class="num">42</span>]);
+<span class="var">$log</span>->warn(<span class="str">'rate limit'</span>);
+<span class="var">$log</span>->error(<span class="str">'payment failed'</span>, [<span class="str">'err'</span> => <span class="var">$e</span>->getMessage()]);
+
+<span class="cm">// Minimum level filter</span>
+<span class="var">$log</span> = <span class="kw">new</span> Logger(<span class="str">'/var/log/app.log'</span>, Logger::WARN);</code></pre>
+
+<h2 id="ref-cli">CLI Console</h2>
+<pre><code>php bin/atom list      <span class="cm"># show commands</span>
+php bin/atom routes    <span class="cm"># list registered routes</span>
+php bin/atom cache     <span class="cm"># clear compiled cache</span></code></pre>
+<pre><code><span class="kw">use</span> Atom\Console\Console;
+
+<span class="var">$console</span> = <span class="kw">new</span> Console(<span class="var">$app</span>);
+<span class="var">$console</span>->add(<span class="str">'db:migrate'</span>, <span class="kw">function</span>(<span class="kw">array</span> <span class="var">$args</span>): <span class="kw">int</span> { ... <span class="kw">return</span> <span class="num">0</span>; });
+<span class="var">$console</span>->run(<span class="var">$argv</span>);</code></pre>
+
+<h2 id="ref-env">.env support</h2>
+<pre><code><span class="cm">// .env file</span>
+APP_DEBUG=true
+DB_DSN=mysql:host=localhost;dbname=app
+
+<span class="cm">// Load</span>
+<span class="var">$config</span> = Config::fromEnv(__DIR__ . <span class="str">'/.env'</span>);
+<span class="var">$config</span>->debug;                     <span class="cm">// true</span>
+<span class="var">$config</span>->get(<span class="str">'DB_DSN'</span>);             <span class="cm">// mysql:host=...</span>
+<span class="var">$config</span>->get(<span class="str">'MISSING'</span>, <span class="str">'default'</span>); <span class="cm">// default</span></code></pre>
 <p>Built‑in: <code>Application</code>, <code>Container</code>, <code>Router</code>, <code>ViewEngine</code>, <code>Config</code>, <code>Session</code>, <code>Request</code>.</p>
 
 <h2 id="ref-regex">Regex utility</h2>
@@ -450,14 +500,16 @@ Regex::assert(<span class="str">'#valid_pattern#'</span>);           <span class
 ├── src/Atom/
 │   ├── Config.php
 │   ├── Application.php
+│   ├── Console/Console.php
 │   ├── Container/Container.php
+│   ├── Database/Database.php
 │   ├── Http/{Request,Response,Session,StatusCode,UploadedFile}.php
 │   ├── Middleware/{Pipeline,Cors,Csrf}.php
 │   ├── Routing/{Route,CompiledRoute,MatchedRoute,RouteCompiler,Router}.php
-│   ├── Support/Regex.php
+│   ├── Support/{Regex,Logger}.php
 │   ├── Validation/Validator.php (+ 5 attribute classes)
 │   └── View/{Compiler,Engine,Template}.php
-├── tests/                    <span class="cm"># 315 tests, 100% coverage</span>
+├── tests/                    <span class="cm"># 347 tests, 99%+ coverage</span>
 ├── public/index.php          <span class="cm"># front controller</span>
 ├── views/                    <span class="cm"># .twig templates</span>
 ├── docs/index.html           <span class="cm"># documentation</span>
@@ -465,7 +517,7 @@ Regex::assert(<span class="str">'#valid_pattern#'</span>);           <span class
 └── composer.json</code></pre>
 
 <footer>
-<p>Atom · PHP 8.5 · 493 LOC · 100% coverage · PCRE‑powered · Sidebar documentation</p>
+<p>Atom · PHP 8.5 · GPL-3.0 · 571 LOC · 99%+ coverage · PCRE‑powered</p>
 </footer>
 
 </div>

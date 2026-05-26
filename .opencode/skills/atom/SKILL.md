@@ -1,9 +1,9 @@
 # Atom Framework
 
-PHP 8.5 micro-framework. Single-regex router, PCRE template engine, minimal DI.
-493 lines, 26 classes, 100% coverage (315 tests).
+PHP 8.5 micro-framework. Single-regex router, PCRE template engine, DI, validation, sessions, database, logger, CLI, .env.
+571 lines, 29 classes, 99%+ coverage (347 tests).
 
-> Topic files: `routing.md`, `http.md`, `templates.md`, `validation.md`, `middleware.md`, `di.md`
+> Topic files: `routing.md`, `http.md`, `templates.md`, `validation.md`, `middleware.md`, `di.md`, `database.md`, `cli.md`
 
 ## Project structure
 
@@ -11,7 +11,9 @@ PHP 8.5 micro-framework. Single-regex router, PCRE template engine, minimal DI.
 src/Atom/
 ├── Config.php              # debug, cacheDir, viewsDir
 ├── Application.php         # entry point, boot, run
+├── Console/Console.php     # CLI: routes, cache, custom commands
 ├── Container/Container.php # DI: bind, singleton, instance, autowire
+├── Database/Database.php   # PDO wrapper: all, one, single, run
 ├── Http/
 │   ├── Request.php         # hooks, JSON body, Bearer token, _method
 │   ├── Response.php        # html, json, redirect, cookies, text, noContent, cache
