@@ -98,7 +98,7 @@ footer{color:var(--dim);font-size:.82em;margin-top:60px}
 <div id="main">
 
 <h1>Atom <span>⚛</span></h1>
-<p class="meta">PHP 8.5 micro‑framework · <strong>571 LOC</strong> · 29 classes · <strong>99%+ coverage</strong> (347 tests) · PCRE‑powered</p>
+<p class="meta">PHP 8.5 micro‑framework · <strong>784 LOC</strong> · 35 classes · <strong>99%+ coverage</strong> (396 tests) · PCRE‑powered</p>
 
 <div class="flex">
 <span class="tag">PHP 8.5</span><span class="tag">PCRE</span><span class="tag">JIT regex</span><span class="tag">100% tests</span>
@@ -131,8 +131,8 @@ footer{color:var(--dim);font-size:.82em;margin-top:60px}
 <div class="card"><h4>Response</h4><p>html/json/redirect, cookies, CRLF shield</p></div>
 <div class="card"><h4>Pipeline</h4><p>Onion: closure | object | string</p></div>
 <div class="card"><h4>Engine</h4><p>Twig-like → PHP, filters, globals</p></div>
-<div class="card"><h4>Validator</h4><p>PCRE attributes: Required, Email, Min/Max</p></div>
-<div class="card"><h4>Session</h4><p>get/set, flash, regenerate</p></div>
+<div class="card"><h4>Validator</h4><p>PCRE attributes: Required, Email, Min/Max, Integer, Between, In, Url, Nullable, Confirmed</p></div>
+<div class="card"><h4>Session</h4><p>get/set, flash, regenerate, CSRF per-form, cookie params</p></div>
 <div class="card"><h4>Cors</h4><p>Preflight + headers middleware</p></div>
 <div class="card"><h4>Regex</h4><p>PCRE wrapper: match/replace/split/quote</p></div>
 </div>
@@ -184,6 +184,21 @@ footer{color:var(--dim);font-size:.82em;margin-top:60px}
     });
 });</code></pre>
 
+<h3>Route name prefixing</h3>
+<pre><code><span class="var">$app</span>->router->namePrefix(<span class="str">'admin.'</span>, <span class="kw">fn</span>(<span class="var">$r</span>) => {
+    <span class="var">$r</span>->get(<span class="str">'/dashboard'</span>, <span class="str">'AdminController@index'</span>, <span class="str">'dashboard'</span>);
+}); <span class="cm">// Route name: admin.dashboard</span>
+
+<span class="var">$app</span>->router->url(<span class="str">'admin.dashboard'</span>); <span class="cm">// → /dashboard</span>
+
+<span class="cm">// Nest prefixes</span>
+<span class="var">$app</span>->router->namePrefix(<span class="str">'v1.'</span>, <span class="kw">fn</span>(<span class="var">$r</span>) => {
+    <span class="var">$r</span>->namePrefix(<span class="str">'users.'</span>, <span class="kw">fn</span>(<span class="var">$r2</span>) => {
+        <span class="var">$r2</span>->get(<span class="str">'/{id}'</span>, <span class="str">'UserController@show'</span>, <span class="str">'show'</span>);
+    });
+});
+<span class="var">$app</span>->router->url(<span class="str">'v1.users.show'</span>, [<span class="str">'id'</span> => <span class="num">5</span>]); <span class="cm">// → /5</span></code></pre>
+
 <h2 id="routing-named">URL generation</h2>
 <pre><code><span class="var">$app</span>->router->get(<span class="str">'/users/{id}'</span>, <span class="str">'UserController@show'</span>, <span class="str">'user.show'</span>);
 <span class="var">$app</span>->router->url(<span class="str">'user.show'</span>, [<span class="str">'id'</span> => <span class="num">42</span>]); <span class="cm">// → /users/42</span></code></pre>
@@ -206,7 +221,10 @@ footer{color:var(--dim);font-size:.82em;margin-top:60px}
     <span class="kw">return</span> <span class="kw">new</span> Response(<span class="str">'Not Found'</span>, StatusCode::NOT_FOUND);
 }
 <span class="var">$id</span> = (<span class="kw">int</span>) <span class="var">$m</span>[<span class="str">'MARK'</span>]; <span class="cm">// → route index</span>
-<span class="var">$params</span> = array_filter(<span class="var">$m</span>, <span class="str">'is_string'</span>, ARRAY_FILTER_USE_KEY);</code></pre>
+<span class="var">$params</span> = array_filter(<span class="var">$m</span>, <span class="str">'is_string'</span>, ARRAY_FILTER_USE_KEY);
+
+<span class="cm">// Cache invalidation</span>
+<span class="var">$app</span>->router->clearCache();</code></pre>
 
 <h2 id="http-request">Request</h2>
 <table>
@@ -283,13 +301,22 @@ Response::redirect(<span class="str">'/new'</span>, StatusCode::MOVED);   <span 
 }</code></pre>
 
 <h2 id="http-session">Session</h2>
-<pre><code><span class="var">$session</span> = <span class="var">$app</span>->container->make(Session::<span class="kw">class</span>); <span class="cm">// auto‑started, singleton</span>
+<pre><code><span class="cm">// Default: httponly=true, samesite=Lax, secure=false</span>
+<span class="var">$session</span> = <span class="var">$app</span>->container->make(Session::<span class="kw">class</span>); <span class="cm">// auto‑started, singleton</span>
+
+<span class="cm">// Custom cookie params</span>
+<span class="var">$session</span> = <span class="kw">new</span> Session([<span class="str">'cookie_samesite'</span> => <span class="str">'Strict'</span>]);
 <span class="var">$session</span>->set(<span class="str">'user_id'</span>, <span class="num">42</span>);
 <span class="var">$session</span>->get(<span class="str">'user_id'</span>);           <span class="cm">// 42</span>
 <span class="var">$session</span>->has(<span class="str">'user_id'</span>);           <span class="cm">// true</span>
 <span class="var">$session</span>->remove(<span class="str">'user_id'</span>);
 <span class="var">$session</span>->flash(<span class="str">'success'</span>, <span class="str">'Saved!'</span>); <span class="cm">// one request only</span>
-<span class="var">$session</span>->regenerate();             <span class="cm">// rotate session ID</span></code></pre>
+<span class="var">$session</span>->regenerate();             <span class="cm">// rotate session ID</span>
+
+<span class="cm">// CSRF — global &amp; per‑form</span>
+<span class="var">$token</span> = <span class="var">$session</span>->csrfToken();      <span class="cm">// global</span>
+<span class="var">$login</span> = <span class="var">$session</span>->csrfToken(<span class="str">'login'</span>); <span class="cm">// per‑form</span>
+<span class="var">$session</span>->validateCsrf(<span class="var">$login</span>, <span class="str">'login'</span>);</code></pre>
 
 <h2 id="tpl-syntax">Template syntax &amp; filters</h2>
 <pre><code><span class="cm">{# comment #}</span>
@@ -443,7 +470,12 @@ Response::redirect(<span class="str">'/new'</span>, StatusCode::MOVED);   <span 
 <span class="var">$db</span>->one(<span class="str">'SELECT * FROM users WHERE id = ?'</span>, [<span class="var">$id</span>]); <span class="cm">// row|null</span>
 <span class="var">$db</span>->single(<span class="str">'SELECT COUNT(*) FROM users'</span>);              <span class="cm">// scalar</span>
 <span class="var">$db</span>->run(<span class="str">'UPDATE users SET name = ? WHERE id = ?'</span>, [...] ); <span class="cm">// execute</span>
-<span class="var">$db</span>->lastId();                                        <span class="cm">// last insert ID</span></code></pre>
+<span class="var">$db</span>->lastId();                                        <span class="cm">// last insert ID</span>
+
+<span class="cm">// Transactions</span>
+<span class="var">$db</span>->beginTransaction();
+<span class="var">$db</span>->commit();
+<span class="var">$db</span>->rollback();</code></pre>
 
 <h2 id="ref-logger">Logger</h2>
 <pre><code><span class="kw">use</span> Atom\Support\Logger;
@@ -453,7 +485,11 @@ Response::redirect(<span class="str">'/new'</span>, StatusCode::MOVED);   <span 
 <span class="var">$log</span>->info(<span class="str">'login'</span>, [<span class="str">'user'</span> => <span class="num">42</span>]);
 <span class="var">$log</span>->warn(<span class="str">'rate limit'</span>);
 <span class="var">$log</span>->error(<span class="str">'payment failed'</span>, [<span class="str">'err'</span> => <span class="var">$e</span>->getMessage()]);
+<span class="var">$log</span>->critical(<span class="str">'disk full'</span>);
+<span class="var">$log</span>->alert(<span class="str">'db down'</span>);
+<span class="var">$log</span>->emergency(<span class="str">'outage'</span>);
 
+<span class="cm">// LEVELS: DEBUG(0) INFO(1) WARN(2) ERROR(3) CRITICAL(4) ALERT(5) EMERGENCY(6)</span>
 <span class="cm">// Minimum level filter</span>
 <span class="var">$log</span> = <span class="kw">new</span> Logger(<span class="str">'/var/log/app.log'</span>, Logger::WARN);</code></pre>
 
@@ -464,8 +500,15 @@ php bin/atom cache     <span class="cm"># clear compiled cache</span></code></pr
 <pre><code><span class="kw">use</span> Atom\Console\Console;
 
 <span class="var">$console</span> = <span class="kw">new</span> Console(<span class="var">$app</span>);
-<span class="var">$console</span>->add(<span class="str">'db:migrate'</span>, <span class="kw">function</span>(<span class="kw">array</span> <span class="var">$args</span>): <span class="kw">int</span> { ... <span class="kw">return</span> <span class="num">0</span>; });
-<span class="var">$console</span>->run(<span class="var">$argv</span>);</code></pre>
+<span class="var">$console</span>->add(<span class="str">'db:migrate'</span>, <span class="kw">function</span>(<span class="kw">array</span> <span class="var">$args</span>, <span class="kw">array</span> <span class="var">$options</span>): <span class="kw">int</span> { ...
+    <span class="kw">return</span> <span class="num">0</span>;
+});
+<span class="var">$console</span>->run(<span class="var">$argv</span>);
+
+<span class="cm">// Options via PCRE: --flag, --key=value</span>
+php bin/atom db:migrate --force --env=production
+
+<span class="cm">// ANSI colored output: bold, green, yellow, cyan, red</span></code></pre>
 
 <h2 id="ref-env">.env support</h2>
 <pre><code><span class="cm">// .env file</span>
@@ -508,7 +551,7 @@ Regex::assert(<span class="str">'#valid_pattern#'</span>);           <span class
 │   ├── Middleware/{Pipeline,Cors,Csrf}.php
 │   ├── Routing/{Route,CompiledRoute,MatchedRoute,RouteCompiler,Router}.php
 │   ├── Support/{Regex,Logger}.php
-│   ├── Validation/Validator.php (+ 5 attribute classes)
+│   ├── Validation/Validator.php (+ 11 attribute classes)
 │   └── View/{Compiler,Engine,Template}.php
 ├── tests/                    <span class="cm"># 347 tests, 99%+ coverage</span>
 ├── public/index.php          <span class="cm"># front controller</span>

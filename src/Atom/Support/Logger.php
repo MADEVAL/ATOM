@@ -4,22 +4,28 @@ namespace Atom\Support;
 
 final class Logger
 {
-    public const DEBUG = 0;
-    public const INFO  = 1;
-    public const WARN  = 2;
-    public const ERROR = 3;
+    public const DEBUG     = 0;
+    public const INFO      = 1;
+    public const WARN      = 2;
+    public const ERROR     = 3;
+    public const CRITICAL  = 4;
+    public const ALERT     = 5;
+    public const EMERGENCY = 6;
 
-    private static array $levels = ['DEBUG', 'INFO', 'WARN', 'ERROR'];
+    private static array $levels = ['DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL', 'ALERT', 'EMERGENCY'];
 
     public function __construct(
         private string $file,
         private int $minLevel = self::DEBUG,
     ) {}
 
-    public function debug(string $msg, array $ctx = []): void { $this->log(self::DEBUG, $msg, $ctx); }
-    public function info(string $msg, array $ctx = []): void  { $this->log(self::INFO, $msg, $ctx); }
-    public function warn(string $msg, array $ctx = []): void  { $this->log(self::WARN, $msg, $ctx); }
-    public function error(string $msg, array $ctx = []): void { $this->log(self::ERROR, $msg, $ctx); }
+    public function debug(string $msg, array $ctx = []): void     { $this->log(self::DEBUG, $msg, $ctx); }
+    public function info(string $msg, array $ctx = []): void      { $this->log(self::INFO, $msg, $ctx); }
+    public function warn(string $msg, array $ctx = []): void      { $this->log(self::WARN, $msg, $ctx); }
+    public function error(string $msg, array $ctx = []): void     { $this->log(self::ERROR, $msg, $ctx); }
+    public function critical(string $msg, array $ctx = []): void  { $this->log(self::CRITICAL, $msg, $ctx); }
+    public function alert(string $msg, array $ctx = []): void     { $this->log(self::ALERT, $msg, $ctx); }
+    public function emergency(string $msg, array $ctx = []): void { $this->log(self::EMERGENCY, $msg, $ctx); }
 
     private function log(int $level, string $msg, array $ctx): void
     {

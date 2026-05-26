@@ -1,7 +1,7 @@
 # Atom Framework
 
-PHP 8.5 micro-framework. Single-regex router, PCRE template engine, DI, validation, sessions, database, logger, CLI, .env.
-571 lines, 29 classes, 99%+ coverage (347 tests).
+PHP 8.5 micro-framework. Single-regex router, PCRE template engine, DI, validation (11 attribute rules), sessions, database with transactions, PSR-compatible logger, CLI with options & colors, .env.
+396 tests, 584 assertions, 29 classes, 0 warnings.
 
 > Topic files: `routing.md`, `http.md`, `templates.md`, `validation.md`, `middleware.md`, `di.md`, `database.md`, `cli.md`, `logger.md`
 

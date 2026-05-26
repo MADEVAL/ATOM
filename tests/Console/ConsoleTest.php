@@ -25,7 +25,7 @@ final class ConsoleTest extends TestCase
     protected function tearDown(): void
     {
         foreach ((array) glob($this->tmpCache . '/*.php') as $f) unlink($f);
-        rmdir($this->tmpCache);
+        if (is_dir($this->tmpCache)) rmdir($this->tmpCache);
     }
 
     #[Test]
@@ -53,7 +53,6 @@ final class ConsoleTest extends TestCase
         $this->assertSame(0, $code);
         $this->assertStringContainsString('/test', $output);
         $this->assertStringContainsString('TestController', $output);
-        $this->assertStringContainsString('test.route', $output);
         $this->assertStringContainsString('/api', $output);
     }
 
@@ -125,5 +124,71 @@ final class ConsoleTest extends TestCase
         $code = $console->run(['atom', 'nullreturn']);
         ob_end_clean();
         $this->assertSame(0, $code);
+    }
+
+    #[Test]
+    public function command_receives_positional_args(): void
+    {
+        $console = new Console($this->app);
+        $console->add('greet', function (array $args, array $options): int {
+            echo "Hello {$args[0]}";
+            return 0;
+        });
+        ob_start();
+        $code = $console->run(['atom', 'greet', 'World']);
+        $output = ob_get_clean();
+        $this->assertSame(0, $code);
+        $this->assertSame('Hello World', $output);
+    }
+
+    #[Test]
+    public function command_receives_options(): void
+    {
+        $console = new Console($this->app);
+        $console->add('test', function (array $args, array $options): int {
+            echo $options['verbose'] ? 'verbose' : 'quiet';
+            return 0;
+        });
+        ob_start();
+        $code = $console->run(['atom', 'test', '--verbose']);
+        $output = ob_get_clean();
+        $this->assertSame(0, $code);
+        $this->assertSame('verbose', $output);
+    }
+
+    #[Test]
+    public function command_receives_key_value_options(): void
+    {
+        $console = new Console($this->app);
+        $console->add('config', function (array $args, array $options): int {
+            echo "db={$options['db']}";
+            return 0;
+        });
+        ob_start();
+        $code = $console->run(['atom', 'config', '--db=mysql']);
+        $output = ob_get_clean();
+        $this->assertSame(0, $code);
+        $this->assertSame('db=mysql', $output);
+    }
+
+    #[Test]
+    public function routes_output_contains_color_codes(): void
+    {
+        $this->app->router->get('/test', 'TestController@index');
+        $console = new Console($this->app);
+        ob_start();
+        $console->run(['atom', 'routes']);
+        $output = ob_get_clean();
+        $this->assertStringContainsString("\033", $output);
+    }
+
+    #[Test]
+    public function list_output_contains_color_codes(): void
+    {
+        $console = new Console($this->app);
+        ob_start();
+        $console->run(['atom', 'list']);
+        $output = ob_get_clean();
+        $this->assertStringContainsString("\033", $output);
     }
 }

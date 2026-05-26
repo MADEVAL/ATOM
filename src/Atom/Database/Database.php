@@ -45,6 +45,21 @@ final class Database
         return $this->pdo->lastInsertId();
     }
 
+    public function beginTransaction(): bool
+    {
+        return $this->pdo->beginTransaction();
+    }
+
+    public function commit(): bool
+    {
+        return $this->pdo->commit();
+    }
+
+    public function rollback(): bool
+    {
+        return $this->pdo->rollBack();
+    }
+
     public function raw(): PDO
     {
         return $this->pdo;

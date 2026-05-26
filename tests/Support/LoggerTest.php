@@ -77,5 +77,35 @@ final class LoggerTest extends TestCase
     {
         $this->assertGreaterThan(Logger::INFO, Logger::WARN);
         $this->assertGreaterThan(Logger::WARN, Logger::ERROR);
+        $this->assertGreaterThan(Logger::ERROR, Logger::CRITICAL);
+        $this->assertGreaterThan(Logger::CRITICAL, Logger::ALERT);
+        $this->assertGreaterThan(Logger::ALERT, Logger::EMERGENCY);
+    }
+
+    #[Test]
+    public function writes_critical(): void
+    {
+        $logger = new Logger($this->tmpFile);
+        $logger->critical('disk full');
+        $content = file_get_contents($this->tmpFile);
+        $this->assertStringContainsString('CRITICAL: disk full', $content);
+    }
+
+    #[Test]
+    public function writes_alert(): void
+    {
+        $logger = new Logger($this->tmpFile);
+        $logger->alert('system down');
+        $content = file_get_contents($this->tmpFile);
+        $this->assertStringContainsString('ALERT: system down', $content);
+    }
+
+    #[Test]
+    public function writes_emergency(): void
+    {
+        $logger = new Logger($this->tmpFile);
+        $logger->emergency('complete outage');
+        $content = file_get_contents($this->tmpFile);
+        $this->assertStringContainsString('EMERGENCY: complete outage', $content);
     }
 }

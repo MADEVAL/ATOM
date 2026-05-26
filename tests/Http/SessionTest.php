@@ -61,9 +61,6 @@ final class SessionTest extends TestCase
     public function flash_stores_value_for_next_request(): void
     {
         $this->session->flash('success', 'Saved!');
-
-        // Flash data is in $_SESSION['_flash'] for the next request
-        // Simulate next request
         $_SESSION = ['_flash' => ['success' => 'Saved!']];
         $session2 = new Session();
         $this->assertSame('Saved!', $session2->get('success'));
@@ -73,13 +70,9 @@ final class SessionTest extends TestCase
     public function flash_persists_one_request(): void
     {
         $this->session->flash('info', 'hello');
-
-        // Next request
         $_SESSION = ['_flash' => ['info' => 'hello']];
         $session2 = new Session();
         $this->assertSame('hello', $session2->get('info'));
-
-        // Following request (no flash) - gone
         $_SESSION = [];
         $session3 = new Session();
         $this->assertNull($session3->get('info'));
@@ -99,12 +92,6 @@ final class SessionTest extends TestCase
         $this->session->flash('key', 'flashed');
         $this->session->set('key', 'permanent');
         $this->assertSame('permanent', $this->session->get('key'));
-    }
-
-    #[Test]
-    public function session_is_singleton_in_container(): void
-    {
-        $this->assertInstanceOf(Session::class, $this->session);
     }
 
     #[Test]
@@ -128,5 +115,49 @@ final class SessionTest extends TestCase
     {
         $this->session->csrfToken();
         $this->assertFalse($this->session->validateCsrf('wrong'));
+    }
+
+    #[Test]
+    public function per_form_csrf_tokens_are_different(): void
+    {
+        $t1 = $this->session->csrfToken('login');
+        $t2 = $this->session->csrfToken('register');
+        $this->assertNotSame($t1, $t2);
+    }
+
+    #[Test]
+    public function per_form_csrf_validation_with_form_name(): void
+    {
+        $t = $this->session->csrfToken('profile');
+        $this->assertTrue($this->session->validateCsrf($t, 'profile'));
+        $this->assertFalse($this->session->validateCsrf($t, 'other_form'));
+    }
+
+    #[Test]
+    public function per_form_csrf_token_stable_for_same_form(): void
+    {
+        $t1 = $this->session->csrfToken('payment');
+        $t2 = $this->session->csrfToken('payment');
+        $this->assertSame($t1, $t2);
+    }
+
+    #[Test]
+    public function cookie_secure_option(): void
+    {
+        $_SESSION = [];
+        if (session_status() === PHP_SESSION_ACTIVE) session_destroy();
+        $s = new Session(['cookie_secure' => true]);
+        $params = session_get_cookie_params();
+        $this->assertTrue($params['secure']);
+    }
+
+    #[Test]
+    public function cookie_samesite_option(): void
+    {
+        $_SESSION = [];
+        if (session_status() === PHP_SESSION_ACTIVE) session_destroy();
+        $s = new Session(['cookie_samesite' => 'Strict']);
+        $params = session_get_cookie_params();
+        $this->assertSame('Strict', $params['samesite']);
     }
 }

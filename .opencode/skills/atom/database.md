@@ -38,7 +38,22 @@ $db->run('UPDATE users SET name = ? WHERE id = ?', ['New Name', 1]);
 $id = $db->lastId();
 
 // Raw PDO for advanced use
-$db->raw()->beginTransaction();
+$db->raw();
+
+// Transactions
+$db->beginTransaction();
+$db->run('UPDATE accounts SET balance = balance - 100 WHERE id = ?', [1]);
+$db->run('UPDATE accounts SET balance = balance + 100 WHERE id = ?', [2]);
+$db->commit();
+
+// Rollback on error
+try {
+    $db->beginTransaction();
+    // ...
+    $db->commit();
+} catch (\Throwable) {
+    $db->rollback();
+}
 ```
 
 ## Named parameters

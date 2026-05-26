@@ -108,14 +108,28 @@ class UserController {
 ## Session
 
 ```php
-$session = $app->container->make(Session::class);  // auto-started, singleton
+// Default: cookie_httponly=true, samesite=Lax, secure=false
+$session = $app->container->make(Session::class);
 
+// With custom cookie params
+$session = new Session(['cookie_secure' => true, 'cookie_samesite' => 'Strict']);
+
+// Standard operations
 $session->set('user_id', 42);
 $session->get('user_id');           // 42
 $session->has('user_id');           // true
 $session->remove('user_id');
 $session->flash('success', 'Saved!');  // next request only
 $session->regenerate();                // rotate session ID
-$token = $session->csrfToken();        // generates once, persists in session
-$session->validateCsrf($token);        // constant-time comparison
+
+// Global CSRF
+$token = $session->csrfToken();
+$session->validateCsrf($token);
+
+// Per-form CSRF — independent tokens for each form
+$loginToken = $session->csrfToken('login');
+$session->validateCsrf($loginToken, 'login');
+
+$payToken = $session->csrfToken('payment');
+$session->validateCsrf($payToken, 'payment');
 ```

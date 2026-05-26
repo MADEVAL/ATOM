@@ -52,6 +52,36 @@ $app->router->get('/users/{id}', 'UserController@show', 'user.show');
 echo $app->router->url('user.show', ['id' => 42]); // /users/42
 ```
 
+## Route name prefixing
+
+Nest routes with name prefixes for clean namespacing:
+
+```php
+$app->router->namePrefix('admin.', fn($r) => {
+    $r->get('/dashboard', 'AdminController@index', 'dashboard');
+    // Route name: admin.dashboard
+});
+echo $app->router->url('admin.dashboard'); // /dashboard
+
+// Nested prefixes
+$app->router->namePrefix('v1.', fn($r) => {
+    $r->namePrefix('users.', fn($r2) => {
+        $r2->get('/{id}', 'UserController@show', 'show');
+    });
+});
+echo $app->router->url('v1.users.show', ['id' => 5]); // /5
+```
+
+## Cache invalidation
+
+Routes are compiled once and cached to disk. Clear the cache when routes change:
+
+```php
+$app->router->clearCache();
+```
+
+Automatic: adding any route or calling `addPattern()` also invalidates the runtime cache.
+
 ## Attribute-based routing
 
 ```php

@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Atom\Tests\Validation;
 
-use Atom\Validation\{Required, Regex, Email, Min, Max, Validator, ValidationException};
+use Atom\Validation\{Required, Regex, Email, Min, Max, Integer, Between, In, Url, Nullable, Confirmed, Validator, ValidationException};
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -13,6 +13,12 @@ use PHPUnit\Framework\Attributes\Test;
 #[CoversClass(Email::class)]
 #[CoversClass(Min::class)]
 #[CoversClass(Max::class)]
+#[CoversClass(Integer::class)]
+#[CoversClass(Between::class)]
+#[CoversClass(In::class)]
+#[CoversClass(Url::class)]
+#[CoversClass(Nullable::class)]
+#[CoversClass(Confirmed::class)]
 #[CoversClass(ValidationException::class)]
 final class ValidatorTest extends TestCase
 {
@@ -137,7 +143,7 @@ final class ValidatorTest extends TestCase
             public string $email = '';
         };
         $errors = Validator::validate($dto);
-        $this->assertCount(1, $errors['email']); // Required stops Email check
+        $this->assertCount(1, $errors['email']);
     }
 
     #[Test]
@@ -185,5 +191,188 @@ final class ValidatorTest extends TestCase
         $dto = new class { #[Regex('#^\d+$#')] public string $code = ''; };
         $errors = Validator::validate($dto);
         $this->assertArrayNotHasKey('code', $errors);
+    }
+
+    // --- New attributes ---
+
+    #[Test]
+    public function integer_fails_for_non_integer(): void
+    {
+        $dto = new class { #[Integer] public string $age = 'abc'; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('age', $errors);
+    }
+
+    #[Test]
+    public function integer_passes_for_numeric_string(): void
+    {
+        $dto = new class { #[Integer] public string $count = '42'; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayNotHasKey('count', $errors);
+    }
+
+    #[Test]
+    public function integer_passes_for_int(): void
+    {
+        $dto = new class { #[Integer] public int $id = 7; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayNotHasKey('id', $errors);
+    }
+
+    #[Test]
+    public function integer_fails_for_float_string(): void
+    {
+        $dto = new class { #[Integer] public string $val = '3.14'; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('val', $errors);
+    }
+
+    #[Test]
+    public function between_fails_below_min(): void
+    {
+        $dto = new class { #[Between(5, 10)] public int $val = 3; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('val', $errors);
+    }
+
+    #[Test]
+    public function between_fails_above_max(): void
+    {
+        $dto = new class { #[Between(1, 5)] public int $val = 10; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('val', $errors);
+    }
+
+    #[Test]
+    public function between_passes_in_range(): void
+    {
+        $dto = new class { #[Between(1, 10)] public int $val = 5; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayNotHasKey('val', $errors);
+    }
+
+    #[Test]
+    public function between_passes_at_boundary(): void
+    {
+        $dto = new class { #[Between(3, 7)] public int $val = 3; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayNotHasKey('val', $errors);
+    }
+
+    #[Test]
+    public function in_fails_for_value_not_in_list(): void
+    {
+        $dto = new class { #[In(['a','b','c'])] public string $letter = 'z'; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('letter', $errors);
+    }
+
+    #[Test]
+    public function in_passes_for_value_in_list(): void
+    {
+        $dto = new class { #[In(['admin','user'])] public string $role = 'admin'; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayNotHasKey('role', $errors);
+    }
+
+    #[Test]
+    public function in_passes_for_int_in_list(): void
+    {
+        $dto = new class { #[In([1,2,3])] public int $num = 2; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayNotHasKey('num', $errors);
+    }
+
+    #[Test]
+    public function url_fails_for_invalid(): void
+    {
+        $dto = new class { #[Url] public string $link = 'not-a-url'; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('link', $errors);
+    }
+
+    #[Test]
+    public function url_passes_for_http(): void
+    {
+        $dto = new class { #[Url] public string $link = 'http://example.com'; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayNotHasKey('link', $errors);
+    }
+
+    #[Test]
+    public function url_passes_for_https(): void
+    {
+        $dto = new class { #[Url] public string $link = 'https://example.com/path?q=1'; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayNotHasKey('link', $errors);
+    }
+
+    #[Test]
+    public function nullable_skips_validation_when_null(): void
+    {
+        $dto = new class {
+            #[Nullable]
+            #[Email]
+            public ?string $email = null;
+        };
+        $errors = Validator::validate($dto);
+        $this->assertArrayNotHasKey('email', $errors);
+    }
+
+    #[Test]
+    public function nullable_validates_when_not_null(): void
+    {
+        $dto = new class {
+            #[Nullable]
+            #[Email]
+            public ?string $email = 'bad';
+        };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('email', $errors);
+    }
+
+    #[Test]
+    public function nullable_with_required_allows_null(): void
+    {
+        // Nullable + Required with null = Nullable wins, skip all validation
+        $dto = new class {
+            #[Required]
+            #[Nullable]
+            public ?string $name = null;
+        };
+        $errors = Validator::validate($dto);
+        $this->assertArrayNotHasKey('name', $errors);
+    }
+
+    #[Test]
+    public function confirmed_fails_when_mismatch(): void
+    {
+        $dto = new class {
+            #[Confirmed]
+            public string $password = 'secret';
+            public string $password_confirmation = 'different';
+        };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('password', $errors);
+    }
+
+    #[Test]
+    public function confirmed_passes_when_match(): void
+    {
+        $dto = new class {
+            #[Confirmed]
+            public string $password = 'secret';
+            public string $password_confirmation = 'secret';
+        };
+        $errors = Validator::validate($dto);
+        $this->assertArrayNotHasKey('password', $errors);
+    }
+
+    #[Test]
+    public function custom_message_on_any_attribute(): void
+    {
+        $dto = new class { #[Integer('Not a number')] public string $x = 'nope'; };
+        $errors = Validator::validate($dto);
+        $this->assertContains('Not a number', $errors['x']);
     }
 }

@@ -94,4 +94,41 @@ final class DatabaseTest extends TestCase
         $rows = $this->db->all('SELECT * FROM users WHERE name = ?', ['Nobody']);
         $this->assertEmpty($rows);
     }
+
+    #[Test]
+    public function transaction_commit_persists(): void
+    {
+        $this->db->beginTransaction();
+        $this->db->run('INSERT INTO users (name) VALUES (?)', ['InTx']);
+        $this->db->commit();
+
+        $row = $this->db->one('SELECT * FROM users WHERE name = ?', ['InTx']);
+        $this->assertNotNull($row);
+        $this->assertSame('InTx', $row['name']);
+    }
+
+    #[Test]
+    public function transaction_rollback_discards(): void
+    {
+        $this->db->beginTransaction();
+        $this->db->run('INSERT INTO users (name) VALUES (?)', ['RolledBack']);
+        $this->db->rollback();
+
+        $row = $this->db->one('SELECT * FROM users WHERE name = ?', ['RolledBack']);
+        $this->assertNull($row);
+    }
+
+    #[Test]
+    public function single_returns_false_when_empty(): void
+    {
+        $result = $this->db->single('SELECT name FROM users WHERE name = ?', ['Nobody']);
+        $this->assertFalse($result);
+    }
+
+    #[Test]
+    public function run_returns_zero_when_no_rows_affected(): void
+    {
+        $affected = $this->db->run('UPDATE users SET name = ? WHERE name = ?', ['X', 'Nobody']);
+        $this->assertSame(0, $affected);
+    }
 }

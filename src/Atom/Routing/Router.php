@@ -17,6 +17,7 @@ final class Router
     private array $patterns = [];
     private array $groupMiddleware = [];
     private string $groupPrefix = '';
+    private string $groupNamePrefix = '';
 
     public function __construct(
         private readonly Container $container,
@@ -34,13 +35,25 @@ final class Router
 
     public function group(string $prefix, array $middleware, callable $fn): self
     {
-        $prevPrefix = $this->groupPrefix;
-        $prevMw     = $this->groupMiddleware;
+        $prevPrefix     = $this->groupPrefix;
+        $prevMw         = $this->groupMiddleware;
+        $prevNamePrefix = $this->groupNamePrefix;
         $this->groupPrefix     = $prevPrefix . $prefix;
         $this->groupMiddleware = [...$prevMw, ...$middleware];
+        $this->groupNamePrefix = $prevNamePrefix;
         $fn($this);
         $this->groupPrefix     = $prevPrefix;
         $this->groupMiddleware = $prevMw;
+        $this->groupNamePrefix = $prevNamePrefix;
+        return $this;
+    }
+
+    public function namePrefix(string $prefix, callable $fn): self
+    {
+        $prev = $this->groupNamePrefix;
+        $this->groupNamePrefix = $prev . $prefix;
+        $fn($this);
+        $this->groupNamePrefix = $prev;
         return $this;
     }
 
@@ -50,7 +63,7 @@ final class Router
         $this->routes[] = new CompiledRoute(
             path:       $this->groupPrefix . $path,
             methods:    [strtoupper($method)],
-            name:       $name,
+            name:       $this->groupNamePrefix . $name,
             middleware: [...$this->groupMiddleware, ...$mw],
             controller: $controller,
             action:     $action,
@@ -71,11 +84,17 @@ final class Router
         [$controller, $action] = explode('@', $h, 2) + [1 => '__invoke'];
         $this->routes[] = new CompiledRoute(
             path: $this->groupPrefix . $p, methods: array_map(strtoupper(...), $methods),
-            name: $n, middleware: [...$this->groupMiddleware, ...$mw],
+            name: $this->groupNamePrefix . $n, middleware: [...$this->groupMiddleware, ...$mw],
             controller: $controller, action: $action,
         );
         $this->compiled = null;
         return $this;
+    }
+
+    public function clearCache(): void
+    {
+        if (is_file($this->cacheFile)) unlink($this->cacheFile);
+        $this->compiled = null;
     }
 
     public function loadFromAttributes(string $directory): self

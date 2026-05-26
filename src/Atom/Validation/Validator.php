@@ -36,6 +36,42 @@ final readonly class Max
     public function __construct(public int $value, public string $message = 'Too long') {}
 }
 
+#[Attribute(Attribute::TARGET_PROPERTY)]
+final readonly class Integer
+{
+    public function __construct(public string $message = 'Must be an integer') {}
+}
+
+#[Attribute(Attribute::TARGET_PROPERTY)]
+final readonly class Between
+{
+    public function __construct(public int $min, public int $max, public string $message = 'Out of range') {}
+}
+
+#[Attribute(Attribute::TARGET_PROPERTY)]
+final readonly class In
+{
+    /** @param list<string|int> $values */
+    public function __construct(public array $values, public string $message = 'Invalid value') {}
+}
+
+#[Attribute(Attribute::TARGET_PROPERTY)]
+final readonly class Url
+{
+    public function __construct(public string $message = 'Invalid URL') {}
+}
+
+#[Attribute(Attribute::TARGET_PROPERTY)]
+final readonly class Nullable
+{
+}
+
+#[Attribute(Attribute::TARGET_PROPERTY)]
+final readonly class Confirmed
+{
+    public function __construct(public string $message = 'Confirmation does not match') {}
+}
+
 final class Validator
 {
     /** @return array<string,list<string>> empty = valid */
@@ -46,6 +82,9 @@ final class Validator
         foreach ($ref->getProperties() as $prop) {
             $value = $prop->getValue($dto);
             $name  = $prop->getName();
+
+            $isNullable = $prop->getAttributes(Nullable::class) !== [];
+            if ($isNullable && $value === null) continue;
 
             foreach ($prop->getAttributes(Required::class) as $attr) {
                 /** @var Required $r */
@@ -73,6 +112,14 @@ final class Validator
                 }
             }
 
+            foreach ($prop->getAttributes(Integer::class) as $attr) {
+                /** @var Integer $r */
+                $r = $attr->newInstance();
+                if (Pcre::match('/^-?\d+$/', (string) $value) === null) {
+                    $errors[$name][] = $r->message;
+                }
+            }
+
             foreach ($prop->getAttributes(Min::class) as $attr) {
                 /** @var Min $r */
                 $r = $attr->newInstance();
@@ -85,6 +132,41 @@ final class Validator
                 /** @var Max $r */
                 $r = $attr->newInstance();
                 if (is_numeric($value) ? (float) $value > $r->value : strlen((string) $value) > $r->value) {
+                    $errors[$name][] = $r->message;
+                }
+            }
+
+            foreach ($prop->getAttributes(Between::class) as $attr) {
+                /** @var Between $r */
+                $r = $attr->newInstance();
+                $num = is_numeric($value) ? (float) $value : strlen((string) $value);
+                if ($num < $r->min || $num > $r->max) {
+                    $errors[$name][] = $r->message;
+                }
+            }
+
+            foreach ($prop->getAttributes(In::class) as $attr) {
+                /** @var In $r */
+                $r = $attr->newInstance();
+                if (!in_array($value, $r->values, true)) {
+                    $errors[$name][] = $r->message;
+                }
+            }
+
+            foreach ($prop->getAttributes(Url::class) as $attr) {
+                /** @var Url $r */
+                $r = $attr->newInstance();
+                if (Pcre::match('~^https?://[^\s/$.?#].[^\s]*$~i', (string) $value) === null) {
+                    $errors[$name][] = $r->message;
+                }
+            }
+
+            foreach ($prop->getAttributes(Confirmed::class) as $attr) {
+                /** @var Confirmed $r */
+                $r = $attr->newInstance();
+                $confirmProp = $ref->getProperty($name . '_confirmation');
+                $confirmVal  = $confirmProp->getValue($dto);
+                if ($value !== $confirmVal) {
                     $errors[$name][] = $r->message;
                 }
             }

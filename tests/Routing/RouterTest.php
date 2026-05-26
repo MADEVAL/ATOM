@@ -477,4 +477,67 @@ final class RouterTest extends TestCase
         $reqPut = new Request(server: ['REQUEST_METHOD' => 'PUT', 'REQUEST_URI' => '/multi']);
         $this->assertSame(404, $this->router->dispatch($reqPut)->getStatusCode());
     }
+
+    #[Test]
+    public function name_prefix_prepends_to_route_names(): void
+    {
+        $this->router->namePrefix('admin.', function (Router $r) {
+            $r->get('/dashboard', 'AdminController@index', 'dashboard');
+        });
+
+        $req = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/dashboard']);
+        $this->container->bind('AdminController', fn() => new class {
+            public function index(): string { return 'admin'; }
+        });
+        $res = $this->router->dispatch($req);
+        $this->assertStringContainsString('admin', $res->getContent());
+
+        $url = $this->router->url('admin.dashboard');
+        $this->assertSame('/dashboard', $url);
+    }
+
+    #[Test]
+    public function name_prefix_nested(): void
+    {
+        $this->router->namePrefix('v1.', function (Router $r) {
+            $r->namePrefix('users.', function (Router $r2) {
+                $r2->get('/users', 'UserController@list', 'list');
+            });
+        });
+
+        $url = $this->router->url('v1.users.list');
+        $this->assertSame('/users', $url);
+    }
+
+    #[Test]
+    public function clear_cache_removes_cache_file(): void
+    {
+        $this->router->get('/test', 'TestController@index');
+        $req = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/test']);
+        $this->container->bind('TestController', fn() => new class {
+            public function index(): string { return 'hit'; }
+        });
+
+        // Dispatch to populate cache
+        $this->router->dispatch($req);
+        $cacheFile = $this->tmpCacheDir . '/routes.php';
+        $this->assertFileExists($cacheFile);
+
+        $this->router->clearCache();
+        $this->assertFileDoesNotExist($cacheFile);
+    }
+
+    #[Test]
+    public function group_preserves_name_prefix_independence(): void
+    {
+        $this->router->namePrefix('a.', function (Router $r) {
+            $r->get('/x', 'XController@x', 'x');
+        });
+        $this->router->namePrefix('b.', function (Router $r) {
+            $r->get('/y', 'YController@y', 'y');
+        });
+
+        $this->assertSame('/x', $this->router->url('a.x'));
+        $this->assertSame('/y', $this->router->url('b.y'));
+    }
 }

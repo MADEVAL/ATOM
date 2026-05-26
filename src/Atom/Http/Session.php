@@ -6,9 +6,19 @@ final class Session
 {
     private array $flashed = [];
 
-    public function __construct()
-    {
+    /** @param array{cookie_secure?:bool,cookie_httponly?:bool,cookie_samesite?:string} $options */
+    public function __construct(
+        private array $options = [],
+    ) {
         if (session_status() === PHP_SESSION_NONE) {
+            $opts = $this->options;
+            if (isset($opts['cookie_secure']) || isset($opts['cookie_httponly']) || isset($opts['cookie_samesite'])) {
+                session_set_cookie_params([
+                    'secure'   => $opts['cookie_secure'] ?? false,
+                    'httponly' => $opts['cookie_httponly'] ?? true,
+                    'samesite' => $opts['cookie_samesite'] ?? 'Lax',
+                ]);
+            }
             session_start();
         }
         $this->flashed = $_SESSION['_flash'] ?? [];
@@ -45,16 +55,17 @@ final class Session
         session_regenerate_id($deleteOld);
     }
 
-    public function csrfToken(): string
+    public function csrfToken(string $form = ''): string
     {
-        if (!isset($_SESSION['_csrf'])) {
-            $_SESSION['_csrf'] = bin2hex(random_bytes(32));
+        $key = $form !== '' ? "_csrf_{$form}" : '_csrf';
+        if (!isset($_SESSION[$key])) {
+            $_SESSION[$key] = bin2hex(random_bytes(32));
         }
-        return $_SESSION['_csrf'];
+        return $_SESSION[$key];
     }
 
-    public function validateCsrf(string $token): bool
+    public function validateCsrf(string $token, string $form = ''): bool
     {
-        return hash_equals($this->csrfToken(), $token);
+        return hash_equals($this->csrfToken($form), $token);
     }
 }

@@ -3,11 +3,21 @@ declare(strict_types=1);
 namespace Atom\Console;
 
 use Atom\Application;
+use Atom\Support\Regex;
 use ReflectionClass;
 
 final class Console
 {
     private array $commands = [];
+
+    private const COLOR = [
+        'reset'  => "\033[0m",
+        'bold'   => "\033[1m",
+        'green'  => "\033[32m",
+        'yellow' => "\033[33m",
+        'cyan'   => "\033[36m",
+        'red'    => "\033[31m",
+    ];
 
     public function __construct(
         private Application $app,
@@ -22,22 +32,35 @@ final class Console
     public function run(array $argv): int
     {
         $cmd = $argv[1] ?? 'list';
+        $args = array_slice($argv, 2);
+
+        // Parse options: --flag and --key=value
+        $options = [];
+        $positional = [];
+        foreach ($args as $arg) {
+            if ($m = Regex::match('#^--([a-zA-Z][a-zA-Z0-9_-]*)(?:=(.+))?$#', $arg)) {
+                $options[$m[1]] = $m[2] ?? true;
+            } else {
+                $positional[] = $arg;
+            }
+        }
+
         return match ($cmd) {
             'list'    => $this->listCommands(),
             'routes'  => $this->listRoutes(),
             'cache'   => $this->clearCache(),
-            default   => $this->executeCommand($cmd, array_slice($argv, 2)),
+            default   => $this->executeCommand($cmd, $positional, $options),
         };
     }
 
     private function listCommands(): int
     {
-        echo "Atom CLI\n\n";
-        echo "  list        Show available commands\n";
-        echo "  routes      List registered routes\n";
-        echo "  cache       Clear compiled cache\n";
+        $this->out('bold', "Atom CLI\n");
+        $this->out('cyan', "  list        Show available commands\n");
+        $this->out('cyan', "  routes      List registered routes\n");
+        $this->out('cyan', "  cache       Clear compiled cache\n");
         foreach (array_keys($this->commands) as $name) {
-            echo "  {$name}\n";
+            $this->out('green', "  {$name}\n");
         }
         return 0;
     }
@@ -48,14 +71,14 @@ final class Console
             $ref = new ReflectionClass($this->app->router);
             $routes = $ref->getProperty('routes')->getValue($this->app->router);
         } catch (\ReflectionException $e) {
-            echo "Error: cannot read routes - {$e->getMessage()}\n";
+            $this->out('red', "Error: cannot read routes - {$e->getMessage()}\n");
             return 1;
         }
         if ($routes === []) { echo "No routes registered.\n"; return 0; }
 
         foreach ($routes as $r) {
-            $methods = implode('|', $r->methods);
-            $name = $r->name !== '' ? " [{$r->name}]" : '';
+            $methods = $this->color('yellow', implode('|', $r->methods));
+            $name = $r->name !== '' ? $this->color('green', " [{$r->name}]") : '';
             echo "  {$methods}  {$r->path}  → {$r->controller}@{$r->action}{$name}\n";
         }
         return 0;
@@ -64,22 +87,35 @@ final class Console
     private function clearCache(): int
     {
         $dir = $this->app->config->cacheDir;
-        if ($dir === '' || !is_dir($dir)) { echo "No cache dir configured.\n"; return 1; }
+        if ($dir === '' || !is_dir($dir)) {
+            $this->out('yellow', "No cache dir configured.\n");
+            return 1;
+        }
         $count = 0;
         foreach ((array) glob($dir . '/*.php') as $f) {
             unlink($f);
             $count++;
         }
-        echo "Cleared {$count} cached file(s).\n";
+        $this->out('green', "Cleared {$count} cached file(s).\n");
         return 0;
     }
 
-    private function executeCommand(string $name, array $args): int
+    private function executeCommand(string $name, array $args, array $options): int
     {
         if (!isset($this->commands[$name])) {
-            echo "Unknown command: {$name}\n";
+            $this->out('red', "Unknown command: {$name}\n");
             return 1;
         }
-        return ($this->commands[$name])($args) ?? 0;
+        return ($this->commands[$name])($args, $options) ?? 0;
+    }
+
+    private function color(string $c, string $text): string
+    {
+        return (self::COLOR[$c] ?? '') . $text . self::COLOR['reset'];
+    }
+
+    private function out(string $c, string $text): void
+    {
+        echo $this->color($c, $text);
     }
 }
