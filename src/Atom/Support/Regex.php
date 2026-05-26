@@ -23,9 +23,9 @@ final readonly class Regex
         return $r ?? throw new \RuntimeException('PCRE error: ' . preg_last_error_msg());
     }
 
-    public static function split(string $pattern, string $subject): array
+    public static function split(string $pattern, string $subject, int $flags = PREG_SPLIT_NO_EMPTY): array
     {
-        return preg_split($pattern, $subject, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        return preg_split($pattern, $subject, -1, $flags) ?: [];
     }
 
     public static function quote(string $str): string

@@ -14,9 +14,9 @@ final readonly class RouteCompiler
     ];
 
     /**
-     * @param Route[] $routes  список маршрутов с уже сохранёнными controller/action
+     * @param CompiledRoute[] $routes
      * @param array<string,string> $extraPatterns
-     * @return array{regex:string, map:array<int, array{controller:string,action:string,name:string,middleware:array,route:Route}>}
+     * @return array{regex:string, map:array}
      */
     public function compile(array $routes, array $extraPatterns = []): array
     {
@@ -26,7 +26,7 @@ final readonly class RouteCompiler
         $id    = 0;
 
         foreach ($routes as $route) {
-            // Превращаем "/users/{id:\d+}" в "/users/(?<id>\d+)"
+            // Split path into literal segments and parameter placeholders, quote literals
             $compiled = Regex::replace(
                 '#\{([a-zA-Z_][a-zA-Z0-9_]*)(?::([^}]+))?\}#',
                 function (array $m) use ($patterns): string {
@@ -37,8 +37,14 @@ final readonly class RouteCompiler
                 },
                 $route->path,
             );
-
-            // Экранируем слеши и собираем альтернативу с маркером (*:N)
+            // Escape PCRE meta-chars in literal parts (outside (?<name>...) groups)
+            $segments = Regex::split('#(\(\?<[^>]+>[^)]*\)|\(\?:)#', $compiled, PREG_SPLIT_DELIM_CAPTURE);
+            $compiled = implode(array_map(
+                fn(string $s, int $i): string => $i % 2 === 0 ? preg_quote($s, '#') : $s,
+                $segments,
+                array_keys($segments),
+            ));
+            // Escape slashes
             $regex = Regex::replace('#(?<!\\\\)/#', '\\/', $compiled);
             foreach ($route->methods as $method) {
                 $parts[] = "(?<METHOD>{$method}){$regex}(*:{$id})";
@@ -53,7 +59,6 @@ final readonly class RouteCompiler
             }
         }
 
-        // Используем branch reset (?|...) чтобы именованные группы работали единообразно
         $regex = '#^(?|' . implode('|', $parts) . ')$#xs';
         Regex::assert($regex);
 

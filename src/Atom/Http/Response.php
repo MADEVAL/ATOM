@@ -2,6 +2,8 @@
 declare(strict_types=1);
 namespace Atom\Http;
 
+use Atom\Support\Regex;
+
 final class Response
 {
     private string $content = '';
@@ -49,7 +51,10 @@ final class Response
     {
         if (!headers_sent()) {
             http_response_code($this->status->value);
-            foreach ($this->headers as $k => $v) header("{$k}: {$v}");
+            foreach ($this->headers as $k => $v) {
+                $v = Regex::replace('#[\r\n]+#', ' ', $v);
+                header("{$k}: {$v}");
+            }
         }
         echo $this->content;
     }

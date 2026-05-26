@@ -198,4 +198,17 @@ final class PipelineTest extends TestCase
         $response = Pipeline::run(['mw1', $mw2], $req, $core, $container);
         $this->assertSame('ABCBA', $response->getContent());
     }
+
+    #[Test]
+    public function run_with_closure_middleware(): void
+    {
+        $container = new Container();
+        $core = fn(Request $req): Response => new Response('core');
+
+        $mw = fn(Request $req, \Closure $next): Response => new Response('[' . $next($req)->getContent() . ']');
+
+        $req = new Request();
+        $response = Pipeline::run([$mw], $req, $core, $container);
+        $this->assertSame('[core]', $response->getContent());
+    }
 }

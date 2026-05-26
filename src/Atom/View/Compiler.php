@@ -99,6 +99,7 @@ final readonly class Compiler
             return $v;
         }
         // a.b.c -> $this->ctx['a']['b']['c']
+        // a.0 -> $this->ctx['a'][0]
         $parts = explode('.', $v, 2);
         if (count($parts) === 1) {
             return "\$this->ctx['{$parts[0]}']";
@@ -106,7 +107,7 @@ final readonly class Compiler
         $result = "\$this->ctx['{$parts[0]}']";
         $result .= Regex::replace(
             '#\.(\w+)#',
-            fn($m) => "['{$m[1]}']",
+            fn($m) => ctype_digit($m[1]) ? "[{$m[1]}]" : "['{$m[1]}']",
             '.' . $parts[1],
         );
         return $result;

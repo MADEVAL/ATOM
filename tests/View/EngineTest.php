@@ -326,6 +326,21 @@ final class EngineTest extends TestCase
     }
 
     #[Test]
+    public function render_nonexistent_template_throws(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Template not found');
+        $this->engine->render('does_not_exist.twig', []);
+    }
+
+    #[Test]
+    public function render_path_traversal_blocked(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->engine->render('../outside.twig', []);
+    }
+
+    #[Test]
     public function render_for_loop_with_key_value(): void
     {
         file_put_contents($this->tmpViewsDir . '/kv.twig', '{% for key, val in data %}{{ key }}:{{ val }};{% endfor %}');

@@ -3,29 +3,31 @@ declare(strict_types=1);
 namespace Atom;
 
 use Atom\Container\Container;
-use Atom\Http\{Request, Response};
+use Atom\Http\{Request, Response, StatusCode};
 use Atom\Routing\Router;
 use Atom\View\Engine as ViewEngine;
 
 final class Application
 {
     public readonly Container $container;
-    public readonly Router    $router;
+    public readonly Router $router;
     public readonly ViewEngine $view;
 
-    private array $booted = [];
-
-    public function __construct(array $config = [])
-    {
+    public function __construct(
+        public readonly Config $config = new Config,
+    ) {
         $this->container = new Container();
-        $this->router    = new Router($this->container, $config['cache_dir']  ?? sys_get_temp_dir() . '/atom');
-        $this->view      = new ViewEngine($config['views_dir'] ?? __DIR__ . '/../../views',
-                                          $config['cache_dir'] ?? sys_get_temp_dir() . '/atom/views');
+        $this->router    = new Router($this->container, $config->cacheDir ?: sys_get_temp_dir() . '/atom');
+        $this->view      = new ViewEngine(
+            $config->viewsDir ?: __DIR__ . '/../../views',
+            $config->cacheDir ?: sys_get_temp_dir() . '/atom/views',
+        );
 
-        $this->container->instance(self::class,    $this);
+        $this->container->instance(self::class, $this);
         $this->container->instance(Container::class, $this->container);
-        $this->container->instance(Router::class,  $this->router);
+        $this->container->instance(Router::class, $this->router);
         $this->container->instance(ViewEngine::class, $this->view);
+        $this->container->instance(Config::class, $config);
     }
 
     public function run(?Request $request = null): void
@@ -36,10 +38,9 @@ final class Application
         try {
             $response = $this->router->dispatch($req);
         } catch (\Throwable $e) {
-            $response = new Response(
-                "Server Error: {$e->getMessage()}\n{$e->getTraceAsString()}",
-                \Atom\Http\StatusCode::SERVER_ERROR,
-            );
+            $response = $this->config->debug
+                ? new Response("Server Error: {$e->getMessage()}\n{$e->getTraceAsString()}", StatusCode::SERVER_ERROR)
+                : new Response('', StatusCode::SERVER_ERROR);
         }
         $response->send();
     }

@@ -39,13 +39,17 @@ final class Engine
     public function load(string $template): string
     {
         $src  = $this->viewsDir . '/' . ltrim($template, '/');
-        $hash = sha1($src);
+        $real = realpath($src);
+        if ($real === false || !str_starts_with(strtr($real, '\\', '/'), strtr(realpath($this->viewsDir), '\\', '/') . '/')) {
+            throw new \RuntimeException("Template not found: {$template}");
+        }
+        $hash = sha1($real);
         $cls  = 'AtomTemplate_' . $hash;
         $file = $this->cacheDir . '/' . $hash . '.php';
 
-        if (!is_file($file) || filemtime($file) < filemtime($src)) {
+        if (!is_file($file) || filemtime($file) < filemtime($real)) {
             $compiler = new Compiler($this);
-            $code = $compiler->compile(file_get_contents($src), $cls, $template);
+            $code = $compiler->compile(file_get_contents($real), $cls, $template);
             @mkdir(dirname($file), 0777, true);
             file_put_contents($file, $code);
         }

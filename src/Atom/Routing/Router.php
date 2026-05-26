@@ -68,8 +68,10 @@ final class Router
     {
         foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory)) as $file) {
             if (!$file->isFile() || $file->getExtension() !== 'php') continue;
-            $class = $this->classFromFile($file->getPathname());
+            $path = $file->getPathname();
+            $class = $this->classFromFile($path);
             if ($class === null) continue;
+            require_once $path;
             $ref = new ReflectionClass($class);
             foreach ($ref->getMethods(ReflectionMethod::IS_PUBLIC) as $m) {
                 foreach ($m->getAttributes(Route::class) as $attr) {
@@ -89,9 +91,11 @@ final class Router
     public function dispatch(Request $request): Response
     {
         $compiled = $this->getCompiled();
+        if (empty($compiled['map'])) {
+            return new Response('Not Found', StatusCode::NOT_FOUND);
+        }
         $uri = strtok($request->uri, '?') ?: '/';
 
-        // Ключевая магия: один preg_match на все маршруты
         if (!preg_match($compiled['regex'], $request->method . $uri, $m)) {
             return new Response('Not Found', StatusCode::NOT_FOUND);
         }
@@ -133,22 +137,30 @@ final class Router
     {
         if ($this->compiled !== null) return $this->compiled;
         if (is_file($this->cacheFile)) {
-            $cached = unserialize(file_get_contents($this->cacheFile));
+            $cached = require $this->cacheFile;
             if (is_array($cached) && isset($cached['regex'], $cached['map'])) {
                 return $this->compiled = $cached;
             }
         }
         $this->compiled = (new RouteCompiler())->compile($this->routes, $this->patterns);
-        @file_put_contents($this->cacheFile, serialize($this->compiled));
+        $export = $this->compiled;
+        // Strip route objects from map — not serializable, not needed for dispatch
+        foreach ($export['map'] as &$entry) unset($entry['route']);
+        @file_put_contents(
+            $this->cacheFile,
+            "<?php\nreturn " . var_export($export, true) . ";\n",
+        );
         return $this->compiled;
     }
 
     private function classFromFile(string $file): ?string
     {
         $code = file_get_contents($file);
-        $ns   = Regex::match('#^\s*namespace\s+([^;]+);#m', $code)[1] ?? '';
-        $cls  = Regex::match('#class\s+([A-Za-z_][A-Za-z0-9_]*)#', $code)[1] ?? null;
-        return $cls ? ($ns ? $ns . '\\' . $cls : $cls) : null;
+        $nsMatch = Regex::match('#^\s*namespace\s+([^;]+);#m', $code);
+        $ns = $nsMatch !== null ? $nsMatch[1] : '';
+        $clsMatch = Regex::match('#class\s+([A-Za-z_][A-Za-z0-9_]*)#', $code);
+        $cls = $clsMatch !== null ? $clsMatch[1] : null;
+        return $cls !== null ? ($ns !== '' ? $ns . '\\' . $cls : $cls) : null;
     }
 }
 

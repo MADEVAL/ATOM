@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace Atom\Tests;
 
 use Atom\Application;
+use Atom\Config;
 use Atom\Http\Request;
 use Atom\Http\Response;
 use Atom\View\Engine as ViewEngine;
@@ -11,6 +12,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 
 #[CoversClass(Application::class)]
+#[CoversClass(Config::class)]
 final class ApplicationTest extends TestCase
 {
     private string $tmpDir;
@@ -41,47 +43,48 @@ final class ApplicationTest extends TestCase
         rmdir($dir);
     }
 
+    private function makeApp(bool $debug = false): Application
+    {
+        return new Application(new Config(
+            debug: $debug,
+            cacheDir: $this->tmpDir,
+            viewsDir: $this->tmpViewsDir,
+        ));
+    }
+
     #[Test]
     public function application_creates_container(): void
     {
-        $app = new Application([
-            'views_dir' => $this->tmpViewsDir,
-            'cache_dir' => $this->tmpDir,
-        ]);
-
+        $app = $this->makeApp();
         $this->assertInstanceOf(\Atom\Container\Container::class, $app->container);
     }
 
     #[Test]
     public function application_creates_router(): void
     {
-        $app = new Application([
-            'views_dir' => $this->tmpViewsDir,
-            'cache_dir' => $this->tmpDir,
-        ]);
-
+        $app = $this->makeApp();
         $this->assertInstanceOf(\Atom\Routing\Router::class, $app->router);
     }
 
     #[Test]
     public function application_creates_view_engine(): void
     {
-        $app = new Application([
-            'views_dir' => $this->tmpViewsDir,
-            'cache_dir' => $this->tmpDir,
-        ]);
-
+        $app = $this->makeApp();
         $this->assertInstanceOf(ViewEngine::class, $app->view);
+    }
+
+    #[Test]
+    public function application_stores_config(): void
+    {
+        $app = $this->makeApp();
+        $this->assertInstanceOf(Config::class, $app->config);
+        $this->assertFalse($app->config->debug);
     }
 
     #[Test]
     public function application_registers_self_in_container(): void
     {
-        $app = new Application([
-            'views_dir' => $this->tmpViewsDir,
-            'cache_dir' => $this->tmpDir,
-        ]);
-
+        $app = $this->makeApp();
         $resolved = $app->container->make(Application::class);
         $this->assertSame($app, $resolved);
     }
@@ -89,11 +92,7 @@ final class ApplicationTest extends TestCase
     #[Test]
     public function application_registers_container_in_container(): void
     {
-        $app = new Application([
-            'views_dir' => $this->tmpViewsDir,
-            'cache_dir' => $this->tmpDir,
-        ]);
-
+        $app = $this->makeApp();
         $resolved = $app->container->make(\Atom\Container\Container::class);
         $this->assertSame($app->container, $resolved);
     }
@@ -101,11 +100,7 @@ final class ApplicationTest extends TestCase
     #[Test]
     public function application_registers_router_in_container(): void
     {
-        $app = new Application([
-            'views_dir' => $this->tmpViewsDir,
-            'cache_dir' => $this->tmpDir,
-        ]);
-
+        $app = $this->makeApp();
         $resolved = $app->container->make(\Atom\Routing\Router::class);
         $this->assertSame($app->router, $resolved);
     }
@@ -113,11 +108,7 @@ final class ApplicationTest extends TestCase
     #[Test]
     public function application_registers_view_in_container(): void
     {
-        $app = new Application([
-            'views_dir' => $this->tmpViewsDir,
-            'cache_dir' => $this->tmpDir,
-        ]);
-
+        $app = $this->makeApp();
         $resolved = $app->container->make(ViewEngine::class);
         $this->assertSame($app->view, $resolved);
     }
@@ -125,11 +116,7 @@ final class ApplicationTest extends TestCase
     #[Test]
     public function run_dispatches_request(): void
     {
-        $app = new Application([
-            'views_dir' => $this->tmpViewsDir,
-            'cache_dir' => $this->tmpDir,
-        ]);
-
+        $app = $this->makeApp();
         $app->router->get('/hello', 'HelloController@say');
         $app->container->bind('HelloController', fn() => new class {
             public function say(): string { return 'Hello from app'; }
@@ -147,17 +134,12 @@ final class ApplicationTest extends TestCase
     #[Test]
     public function run_captures_request_if_none_given(): void
     {
-        $app = new Application([
-            'views_dir' => $this->tmpViewsDir,
-            'cache_dir' => $this->tmpDir,
-        ]);
-
+        $app = $this->makeApp();
         $app->router->get('/', 'HomeController@index');
         $app->container->bind('HomeController', fn() => new class {
             public function index(): string { return 'home'; }
         });
 
-        // Override globals to simulate a request
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['REQUEST_URI'] = '/';
 
@@ -169,13 +151,9 @@ final class ApplicationTest extends TestCase
     }
 
     #[Test]
-    public function run_handles_exception_as_500(): void
+    public function run_handles_exception_as_500_in_debug(): void
     {
-        $app = new Application([
-            'views_dir' => $this->tmpViewsDir,
-            'cache_dir' => $this->tmpDir,
-        ]);
-
+        $app = $this->makeApp(debug: true);
         $app->router->get('/crash', 'CrashController@boom');
         $app->container->bind('CrashController', fn() => new class {
             public function boom(): never { throw new \RuntimeException('Test crash'); }
@@ -192,13 +170,29 @@ final class ApplicationTest extends TestCase
     }
 
     #[Test]
+    public function run_hides_exception_details_in_production(): void
+    {
+        $app = $this->makeApp(debug: false);
+        $app->router->get('/crash', 'CrashController@boom');
+        $app->container->bind('CrashController', fn() => new class {
+            public function boom(): never { throw new \RuntimeException('secret info'); }
+        });
+
+        $req = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/crash']);
+
+        ob_start();
+        $app->run($req);
+        $output = ob_get_clean();
+
+        $this->assertStringNotContainsString('secret info', $output);
+        $this->assertStringNotContainsString('Server Error', $output);
+        $this->assertEmpty($output);
+    }
+
+    #[Test]
     public function run_sets_request_in_container(): void
     {
-        $app = new Application([
-            'views_dir' => $this->tmpViewsDir,
-            'cache_dir' => $this->tmpDir,
-        ]);
-
+        $app = $this->makeApp();
         $req = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/']);
         $app->router->get('/', 'ReqController@check');
 
@@ -226,11 +220,7 @@ final class ApplicationTest extends TestCase
     {
         file_put_contents($this->tmpViewsDir . '/welcome.twig', '<h1>{{ title }}</h1>');
 
-        $app = new Application([
-            'views_dir' => $this->tmpViewsDir,
-            'cache_dir' => $this->tmpDir,
-        ]);
-
+        $app = $this->makeApp();
         $app->router->get('/', 'WelcomeController@show');
         $app->container->bind('WelcomeController', fn() => new class($app) {
             public function __construct(private Application $app) {}
@@ -249,20 +239,38 @@ final class ApplicationTest extends TestCase
     #[Test]
     public function application_uses_default_dirs_when_not_configured(): void
     {
-        $app = new Application([]);
+        $app = new Application();
         $this->assertInstanceOf(Application::class, $app);
         $this->assertInstanceOf(ViewEngine::class, $app->view);
         $this->assertInstanceOf(\Atom\Routing\Router::class, $app->router);
+        $this->assertFalse($app->config->debug);
+    }
+
+    #[Test]
+    public function config_debug_flag(): void
+    {
+        $cfg = new Config(debug: true);
+        $this->assertTrue($cfg->debug);
+
+        $cfg2 = new Config(debug: false);
+        $this->assertFalse($cfg2->debug);
+
+        $cfg3 = new Config();
+        $this->assertFalse($cfg3->debug);
+    }
+
+    #[Test]
+    public function config_stores_dirs(): void
+    {
+        $cfg = new Config(cacheDir: '/tmp/cache', viewsDir: '/tmp/views');
+        $this->assertSame('/tmp/cache', $cfg->cacheDir);
+        $this->assertSame('/tmp/views', $cfg->viewsDir);
     }
 
     #[Test]
     public function run_respects_response_status(): void
     {
-        $app = new Application([
-            'views_dir' => $this->tmpViewsDir,
-            'cache_dir' => $this->tmpDir,
-        ]);
-
+        $app = $this->makeApp();
         $app->router->get('/not-found', 'NotFoundController@handle');
         $app->container->bind('NotFoundController', fn() => new class {
             public function handle(): Response { return new Response('Not here', 404); }
@@ -274,6 +282,6 @@ final class ApplicationTest extends TestCase
         $app->run($req);
         ob_get_clean();
 
-        $this->assertTrue(true); // No exception
+        $this->assertTrue(true);
     }
 }
