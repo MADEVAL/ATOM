@@ -28,6 +28,11 @@ final class Paginator
         return new self($page, $perPage);
     }
 
+    public static function make(int $page, int $perPage): self
+    {
+        return new self(max(1, $page), min(\Atom\Constants::PAGINATOR_MAX_PER_PAGE, max(1, $perPage)));
+    }
+
     /** @param list<array<string,mixed>> $items */
     public function paginate(array $items, int $total): array
     {

@@ -139,7 +139,7 @@ final class Console
         if (is_string($options['port'] ?? null)) {
             $port = (int) $options['port'];
         }
-        $server = new WsServer($this->app, $host, $port);
+        $server = new WsServer($host, $port);
         foreach ($this->app->wsServer()->routes() as $path => $handler) {
             $server->add($path, $handler);
         }

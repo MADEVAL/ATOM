@@ -3,9 +3,11 @@ declare(strict_types=1);
 namespace Atom;
 
 use Atom\Container\Container;
+use Atom\Cache\{Cache, FileDriver, ArrayDriver};
 use Atom\Http\{Request, Response, Session, StatusCode};
 use Atom\Middleware\{MiddlewareInterface, Pipeline};
 use Atom\Routing\Router;
+use Atom\Support\Logger;
 use Atom\Validation\ValidationException;
 use Atom\View\Engine as ViewEngine;
 use Atom\WebSocket\Server as WsServer;
@@ -18,6 +20,7 @@ final class Application
 
     private array $middleware = [];
     private ?WsServer $wsServer = null;
+    private ?Cache $cache = null;
 
     public function __construct(
         public readonly Config $config = new Config,
@@ -38,6 +41,11 @@ final class Application
         $this->container->instance(ViewEngine::class, $this->view);
         $this->container->instance(Config::class, $config);
         $this->container->singleton(Session::class, fn() => new Session());
+        $this->container->singleton(Logger::class, fn() => new Logger(
+            $config->logFile ?: sys_get_temp_dir() . '/atom/app.log',
+            $config->logLevel,
+            $config->logMaxSize,
+        ));
     }
 
     public function use(\Closure|MiddlewareInterface|string $middleware): self
@@ -57,7 +65,7 @@ final class Application
         if ($this->wsServer === null) {
             $wsHost = $this->config->env['WS_HOST'] ?? '0.0.0.0';
             $wsPort = (int) ($this->config->env['WS_PORT'] ?? 8080);
-            $this->wsServer = new WsServer($this, $wsHost, $wsPort);
+            $this->wsServer = new WsServer($wsHost, $wsPort);
             $this->container->instance(WsServer::class, $this->wsServer);
         }
         $this->wsServer->add($path, $handler);
@@ -68,6 +76,31 @@ final class Application
     public function wsServer(): ?WsServer
     {
         return $this->wsServer;
+    }
+
+    /**
+     * Returns the cache instance, lazily initialized with the driver
+     * specified in APP_CACHE_DRIVER env var ('array' or 'file').
+     * Defaults to file driver when cacheDir is configured, array otherwise.
+     */
+    public function cache(): Cache
+    {
+        if ($this->cache === null) {
+            $driver = $this->config->env['APP_CACHE_DRIVER'] ?? null;
+            if ($driver === 'array') {
+                $this->cache = new Cache(new ArrayDriver());
+            } else {
+                $dir = $this->config->cacheDir ?: sys_get_temp_dir() . '/atom/cache';
+                $this->cache = new Cache(new FileDriver($dir));
+            }
+            $this->container->instance(Cache::class, $this->cache);
+        }
+        return $this->cache;
+    }
+
+    public function log(): Logger
+    {
+        return $this->container->make(Logger::class);
     }
 
     public function run(?Request $request = null): void
@@ -88,6 +121,9 @@ final class Application
             if ($this->config->debug) {
                 throw $e;
             }
+            try {
+                $this->log()->error($e->getMessage(), ['exception' => $e::class, 'uri' => $req->uri]);
+            } catch (\Throwable) {}
             $response = new Response('', StatusCode::SERVER_ERROR);
         }
         $response->send();

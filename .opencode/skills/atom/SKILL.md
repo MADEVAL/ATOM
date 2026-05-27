@@ -144,3 +144,32 @@ php atom ws:serve --port=8080 --host=0.0.0.0
 ```
 
 Key features: RFC 6455 frame encoding/decoding, non-blocking stream_select event loop, room/channel management, client→server frame masking handled, auto-pong, close handshake.
+
+## Cache
+
+```php
+// Access via Application (driver from APP_CACHE_DRIVER env: 'array' | 'file')
+$cache = $app->cache();
+
+// Basic operations
+$cache->set('key', 'value', ttl: 3600);
+$value = $cache->get('key', default: null);
+$cache->has('key');         // bool
+$cache->delete('key');
+$cache->flush();
+
+// Atomic counters
+$cache->increment('hits');      // → 1
+$cache->increment('hits', 5);   // → 6
+$cache->decrement('hits');      // → 5
+
+// Compute-on-miss
+$data = $cache->remember('expensive', fn() => fetchFromDb(), ttl: 300);
+$data = $cache->rememberForever('config', fn() => loadConfig());
+
+// Manual instantiation
+$cache = new Cache(new ArrayDriver());           // in-memory
+$cache = new Cache(new FileDriver('/tmp/cache')); // file-based
+```
+
+Key features: PSR-16-like API, TTL expiry, atomic file writes (temp+rename), probabilistic expired-entry cleanup, null-safe.

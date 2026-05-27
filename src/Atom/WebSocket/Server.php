@@ -2,9 +2,6 @@
 declare(strict_types=1);
 namespace Atom\WebSocket;
 
-use Atom\Application;
-use Atom\Container\Container;
-
 final class Server
 {
     /** @var resource|null */
@@ -17,11 +14,8 @@ final class Server
     private array $rooms = [];
     /** @var array<string,array{handler:callable,path:string}> */
     private array $routes = [];
-    /** @var array<string,list<string>> */
-    private array $routeParams = [];
 
     public function __construct(
-        private Application $app,
         private string $host = '0.0.0.0',
         private int $port = 8080,
     ) {}
