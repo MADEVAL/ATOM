@@ -123,22 +123,28 @@ final class Router
 
     public function health(string $path, callable $checks): self
     {
-        $this->container->singleton('__health_checks', fn() => $checks);
-        $this->container->bind('__health_controller', fn() => new class($this->container) {
-            public function __construct(private \Atom\Container\Container $c) {}
+        $key = '__health_' . sha1($path);
+        $this->container->singleton($key, fn() => $checks);
+        $this->container->bind($key . '_ctrl', fn() => new class($this->container, $key) {
+            public function __construct(private \Atom\Container\Container $c, private string $k) {}
             public function check(): \Atom\Http\Response {
-                $fn = $this->c->make('__health_checks');
+                $fn = $this->c->make($this->k);
                 $result = ($fn)();
                 $allOk = !in_array(false, $result, true);
                 return \Atom\Http\Response::json($result, $allOk ? \Atom\Http\StatusCode::OK : \Atom\Http\StatusCode::SERVICE_UNAVAILABLE);
             }
         });
-        return $this->get($path, '__health_controller@check');
+        return $this->get($path, $key . '_ctrl@check');
     }
 
     public function loadFromAttributes(string $directory): self
     {
-        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory)) as $file) {
+        try {
+            $iter = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory));
+        } catch (\UnexpectedValueException) {
+            return $this;
+        }
+        foreach ($iter as $file) {
             if (!$file->isFile() || $file->getExtension() !== 'php') continue;
             $path = $file->getPathname();
             $class = $this->classFromFile($path);

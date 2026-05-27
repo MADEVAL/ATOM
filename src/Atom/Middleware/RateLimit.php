@@ -25,9 +25,15 @@ final class RateLimit implements MiddlewareInterface
         self::$store[$key] = array_filter(self::$store[$key], fn(int $t) => $t > $windowStart);
         self::$store[$key][] = $now;
 
-        if (count(self::$store[$key]) > $this->max) {
+        $count = count(self::$store[$key]);
+        if ($count > $this->max) {
             return new Response('Too Many Requests', StatusCode::TOO_MANY_REQUESTS);
         }
+
+        if ($count === 1 && count(self::$store) > 10000) {
+            self::$store = array_filter(self::$store, fn(array $t) => $t !== [], ARRAY_FILTER_USE_BOTH);
+        }
+
         return $next($req);
     }
 }

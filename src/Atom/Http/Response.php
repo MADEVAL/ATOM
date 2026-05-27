@@ -41,7 +41,7 @@ final class Response
 
     public static function redirect(string $url, StatusCode $s = StatusCode::FOUND): self
     {
-        $low = strtolower($url);
+        $low = strtolower(trim($url));
         if (str_starts_with($low, 'javascript:') || str_starts_with($low, 'data:') || str_starts_with($low, 'vbscript:')) {
             $url = '/';
         }

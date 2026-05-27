@@ -7,7 +7,7 @@ use Atom\Http\{Request, Response};
 
 final class HttpClient
 {
-    private Response $response;
+    private ?Response $response = null;
 
     public function __construct(
         private Application $app,
@@ -56,6 +56,9 @@ final class HttpClient
 
     public function assertStatus(int $code): self
     {
+        if ($this->response === null) {
+            throw new \RuntimeException('No response — call get/post/put/patch/delete first');
+        }
         $actual = $this->response->getStatusCode();
         if ($actual !== $code) {
             throw new \RuntimeException(

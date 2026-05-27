@@ -62,7 +62,11 @@ final class Session
             try {
                 $_SESSION[$key] = bin2hex(random_bytes(32));
             } catch (\Throwable) {
-                $_SESSION[$key] = bin2hex(uniqid('csrf', true) . random_int(0, PHP_INT_MAX));
+                try {
+                    $_SESSION[$key] = bin2hex(uniqid('csrf', true) . random_int(0, PHP_INT_MAX));
+                } catch (\Throwable) {
+                    $_SESSION[$key] = bin2hex(hash('sha256', uniqid('csrf', true) . microtime(), true));
+                }
             }
         }
         return $_SESSION[$key];

@@ -276,6 +276,15 @@ final class ResponseTest extends TestCase
     }
 
     #[Test]
+    public function redirect_blocks_whitespace_padded_javascript(): void
+    {
+        $res = Response::redirect("   javascript:alert(1)");
+        $prop = new \ReflectionProperty(Response::class, 'headers');
+        $headers = $prop->getValue($res);
+        $this->assertSame('/', $headers['Location']);
+    }
+
+    #[Test]
     public function redirect_blocks_data_protocol(): void
     {
         $res = Response::redirect('data:text/html,<script>alert(1)</script>');

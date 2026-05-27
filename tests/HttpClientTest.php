@@ -74,4 +74,13 @@ final class HttpClientTest extends TestCase
         $c->delete('/res/2')->assertOk();
         $this->assertTrue(true);
     }
+
+    #[Test]
+    public function assert_without_request_throws(): void
+    {
+        $client = new HttpClient($this->app);
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('No response');
+        $client->assertOk();
+    }
 }
