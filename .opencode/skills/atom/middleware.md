@@ -46,10 +46,12 @@ $app->router->group('/api', [new Cors(
     allowOrigin: 'https://example.com',
     allowMethods: 'GET,POST,PATCH',
     allowHeaders: 'X-API-Key,Content-Type',
+    allowCredentials: true,
+    exposeHeaders: 'X-Total-Count',
 )], fn($r) => { ... });
 ```
 
-Automatically handles OPTIONS preflight with 204.
+Automatically handles OPTIONS preflight with 204. Reflects request Origin header when `allowOrigin: '*'`. Throws `InvalidArgumentException` for `allowOrigin='*' + allowCredentials=true` (CORS spec violation).
 
 ## CSRF middleware
 
@@ -61,5 +63,6 @@ $app->router->group('', [Csrf::class], fn($r) => { ... });
 
 // In template: <input type="hidden" name="_csrf" value="{{ _csrf }}">
 // Or header: X-CSRF-Token: <token>
-// Validated on POST/PUT/PATCH/DELETE - returns 403 on mismatch
+// Validated on POST/PUT/PATCH/DELETE — returns 403 on mismatch
+// Token is rotated after successful validation
 ```

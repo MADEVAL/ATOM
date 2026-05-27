@@ -6,15 +6,17 @@ Twig-like syntax compiled to PHP classes. Disk-cached, OPCache-friendly.
 
 ```twig
 {# comment #}
-{{ user.name | e }}              # escape
-{{ html | raw }}                 # raw (no escape)
-{{ title | upper | raw }}        # chained
-{{ count | default(0) }}         # with args
-{{ data | json }}                # JSON encode
-{{ items.0 }}                    # numeric index
+{{ user.name | e }}
+{{ html | raw }}
+{{ title | upper | raw }}
+{{ count | default(0) }}
+{{ data | json }}
+{{ items.0 }}
 ```
 
 Built-in filters: `escape`, `e`, `upper`, `lower`, `trim`, `length`, `nl2br`, `json`, `default`, `raw`.
+
+The `default` filter handles `null`, `false`, `''`, and `[]` as empty values — showing the fallback. Nested `{{ }}` braces (e.g., `{{ func({a: 1}) }}`) are handled correctly.
 
 ## Control flow
 
@@ -34,11 +36,27 @@ Built-in filters: `escape`, `e`, `upper`, `lower`, `trim`, `length`, `nl2br`, `j
 {% for key, val in data %}
   {{ key }}: {{ val }}
 {% endfor %}
+```
 
+For-loop variables are cleaned up after `endfor`. Shadowed variables (same name as outer context) are saved and restored.
+
+```twig
+{{ title }}                      {# "My Page" #}
+{% for title in items %}
+  [{{ title }}]                  {# iterated values #}
+{% endfor %}
+{{ title }}                      {# "My Page" — restored #}
+```
+
+## Set, include, raw
+
+```twig
 {% set total = price * qty %}
 {% include "partials/nav.twig" %}
 {% raw %}<script>{{ not_parsed }}</script>{% endraw %}
 ```
+
+Unclosed tags (missing `%}`) throw `RuntimeException`.
 
 ## Inheritance
 
@@ -54,6 +72,8 @@ Built-in filters: `escape`, `e`, `upper`, `lower`, `trim`, `length`, `nl2br`, `j
 {% block title %}{{ page.title | e }}{% endblock %}
 {% block body %}<p>{{ page.content | raw }}</p>{% endblock %}
 ```
+
+Template recompilation: source change detection via `filemtime`. In-process recompilation uses `class_exists` guard + `require` (no `require_once` staleness).
 
 ## Custom filters & globals
 

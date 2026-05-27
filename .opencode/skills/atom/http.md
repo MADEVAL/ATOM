@@ -5,7 +5,7 @@
 Property hooks with PHP 8.5 syntax:
 
 ```php
-$req->method   // GET|POST|PUT|PATCH|DELETE (supports _method spoofing)
+$req->method   // GET|POST|PUT|PATCH|DELETE (supports _method spoofing, trims whitespace)
 $req->path     // /api/users
 $req->uri      // /api/users?id=1
 $req->scheme   // http|https
@@ -21,6 +21,8 @@ $req->wantsJson()
 $req->file('avatar')   // → UploadedFile
 ```
 
+Constructor accepts explicit arrays — empty `server: []` stays empty (no global fallback).
+
 ### File uploads
 
 ```php
@@ -35,9 +37,11 @@ $file->error;  // UPLOAD_ERR_*
 $file->tmp;    // temp path
 ```
 
+Nested upload arrays (`<input name="photos[]" multiple>`) return `UploadedFile::empty()`.
+
 ### JSON body auto-parse
 
-When `Content-Type: application/json`, body is auto-decoded from `php://input`.
+When `Content-Type: application/json`, body is auto-decoded from `php://input`. Uses `ini_parse_quantity(ini_get('post_max_size'))` for content-length check.
 
 ```php
 // POST /api {"name": "Alice"} → $req->input('name') === 'Alice'
@@ -45,7 +49,7 @@ When `Content-Type: application/json`, body is auto-decoded from `php://input`.
 
 ### Method spoofing
 
-POST with `_method=PUT` → `$req->method === 'PUT'`. Works only from POST.
+POST with `_method=PUT` → `$req->method === 'PUT'`. Works only from POST. Whitespace trimmed. Array values fall back to POST.
 
 ```html
 <form method="POST" action="/users/42">
@@ -60,6 +64,8 @@ POST with `_method=PUT` → `$req->method === 'PUT'`. Works only from POST.
 $req->bearer  // 'abc123' - extracted via PCRE
 ```
 
+Multiline tokens rejected (regex `.+` doesn't match across newlines).
+
 ## Response
 
 ### Factories
@@ -71,8 +77,10 @@ Response::json($data, StatusCode::CREATED)
 Response::text('plain text')
 Response::noContent()              // 204
 Response::redirect('/login')       // 302
-Response::redirect('/new', StatusCode::MOVED)  // 301
+Response::redirect('/new', StatusCode::PERMANENT_REDIRECT)  // 308
 ```
+
+Dangerous redirect protocols (`javascript:`, `data:`, `vbscript:`) are blocked → redirected to `/`.
 
 ### Chaining
 
@@ -80,15 +88,18 @@ Response::redirect('/new', StatusCode::MOVED)  // 301
 (new Response('body', StatusCode::CREATED))
     ->withHeader('X-Custom', 'val')
     ->withStatus(StatusCode::NOT_FOUND)
-    ->withCookie('session', $token, ttl: 7200, path: '/')
+    ->withCookie('session', $token, 7200)          // int ttl
+    ->withCookie('session', $token, ['ttl' => 7200, 'path' => '/admin']) // array options
     ->withCache(3600)   // Cache-Control: public, max-age=3600
     ->send();
 ```
 
 ### Security
 
-- Header injection blocked: `Regex::replace('#[\r\n]+#', ' ', $v)`
-- Cookies default: `httponly: true, samesite: Lax`
+- Header injection: `\r\n` stripped from both key and value
+- Cookies default: `httponly: true, samesite: Lax` (invalid values fall back to Lax)
+- `name`/`value` in options array cannot override cookie identity
+- `send(?bool $isHttps)` parameter for testable cookie `secure` flag
 
 ## Controllers
 
@@ -108,7 +119,7 @@ class UserController {
 ## Session
 
 ```php
-// Default: cookie_httponly=true, samesite=Lax, secure=false
+// Lazy singleton – no session_start() until first use
 $session = $app->container->make(Session::class);
 
 // With custom cookie params
@@ -122,14 +133,11 @@ $session->remove('user_id');
 $session->flash('success', 'Saved!');  // next request only
 $session->regenerate();                // rotate session ID
 
-// Global CSRF
+// Global CSRF – rotated after successful validation
 $token = $session->csrfToken();
 $session->validateCsrf($token);
 
 // Per-form CSRF — independent tokens for each form
 $loginToken = $session->csrfToken('login');
 $session->validateCsrf($loginToken, 'login');
-
-$payToken = $session->csrfToken('payment');
-$session->validateCsrf($payToken, 'payment');
 ```

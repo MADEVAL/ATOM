@@ -1,6 +1,6 @@
 # Container (DI)
 
-Minimal dependency injection: bind, singleton, instance, autowire.
+Minimal dependency injection: bind, singleton, instance, has, autowire.
 
 ## Bindings
 
@@ -27,9 +27,15 @@ $app->container->instance('config', $config);
 $app->container->instance(Request::class, $request);
 ```
 
+## Checking registrations
+
+```php
+$app->container->has(Database::class); // true|false
+```
+
 ## Autowiring
 
-Recursive constructor resolution:
+Recursive constructor resolution. Supports interfaces when a binding is registered.
 
 ```php
 class UserService {
@@ -43,7 +49,7 @@ $service = $app->container->make(UserService::class);
 // Database and LoggerInterface auto-resolved
 ```
 
-Parameters are resolved via: explicit params → type-hinted class → default value → error.
+Parameters are resolved via: explicit params → type-hinted class/interface → default value → error.
 
 ## Built-in instances
 
@@ -53,5 +59,5 @@ Application auto-registers:
 - `Router::class` → `$app->router`
 - `ViewEngine::class` → `$app->view`
 - `Config::class` → `$app->config`
-- `Session::class` → singleton Session
-- `Request::class` → current request (per-request)
+- `Session::class` → lazy singleton (no `session_start()` until first use)
+- `Request::class` → current request (per-request, preserved if pre-registered)

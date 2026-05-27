@@ -5,7 +5,6 @@ Single `preg_match` dispatch - all routes compile into one PCRE regex using bran
 ## Route definitions
 
 ```php
-// Basic
 $app->router->get('/users/{id}', 'UserController@show');
 $app->router->post('/users', 'UserController@create');
 $app->router->put('/items/{id}', 'ItemController@update');
@@ -52,9 +51,9 @@ $app->router->get('/users/{id}', 'UserController@show', 'user.show');
 echo $app->router->url('user.show', ['id' => 42]); // /users/42
 ```
 
-## Route name prefixing
+URL generation is O(1) via hash map lookup. Duplicate route names throw `InvalidArgumentException`.
 
-Nest routes with name prefixes for clean namespacing:
+## Route name prefixing
 
 ```php
 $app->router->namePrefix('admin.', fn($r) => {
@@ -74,13 +73,17 @@ echo $app->router->url('v1.users.show', ['id' => 5]); // /5
 
 ## Cache invalidation
 
-Routes are compiled once and cached to disk. Clear the cache when routes change:
+Routes are compiled once and cached to disk. Corrupted cache files are automatically detected and regenerated. Clear the cache when routes change:
 
 ```php
 $app->router->clearCache();
 ```
 
-Automatic: adding any route or calling `addPattern()` also invalidates the runtime cache.
+## Public route listing
+
+```php
+$routes = $app->router->routes(); // CompiledRoute[]
+```
 
 ## Attribute-based routing
 
@@ -94,6 +97,8 @@ class ApiController {
 }
 $app->router->loadFromAttributes(__DIR__ . '/Controllers');
 ```
+
+Attribute routes support `url()` and duplicate name detection.
 
 ## How it works
 
