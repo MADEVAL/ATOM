@@ -425,6 +425,35 @@ final class RequestTest extends TestCase
         $req = new Request(server: []);
         $this->assertSame([], $req->server);
     }
+
+    #[Test]
+    public function file_returns_empty_for_nested_upload_array(): void
+    {
+        $req = new Request(files: ['photos' => [
+            'name' => ['a.jpg', 'b.jpg'],
+            'error' => [UPLOAD_ERR_OK, UPLOAD_ERR_OK],
+            'tmp_name' => ['/tmp/a', '/tmp/b'],
+            'size' => [100, 200],
+            'type' => ['image/jpeg', 'image/png'],
+        ]]);
+        $this->assertFalse($req->file('photos')->ok);
+    }
+
+    #[Test]
+    public function file_missing_key_returns_empty(): void
+    {
+        $req = new Request(files: []);
+        $this->assertFalse($req->file('nope')->ok);
+    }
+
+    #[Test]
+    public function validate_uses_constructor_when_available(): void
+    {
+        $req = new Request(body: ['name' => 'test', 'email' => 'a@b.com']);
+        $dto = $req->validate(ValidatableUser::class);
+        $this->assertSame('test', $dto->name);
+        $this->assertSame('a@b.com', $dto->email);
+    }
 }
 
 final class ValidatableUser

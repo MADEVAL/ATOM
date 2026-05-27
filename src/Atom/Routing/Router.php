@@ -12,6 +12,7 @@ final class Router
 {
     /** @var Route[] */
     private array $routes = [];
+    private array $namedRoutes = [];
     private ?array $compiled = null;
     private string $cacheFile;
     private array $patterns = [];
@@ -59,18 +60,22 @@ final class Router
 
     public function add(string $method, string $path, string $controllerAction, string $name = '', array $mw = []): self
     {
-        if ($name !== '' && array_any($this->routes, fn($r) => $r->name === $this->groupNamePrefix . $name)) {
-            throw new \InvalidArgumentException("Duplicate route name: {$this->groupNamePrefix}{$name}");
+        $fullName = $this->groupNamePrefix . $name;
+        if ($name !== '' && isset($this->namedRoutes[$fullName])) {
+            throw new \InvalidArgumentException("Duplicate route name: {$fullName}");
         }
         [$controller, $action] = explode('@', $controllerAction, 2) + [1 => '__invoke'];
         $this->routes[] = new CompiledRoute(
             path:       $this->groupPrefix . $path,
             methods:    [strtoupper($method)],
-            name:       $this->groupNamePrefix . $name,
+            name:       $fullName,
             middleware: [...$this->groupMiddleware, ...$mw],
             controller: $controller,
             action:     $action,
         );
+        if ($name !== '') {
+            $this->namedRoutes[$fullName] = true;
+        }
         $this->compiled = null;
         return $this;
     }
@@ -84,15 +89,19 @@ final class Router
     /** @param string[] $methods */
     public function match(array $methods, string $p, string $h, string $n = '', array $mw = []): self
     {
-        if ($n !== '' && array_any($this->routes, fn($r) => $r->name === $this->groupNamePrefix . $n)) {
-            throw new \InvalidArgumentException("Duplicate route name: {$this->groupNamePrefix}{$n}");
+        $fullName = $this->groupNamePrefix . $n;
+        if ($n !== '' && isset($this->namedRoutes[$fullName])) {
+            throw new \InvalidArgumentException("Duplicate route name: {$fullName}");
         }
         [$controller, $action] = explode('@', $h, 2) + [1 => '__invoke'];
         $this->routes[] = new CompiledRoute(
             path: $this->groupPrefix . $p, methods: array_map(strtoupper(...), $methods),
-            name: $this->groupNamePrefix . $n, middleware: [...$this->groupMiddleware, ...$mw],
+            name: $fullName, middleware: [...$this->groupMiddleware, ...$mw],
             controller: $controller, action: $action,
         );
+        if ($n !== '') {
+            $this->namedRoutes[$fullName] = true;
+        }
         $this->compiled = null;
         return $this;
     }
@@ -240,6 +249,7 @@ final class Router
     private function classFromFile(string $file): ?string
     {
         $code = file_get_contents($file);
+        if ($code === false) return null;
         $nsMatch = Regex::match('#^\s*namespace\s+([^;]+);#m', $code);
         $ns = $nsMatch !== null ? $nsMatch[1] : '';
         $clsMatch = Regex::match('#class\s+([A-Za-z_][A-Za-z0-9_]*)#', $code);

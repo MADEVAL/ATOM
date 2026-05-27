@@ -39,6 +39,8 @@ final readonly class Config
         }
         return new self(
             debug: in_array($env['APP_DEBUG'] ?? '', ['1', 'true'], true),
+            cacheDir: $env['APP_CACHE_DIR'] ?? '',
+            viewsDir: $env['APP_VIEWS_DIR'] ?? '',
             env: $env,
         );
     }

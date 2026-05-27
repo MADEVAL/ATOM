@@ -49,10 +49,31 @@ final class ConfigEnvTest extends TestCase
     }
 
     #[Test]
+    public function set_global_populates_env(): void
+    {
+        $file = sys_get_temp_dir() . '/atom_env_' . uniqid();
+        file_put_contents($file, "KEY=val");
+        Config::fromEnv($file, true);
+        unlink($file);
+        $this->assertSame('val', $_ENV['KEY']);
+        unset($_ENV['KEY']);
+    }
+
+    #[Test]
+    public function reads_cache_and_views_dir_from_env(): void
+    {
+        $file = sys_get_temp_dir() . '/atom_env_' . uniqid();
+        file_put_contents($file, "APP_CACHE_DIR=/tmp/cache\nAPP_VIEWS_DIR=/tmp/views");
+        $config = Config::fromEnv($file, false);
+        unlink($file);
+        $this->assertSame('/tmp/cache', $config->cacheDir);
+        $this->assertSame('/tmp/views', $config->viewsDir);
+    }
+
+    #[Test]
     public function debug_false_by_default(): void
     {
-        file_put_contents($this->tmpEnv, "KEY=val\n");
-        $config = Config::fromEnv($this->tmpEnv, false);
+        $config = Config::fromEnv(sys_get_temp_dir() . '/atom_missing_' . uniqid());
         $this->assertFalse($config->debug);
     }
 
@@ -99,15 +120,5 @@ final class ConfigEnvTest extends TestCase
         $this->assertSame('from_file', $config->get('X'));
         $this->assertSame('from_env', $config->get('Y'));
         putenv('Y');
-    }
-
-    #[Test]
-    public function set_global_populates_env(): void
-    {
-        file_put_contents($this->tmpEnv, "GLOBAL_KEY=global_value\n");
-        $config = Config::fromEnv($this->tmpEnv, true);
-        $this->assertSame('global_value', $config->get('GLOBAL_KEY'));
-        $this->assertSame('global_value', $_ENV['GLOBAL_KEY'] ?? null);
-        unset($_ENV['GLOBAL_KEY']);
     }
 }

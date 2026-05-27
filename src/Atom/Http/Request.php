@@ -69,8 +69,19 @@ final class Request
 
     public function file(string $key): UploadedFile
     {
-        return isset($this->files[$key]) && $this->files[$key]['error'] !== UPLOAD_ERR_NO_FILE
-            ? UploadedFile::fromFileArray($this->files[$key])
+        if (!isset($this->files[$key])) {
+            return UploadedFile::empty();
+        }
+        $file = $this->files[$key];
+        if (is_array($file) && !isset($file['error'])) {
+            return UploadedFile::empty();
+        }
+        $error = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+        if (is_array($error)) {
+            return UploadedFile::empty();
+        }
+        return $error !== UPLOAD_ERR_NO_FILE
+            ? UploadedFile::fromFileArray($file)
             : UploadedFile::empty();
     }
 
@@ -82,7 +93,12 @@ final class Request
     public function validate(string $dtoClass): object
     {
         $ref = new \ReflectionClass($dtoClass);
-        $dto = $ref->newInstanceWithoutConstructor();
+        $ctor = $ref->getConstructor();
+        if ($ctor !== null && $ctor->getNumberOfRequiredParameters() > 0) {
+            $dto = $ref->newInstanceWithoutConstructor();
+        } else {
+            $dto = $ref->newInstance();
+        }
         foreach ($ref->getProperties(\ReflectionProperty::IS_PUBLIC) as $prop) {
             $name = $prop->getName();
             if (array_key_exists($name, $this->body)) {

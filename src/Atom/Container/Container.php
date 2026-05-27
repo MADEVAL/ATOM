@@ -26,6 +26,11 @@ final class Container
         $this->instances[$abstract] = $value;
     }
 
+    public function has(string $abstract): bool
+    {
+        return isset($this->instances[$abstract]) || isset($this->bindings[$abstract]) || isset($this->singletons[$abstract]);
+    }
+
     public function make(string $abstract, array $params = []): object
     {
         if (isset($this->instances[$abstract])) return $this->instances[$abstract];

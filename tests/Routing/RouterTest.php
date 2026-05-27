@@ -572,6 +572,16 @@ final class RouterTest extends TestCase
     }
 
     #[Test]
+    public function router_duplicate_name_detected_after_many_adds(): void
+    {
+        for ($i = 0; $i < 100; $i++) {
+            $this->router->get("/r{$i}", 'Ctrl@test', "route.{$i}");
+        }
+        $this->expectException(\InvalidArgumentException::class);
+        $this->router->get('/dup', 'Ctrl@test', 'route.42');
+    }
+
+    #[Test]
     public function unnamed_routes_allow_duplicates(): void
     {
         $this->router->get('/x', 'XController@test');

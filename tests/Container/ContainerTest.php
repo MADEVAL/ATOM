@@ -221,6 +221,28 @@ final class ContainerTest extends TestCase
         $this->expectExceptionMessage('Circular dependency detected');
         $this->container->make(CircularA::class);
     }
+
+    #[Test]
+    public function has_returns_true_for_registered_binding(): void
+    {
+        $this->assertFalse($this->container->has('nonexistent'));
+        $this->container->bind('bound', fn() => new \stdClass());
+        $this->assertTrue($this->container->has('bound'));
+    }
+
+    #[Test]
+    public function has_returns_true_for_registered_singleton(): void
+    {
+        $this->container->singleton('shared', fn() => new \stdClass());
+        $this->assertTrue($this->container->has('shared'));
+    }
+
+    #[Test]
+    public function has_returns_true_for_registered_instance(): void
+    {
+        $this->container->instance('inst', new \stdClass());
+        $this->assertTrue($this->container->has('inst'));
+    }
 }
 
 // Test fixtures

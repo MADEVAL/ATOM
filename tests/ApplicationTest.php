@@ -4,8 +4,7 @@ namespace Atom\Tests;
 
 use Atom\Application;
 use Atom\Config;
-use Atom\Http\Request;
-use Atom\Http\Response;
+use Atom\Http\{Request, Response, Session};
 use Atom\View\Engine as ViewEngine;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -238,6 +237,15 @@ final class ApplicationTest extends TestCase
         $this->assertStringContainsString('<h1>Welcome</h1>', $output);
     }
 
+    #[Test]
+    public function session_is_lazy_singleton(): void
+    {
+        $app = $this->makeApp();
+        $this->assertTrue($app->container->has(Session::class));
+        $s1 = $app->container->make(Session::class);
+        $s2 = $app->container->make(Session::class);
+        $this->assertSame($s1, $s2);
+    }
     #[Test]
     public function application_uses_default_dirs_when_not_configured(): void
     {

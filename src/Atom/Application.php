@@ -28,13 +28,15 @@ final class Application
         $this->container->instance(Router::class, $this->router);
         $this->container->instance(ViewEngine::class, $this->view);
         $this->container->instance(Config::class, $config);
-        $this->container->instance(Session::class, new Session());
+        $this->container->singleton(Session::class, fn() => new Session());
     }
 
     public function run(?Request $request = null): void
     {
         $req = $request ?? Request::capture();
-        $this->container->instance(Request::class, $req);
+        if ($request !== null || !$this->container->has(Request::class)) {
+            $this->container->instance(Request::class, $req);
+        }
 
         try {
             $response = $this->router->dispatch($req);
