@@ -4,7 +4,6 @@ namespace Atom\Console;
 
 use Atom\Application;
 use Atom\Support\Regex;
-use ReflectionClass;
 
 final class Console
 {
@@ -67,13 +66,7 @@ final class Console
 
     private function listRoutes(): int
     {
-        try {
-            $ref = new ReflectionClass($this->app->router);
-            $routes = $ref->getProperty('routes')->getValue($this->app->router);
-        } catch (\ReflectionException $e) {
-            $this->out('red', "Error: cannot read routes - {$e->getMessage()}\n");
-            return 1;
-        }
+        $routes = $this->app->router->routes();
         if ($routes === []) { echo "No routes registered.\n"; return 0; }
 
         foreach ($routes as $r) {

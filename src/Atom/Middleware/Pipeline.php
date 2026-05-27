@@ -5,11 +5,6 @@ namespace Atom\Middleware;
 use Atom\Http\{Request, Response};
 use Atom\Container\Container;
 
-interface MiddlewareInterface
-{
-    public function handle(Request $request, \Closure $next): Response;
-}
-
 final readonly class Pipeline
 {
     public static function run(array $layers, Request $request, \Closure $core, Container $c): Response

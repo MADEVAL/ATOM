@@ -12,7 +12,13 @@ final readonly class Cors implements MiddlewareInterface
         private string $allowHeaders = 'Content-Type,Authorization',
         private bool $allowCredentials = false,
         private string $exposeHeaders = '',
-    ) {}
+    ) {
+        if ($this->allowOrigin === '*' && $this->allowCredentials) {
+            throw new \InvalidArgumentException(
+                'Cannot use allowOrigin=* with allowCredentials=true per CORS specification'
+            );
+        }
+    }
 
     public function handle(Request $req, \Closure $next): Response
     {

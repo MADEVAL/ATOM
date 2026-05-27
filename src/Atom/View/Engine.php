@@ -61,7 +61,9 @@ final class Engine
                 throw new \RuntimeException("View Engine: failed to write compiled template '{$file}'");
             }
         }
-        require_once $file;
+        if (!class_exists($cls, false)) {
+            require $file;
+        }
         return $cls;
     }
 

@@ -63,7 +63,7 @@ $app->run();
 |---|---|
 | **Router** | Single `preg_match` dispatch via `(?\|...(*:N))`. Groups, URL gen, attributes, cache. |
 | **Templates** | Twig-like → compiled PHP classes. Extends, blocks, filters, raw blocks. |
-| **Validation** | PCRE-attribute: `#[Required]` `#[Email]` `#[Regex]` `#[Min]` `#[Max]` |
+| **Validation** | PCRE-attribute: `#[Required]` `#[Email]` `#[Regex]` `#[Min]` `#[Max]` `#[Integer]` `#[Between]` `#[In]` `#[Url]` `#[Nullable]` `#[Confirmed]` |
 | **Database** | Minimal PDO wrapper: `all()`, `one()`, `single()`, `run()`, prepared statements. |
 | **Middleware** | Closure | object | string. Built-in: CORS, CSRF. |
 | **Session** | `get/set/flash/regenerate`, CSRF token generation & validation. |
@@ -72,7 +72,7 @@ $app->run();
 | **Response** | `html/json/text/redirect/noContent`, cookies, cache headers, header injection shield. |
 | **Container** | DI: `bind`, `singleton`, `instance`, recursive autowire. |
 | **.env** | PCRE parser via `Config::fromEnv('.env')`. |
-| **Logger** | File-based, 4 levels, min-level filter, context, atomic writes. |
+| **Logger** | File-based, 7 levels (DEBUG..EMERGENCY), min-level filter, context, atomic writes. |
 
 ## Example
 

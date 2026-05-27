@@ -262,10 +262,13 @@ final class FuzzTest extends TestCase
     }
 
     #[Test]
-    public function response_redirect_accepts_javascript_protocol(): void
+    public function response_redirect_blocks_javascript_protocol(): void
     {
         $res = Response::redirect('javascript:alert(1)');
         $this->assertSame(302, $res->getStatusCode());
+        $prop = new \ReflectionProperty(Response::class, 'headers');
+        $headers = $prop->getValue($res);
+        $this->assertSame('/', $headers['Location']);
     }
 
     #[Test]

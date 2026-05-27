@@ -33,14 +33,14 @@ final class Request
         array $body    = [],
         array $cookies = [],
         array $files   = [],
-        array $server  = [],
+        ?array $server = null,
         ?array $headers = null,
     ) {
         $this->query   = $query;
-        $this->body    = $body !== [] ? $body : $this->parseJsonBody($server);
         $this->cookies = $cookies;
         $this->files   = $files;
-        $this->server  = $server ?: $_SERVER;
+        $this->server  = $server !== null ? $server : $_SERVER;
+        $this->body    = $body !== [] ? $body : $this->parseJsonBody($this->server);
         $this->headers = $headers ?? $this->extractHeaders($this->server);
     }
 

@@ -13,7 +13,7 @@ final readonly class Regex
 
     public static function matchAll(string $pattern, string $subject, int $flags = 0): array
     {
-        $r = preg_match_all($pattern, $subject, $m, $flags);
+        $r = @preg_match_all($pattern, $subject, $m, $flags);
         if ($r === false) throw new \RuntimeException('PCRE error: ' . preg_last_error_msg());
         return $m;
     }

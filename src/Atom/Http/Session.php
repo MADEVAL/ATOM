@@ -66,6 +66,14 @@ final class Session
 
     public function validateCsrf(string $token, string $form = ''): bool
     {
-        return hash_equals($this->csrfToken($form), $token);
+        $key = $form !== '' ? "_csrf_{$form}" : '_csrf';
+        if (!isset($_SESSION[$key])) {
+            return false;
+        }
+        $valid = hash_equals($_SESSION[$key], $token);
+        if ($valid) {
+            unset($_SESSION[$key]);
+        }
+        return $valid;
     }
 }

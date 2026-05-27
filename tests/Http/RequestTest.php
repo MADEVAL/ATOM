@@ -418,6 +418,13 @@ final class RequestTest extends TestCase
         $req = new Request(headers: ['authorization' => 'Bearer xyz']);
         $this->assertSame('xyz', $req->bearer);
     }
+
+    #[Test]
+    public function explicit_empty_server_stays_empty(): void
+    {
+        $req = new Request(server: []);
+        $this->assertSame([], $req->server);
+    }
 }
 
 final class ValidatableUser

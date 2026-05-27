@@ -103,6 +103,12 @@ final class Router
         $this->compiled = null;
     }
 
+    /** @return CompiledRoute[] */
+    public function routes(): array
+    {
+        return $this->routes;
+    }
+
     public function loadFromAttributes(string $directory): self
     {
         foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory)) as $file) {
@@ -174,23 +180,16 @@ final class Router
 
     private function getAllowedMethods(string $uri): array
     {
-        $methods = [];
-        foreach ($this->routes as $route) {
-            $pattern = Regex::replace(
-                '#\{([a-zA-Z_][a-zA-Z0-9_]*)(?::([^}]+))?\}#',
-                function (array $m): string {
-                    return $this->getPatternForParam($m[1], $m[2] ?? '');
-                },
-                $route->path,
-            );
-            $pattern = '#^' . Regex::quote($pattern) . '$#';
-            if (Regex::match($pattern, $uri) !== null) {
-                foreach ($route->methods as $m) {
-                    $methods[$m] = true;
-                }
-            }
+        $compiled = $this->getCompiled();
+        if (empty($compiled['altRegex'])) {
+            return [];
         }
-        return array_keys($methods);
+        $m = Regex::match($compiled['altRegex'], 'GET' . $uri);
+        if ($m !== null) {
+            $id = (int) $m['MARK'];
+            return $compiled['map'][$id]['methods'] ?? [];
+        }
+        return [];
     }
 
     public function url(string $name, array $params = []): string
@@ -210,11 +209,20 @@ final class Router
         if ($this->compiled !== null) return $this->compiled;
         if (is_file($this->cacheFile)) {
             $cached = require $this->cacheFile;
-            if (is_array($cached) && isset($cached['regex'], $cached['map'])) {
+            if (is_array($cached) && isset($cached['regex'], $cached['map'], $cached['altRegex'])) {
                 return $this->compiled = $cached;
             }
         }
         $this->compiled = (new RouteCompiler())->compile($this->routes, $this->patterns);
+        $this->compiled['altRegex'] = Regex::replace(
+            '~\(\?<METHOD>[^)]+\)~',
+            '(?<METHOD>\w+)',
+            $this->compiled['regex'],
+        );
+        foreach ($this->compiled['map'] as &$entry) {
+            $entry['methods'] = $entry['route']->methods;
+        }
+        unset($entry);
         $export = $this->compiled;
         foreach ($export['map'] as &$entry) unset($entry['route']);
         unset($entry);

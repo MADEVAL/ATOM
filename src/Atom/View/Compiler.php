@@ -63,20 +63,43 @@ final class Compiler
 
     private function compileBody(string $src): string
     {
-        $m = Regex::matchAll('#(\{\{.*?\}\}|\{%.*?%\})|([^{}]+|\{|\})#s', $src, PREG_SET_ORDER);
-
         $out = '';
-        foreach ($m as $tok) {
-            $t = $tok[0];
-            if (str_starts_with($t, '{{')) {
-                $expr = trim($t, "{} \t\n\r");
-                $out  .= '<?=' . $this->compileExpression($expr, true) . '?>';
-            } elseif (str_starts_with($t, '{%')) {
-                $out .= $this->compileTag(trim($t, "{%} \t\n\r"));
-            } else {
-                $out .= $t;
+        $len = strlen($src);
+        $pos = 0;
+
+        while ($pos < $len) {
+            $c = $src[$pos];
+
+            if ($c === '{' && $pos + 1 < $len) {
+                $next = $src[$pos + 1];
+                if ($next === '{') {
+                    $depth = 1;
+                    $start = $pos;
+                    $pos += 2;
+                    while ($pos < $len && $depth > 0) {
+                        if ($src[$pos] === '{' && isset($src[$pos + 1]) && $src[$pos + 1] === '{') { $depth++; $pos++; }
+                        elseif ($src[$pos] === '}' && isset($src[$pos + 1]) && $src[$pos + 1] === '}') { $depth--; $pos++; }
+                        $pos++;
+                    }
+                    $expr = substr($src, $start + 2, $pos - $start - 4);
+                    $out .= '<?=' . $this->compileExpression(trim($expr), true) . '?>';
+                    continue;
+                }
+                if ($next === '%') {
+                    $end = strpos($src, '%}', $pos + 2);
+                    if ($end !== false) {
+                        $tag = substr($src, $pos + 2, $end - $pos - 2);
+                        $out .= $this->compileTag(trim($tag));
+                        $pos = $end + 2;
+                        continue;
+                    }
+                }
             }
+
+            $out .= $c;
+            $pos++;
         }
+
         return $out;
     }
 

@@ -41,6 +41,10 @@ final class Response
 
     public static function redirect(string $url, StatusCode $s = StatusCode::FOUND): self
     {
+        $low = strtolower($url);
+        if (str_starts_with($low, 'javascript:') || str_starts_with($low, 'data:') || str_starts_with($low, 'vbscript:')) {
+            $url = '/';
+        }
         return new self('', $s, ['Location' => $url]);
     }
 
@@ -75,8 +79,9 @@ final class Response
         return $this->withHeader('Cache-Control', "public, max-age={$ttl}");
     }
 
-    public function send(): void
+    public function send(?bool $isHttps = null): void
     {
+        $secure = $isHttps ?? (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
         if (!headers_sent()) {
             http_response_code($this->status->value);
             foreach ($this->headers as $k => $v) {
@@ -85,7 +90,6 @@ final class Response
                 header("{$k}: {$v}");
             }
             foreach ($this->cookies as $cookie) {
-                $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
                 setcookie(
                     $cookie['name'],
                     $cookie['value'] ?? '',
@@ -95,7 +99,7 @@ final class Response
                         'domain'   => $cookie['domain'] ?? '',
                         'httponly' => $cookie['httponly'] ?? true,
                         'samesite' => $cookie['samesite'] ?? 'Lax',
-                        'secure'   => $cookie['secure'] ?? $isHttps,
+                        'secure'   => $cookie['secure'] ?? $secure,
                     ],
                 );
             }

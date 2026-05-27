@@ -30,12 +30,15 @@ final class Logger
     private function log(int $level, string $msg, array $ctx): void
     {
         if ($level < $this->minLevel) return;
+        if (!isset(self::$levels[$level])) {
+            $level = self::ERROR;
+        }
 
         $line = sprintf("[%s] %s: %s %s\n",
             date('Y-m-d H:i:s'),
             self::$levels[$level],
             $msg,
-            $ctx !== [] ? json_encode($ctx, JSON_UNESCAPED_SLASHES) : '',
+            $ctx !== [] ? json_encode($ctx, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) : '',
         );
         $dir = dirname($this->file);
         if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {

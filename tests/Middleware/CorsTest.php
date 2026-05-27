@@ -105,7 +105,7 @@ final class CorsTest extends TestCase
     #[Test]
     public function allow_credentials_adds_header(): void
     {
-        $cors = new Cors(allowOrigin: '*', allowCredentials: true);
+        $cors = new Cors(allowOrigin: 'https://app.com', allowCredentials: true);
         $req = new Request(server: ['REQUEST_METHOD' => 'OPTIONS', 'REQUEST_URI' => '/']);
         $response = $cors->handle($req, fn() => new Response(''));
         $headers = $this->getHeaders($response);
@@ -115,11 +115,18 @@ final class CorsTest extends TestCase
     #[Test]
     public function allow_credentials_on_normal_request(): void
     {
-        $cors = new Cors(allowOrigin: '*', allowCredentials: true);
+        $cors = new Cors(allowOrigin: 'https://app.com', allowCredentials: true);
         $req = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/']);
         $response = $cors->handle($req, fn() => new Response('ok'));
         $headers = $this->getHeaders($response);
         $this->assertSame('true', $headers['Access-Control-Allow-Credentials']);
+    }
+
+    #[Test]
+    public function cors_wildcard_with_credentials_throws(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new Cors(allowOrigin: '*', allowCredentials: true);
     }
 
     #[Test]

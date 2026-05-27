@@ -265,4 +265,32 @@ final class ResponseTest extends TestCase
         $headers = $prop->getValue($res);
         $this->assertSame('https://new.com', $headers['Location']);
     }
+
+    #[Test]
+    public function redirect_blocks_javascript_protocol(): void
+    {
+        $res = Response::redirect('javascript:alert(1)');
+        $prop = new \ReflectionProperty(Response::class, 'headers');
+        $headers = $prop->getValue($res);
+        $this->assertSame('/', $headers['Location']);
+    }
+
+    #[Test]
+    public function redirect_blocks_data_protocol(): void
+    {
+        $res = Response::redirect('data:text/html,<script>alert(1)</script>');
+        $prop = new \ReflectionProperty(Response::class, 'headers');
+        $headers = $prop->getValue($res);
+        $this->assertSame('/', $headers['Location']);
+    }
+
+    #[Test]
+    public function send_with_explicit_https_flag(): void
+    {
+        $res = (new Response('content'))->withCookie('k', 'v', ['secure' => true]);
+        ob_start();
+        $res->send(isHttps: true);
+        $output = ob_get_clean();
+        $this->assertSame('content', $output);
+    }
 }
