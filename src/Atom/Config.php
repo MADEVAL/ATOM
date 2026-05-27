@@ -22,25 +22,11 @@ final readonly class Config
     public static function fromEnv(string $path = '.env', bool $setGlobal = true): self
     {
         $env = [];
-        if (is_file($path)) {
-            foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-                $line = ltrim($line);
-                if ($line === '' || $line[0] === '#') continue;
-                if ($m = Regex::match('#^([A-Z_][A-Z0-9_]*)\s*=\s*(.*)$#', $line)) {
-                    $v = trim($m[2]);
-                    $dq = Regex::match('#^"((?:[^"\\\\]|\\\\.)*)"$#', $v);
-                    if ($dq !== null) {
-                        $v = stripcslashes($dq[1]);
-                    } else {
-                        $sq = Regex::match("#^'([^']*)'$#", $v);
-                        if ($sq !== null) $v = $sq[1];
-                    }
-                    $env[$m[1]] = $v;
-                    if ($setGlobal) {
-                        $_ENV[$m[1]] = $v;
-                    }
-                }
-            }
+        self::loadEnvFile($path, $env, $setGlobal);
+
+        $profile = $env['APP_ENV'] ?? getenv('APP_ENV') ?: '';
+        if ($profile !== '' && is_file($path . '.' . $profile)) {
+            self::loadEnvFile($path . '.' . $profile, $env, $setGlobal);
         }
 
         $logLevels = ['DEBUG' => 0, 'INFO' => 1, 'WARN' => 2, 'ERROR' => 3, 'CRITICAL' => 4, 'ALERT' => 5, 'EMERGENCY' => 6];
@@ -66,5 +52,29 @@ final readonly class Config
         }
         $v = getenv($key, true);
         return $v !== false ? $v : $default;
+    }
+
+    /** @param array<string,string> $env */
+    private static function loadEnvFile(string $path, array &$env, bool $setGlobal): void
+    {
+        if (!is_file($path)) return;
+        foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+            $line = ltrim($line);
+            if ($line === '' || $line[0] === '#') continue;
+            if ($m = Regex::match('#^([A-Z_][A-Z0-9_]*)\s*=\s*(.*)$#', $line)) {
+                $v = trim($m[2]);
+                $dq = Regex::match('#^"((?:[^"\\\\]|\\\\.)*)"$#', $v);
+                if ($dq !== null) {
+                    $v = stripcslashes($dq[1]);
+                } else {
+                    $sq = Regex::match("#^'([^']*)'$#", $v);
+                    if ($sq !== null) $v = $sq[1];
+                }
+                $env[$m[1]] = $v;
+                if ($setGlobal) {
+                    $_ENV[$m[1]] = $v;
+                }
+            }
+        }
     }
 }

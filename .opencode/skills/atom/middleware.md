@@ -66,3 +66,15 @@ $app->router->group('', [Csrf::class], fn($r) => { ... });
 // Validated on POST/PUT/PATCH/DELETE — returns 403 on mismatch
 // Token is rotated after successful validation
 ```
+
+## Rate Limiter
+
+```php
+use Atom\Middleware\RateLimit;
+
+// Default: 60 requests per 60 seconds, per IP+path
+$app->router->group('/api', [new RateLimit(max: 100, window: 60)], fn($r) => { ... });
+```
+
+Exceeded limit → `429 Too Many Requests`.
+

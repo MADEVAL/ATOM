@@ -2,7 +2,7 @@
 
 PHP 8.5 micro-framework. Single-regex router, PCRE template engine, DI, validation (18 attribute rules), sessions, database with transactions, logger with rotation, CLI with help & NO_COLOR, .env.
 
-> Topic files: `routing.md`, `http.md`, `templates.md`, `validation.md`, `middleware.md`, `di.md`, `database.md`, `cli.md`, `logger.md`
+> Topic files: `routing.md`, `http.md`, `templates.md`, `validation.md`, `middleware.md`, `di.md`, `database.md`, `cli.md`, `logger.md`, `test-client.md`, `rate-limit.md`, `encryption.md`
 
 ## Scope of application
 
@@ -32,16 +32,21 @@ src/Atom/
 │   ├── MiddlewareInterface.php
 │   ├── Cors.php            # preflight + CORS headers, origin reflection
 │   ├── Csrf.php            # CSRF token validation with rotation
-│   └── Pipeline.php        # onion: Closure | object | string
+│   ├── Pipeline.php        # onion: Closure | object | string
+│   └── RateLimit.php       # per-IP request rate limiting
 ├── Routing/
 │   ├── Route.php           # #[Route] attribute
 │   ├── CompiledRoute.php   # internal representation
 │   ├── MatchedRoute.php    # match result
 │   ├── RouteCompiler.php   # single PCRE regex
-│   └── Router.php          # dispatch, groups, url(), cache, routes()
+│   └── Router.php          # dispatch, groups, url(), cache, routes(), health()
 ├── Support/
 │   ├── Logger.php          # file logger: 7 levels, rotate, clear, maxSize
-│   └── Regex.php           # PCRE wrapper
+│   ├── Regex.php           # PCRE wrapper
+│   ├── Paginator.php       # page/perPage/total/pages
+│   └── Encrypt.php         # AES-256-GCM encryption
+├── Test/
+│   └── HttpClient.php      # fluent API test client
 ├── Validation/
 │   └── Validator.php       # 18 attribute rules + ValidationException
 └── View/

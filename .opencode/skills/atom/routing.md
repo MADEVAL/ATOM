@@ -85,6 +85,17 @@ $app->router->clearCache();
 $routes = $app->router->routes(); // CompiledRoute[]
 ```
 
+## Health check
+
+```php
+$app->router->health('/health', fn() => [
+    'database' => $db->raw()->query('SELECT 1') !== false,
+    'cache'    => true,
+]);
+// GET /health → 200 {"database": true, "cache": true}
+// Any check returning false → 503
+```
+
 ## Attribute-based routing
 
 ```php

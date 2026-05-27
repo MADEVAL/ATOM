@@ -89,8 +89,13 @@ $app->run();
 | **Request** | Property hooks, JSON body, Bearer token, `_method` spoofing, file uploads. |
 | **Response** | `html/json/text/redirect/noContent`, cookies, cache headers, header injection shield. |
 | **Container** | DI: `bind`, `singleton`, `instance`, `has`, recursive autowire. |
-| **Config** | `fromEnv('.env')` with `APP_DEBUG`, `APP_CACHE_DIR`, `APP_VIEWS_DIR`, `APP_TIMEZONE`, `APP_LOG_LEVEL`, `APP_LOG_MAX_SIZE`, `APP_NAME`. |
+| **Config** | `fromEnv('.env')` with `APP_ENV` profiles (`.env.production`), `APP_DEBUG`, `APP_CACHE_DIR`, `APP_VIEWS_DIR`, `APP_TIMEZONE`, `APP_LOG_LEVEL`, `APP_LOG_MAX_SIZE`, `APP_NAME`. |
 | **Logger** | File-based, 7 levels, min-level filter, context, atomic writes, rotation, clear. |
+| **HTTP Test Client** | `HttpClient` — fluent API: `$client->get('/users')->assertOk()->assertJson(['id' => 1])`. |
+| **Rate Limiter** | `#[RateLimit(max: 60, window: 60)]` middleware — per-IP request limiting. |
+| **Health Check** | `$router->health('/health', fn() => ['db' => true])` — Kubernetes-ready. |
+| **Paginator** | `Paginator::from($req)->paginate($items, $total)` — page/perPage/total/pages. |
+| **Encryption** | `Encrypt::encrypt()` / `Encrypt::decrypt()` — AES-256-GCM with key derivation. |
 
 ## Example
 
@@ -167,16 +172,21 @@ src/Atom/
 │   ├── MiddlewareInterface.php
 │   ├── Cors.php            # preflight + CORS headers, origin reflection
 │   ├── Csrf.php            # CSRF token validation with rotation
-│   └── Pipeline.php        # onion: Closure | object | string
+│   ├── Pipeline.php        # onion: Closure | object | string
+│   └── RateLimit.php       # per-IP request rate limiting
 ├── Routing/
 │   ├── Route.php           # #[Route] attribute
 │   ├── CompiledRoute.php   # internal representation
 │   ├── MatchedRoute.php    # match result
 │   ├── RouteCompiler.php   # single PCRE regex
-│   └── Router.php          # dispatch, groups, url(), cache, routes()
+│   └── Router.php          # dispatch, groups, url(), cache, routes(), health()
 ├── Support/
 │   ├── Logger.php          # file logger: 7 levels, rotate, clear, maxSize
-│   └── Regex.php           # PCRE wrapper
+│   ├── Regex.php           # PCRE wrapper
+│   ├── Paginator.php       # page/perPage/total/pages from request
+│   └── Encrypt.php         # AES-256-GCM encryption
+├── Test/
+│   └── HttpClient.php      # fluent API test client
 ├── Validation/
 │   └── Validator.php       # 18 attribute rules + ValidationException
 └── View/

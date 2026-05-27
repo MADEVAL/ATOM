@@ -103,6 +103,20 @@ final class ConfigEnvTest extends TestCase
     }
 
     #[Test]
+    public function profile_file_overrides_base(): void
+    {
+        $base = sys_get_temp_dir() . '/atom_env_' . uniqid();
+        $profile = $base . '.production';
+        file_put_contents($base, "APP_DEBUG=true\nAPP_NAME=Base\nAPP_ENV=production\n");
+        file_put_contents($profile, "APP_DEBUG=false\nAPP_NAME=Override\n");
+        $config = Config::fromEnv($base, false);
+        unlink($base);
+        unlink($profile);
+        $this->assertFalse($config->debug);
+        $this->assertSame('Override', $config->appName);
+    }
+
+    #[Test]
     public function debug_false_by_default(): void
     {
         $config = Config::fromEnv(sys_get_temp_dir() . '/atom_missing_' . uniqid());

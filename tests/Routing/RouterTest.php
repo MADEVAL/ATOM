@@ -625,6 +625,17 @@ final class RouterTest extends TestCase
     }
 
     #[Test]
+    public function health_check_route(): void
+    {
+        $this->router->health('/health', fn() => ['db' => true, 'cache' => true]);
+        $req = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/health']);
+        $res = $this->router->dispatch($req);
+        $this->assertSame(200, $res->getStatusCode());
+        $this->assertStringContainsString('db', $res->getContent());
+        $this->assertStringContainsString('true', $res->getContent());
+    }
+
+    #[Test]
     public function match_with_empty_methods_throws(): void
     {
         $this->expectException(\InvalidArgumentException::class);
