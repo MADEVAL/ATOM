@@ -117,4 +117,5 @@ final class Response
 
     public function getContent(): string { return $this->content; }
     public function getStatusCode(): int { return $this->status->value; }
+    public function getHeader(string $name): string { return $this->headers[$name] ?? ''; }
 }

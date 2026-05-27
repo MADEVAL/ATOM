@@ -129,10 +129,11 @@ final class Request
         }
         $maxLength = ini_parse_quantity(ini_get('post_max_size')) ?: \Atom\Constants::JSON_BODY_MAX_FALLBACK;
         $contentLength = (int) ($server['HTTP_CONTENT_LENGTH'] ?? $server['CONTENT_LENGTH'] ?? 0);
-        if ($contentLength > $maxLength) {
+        if ($maxLength > 0 && $contentLength > $maxLength) {
             return [];
         }
-        $raw = file_get_contents('php://input', false, null, 0, $maxLength);
+        $length = $maxLength > 0 ? $maxLength : -1;
+        $raw = file_get_contents('php://input', false, null, 0, $length);
         return $raw !== false ? (json_decode($raw, true) ?? []) : [];
     }
 }

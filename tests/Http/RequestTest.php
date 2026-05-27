@@ -474,6 +474,18 @@ final class RequestTest extends TestCase
         );
         $this->assertSame('PUT', $req->method);
     }
+    #[Test]
+    public function json_body_parsing_handles_unlimited_post_max_size(): void
+    {
+        $req = new Request(
+            body: [],
+            server: [
+                'HTTP_CONTENT_TYPE' => 'application/json',
+                'HTTP_CONTENT_LENGTH' => '1024',
+            ],
+        );
+        $this->assertIsArray($req->body);
+    }
 }
 
 final class ValidatableUser

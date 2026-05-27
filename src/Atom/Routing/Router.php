@@ -10,7 +10,7 @@ use ReflectionClass, ReflectionMethod;
 
 final class Router
 {
-    /** @var Route[] */
+    /** @var CompiledRoute[] */
     private array $routes = [];
     private array $namedRoutes = [];
     private ?array $compiled = null;
@@ -130,7 +130,7 @@ final class Router
             public function check(): \Atom\Http\Response {
                 $fn = $this->c->make($this->k);
                 $result = ($fn)();
-                $allOk = !in_array(false, $result, true);
+                $allOk = !array_any($result, fn(mixed $v) => $v !== true);
                 return \Atom\Http\Response::json($result, $allOk ? \Atom\Http\StatusCode::OK : \Atom\Http\StatusCode::SERVICE_UNAVAILABLE);
             }
         });
@@ -214,16 +214,27 @@ final class Router
     /** @return list<string> */
     private function getAllowedMethods(string $uri): array
     {
-        $compiled = $this->getCompiled();
-        if (empty($compiled['altRegex'])) {
-            return [];
+        $methods = [];
+        foreach ($this->routes as $route) {
+            $regex = '#^';
+            $offset = 0;
+            $path = $route->path;
+            while (preg_match('#\{([a-zA-Z_][a-zA-Z0-9_]*)(?::([^}]+))?\}#', $path, $m, PREG_OFFSET_CAPTURE, $offset)) {
+                $regex .= Regex::quote(substr($path, $offset, $m[0][1] - $offset));
+                $name = $m[1][0];
+                $custom = $m[2][0] ?? '';
+                $pattern = $custom !== '' ? $custom : ($this->patterns[$name] ?? '[^/]+');
+                $regex .= '(' . $pattern . ')';
+                $offset = $m[0][1] + strlen($m[0][0]);
+            }
+            $regex .= Regex::quote(substr($path, $offset)) . '$#';
+            if (Regex::match($regex, $uri) !== null) {
+                foreach ($route->methods as $method) {
+                    $methods[$method] = true;
+                }
+            }
         }
-        $m = Regex::match($compiled['altRegex'], 'GET' . $uri);
-        if ($m !== null) {
-            $id = (int) $m['MARK'];
-            return $compiled['map'][$id]['methods'] ?? [];
-        }
-        return [];
+        return array_keys($methods);
     }
 
     public function url(string $name, array $params = []): string

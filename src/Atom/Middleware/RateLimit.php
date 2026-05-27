@@ -27,7 +27,8 @@ final class RateLimit implements MiddlewareInterface
 
         $count = count(self::$store[$key]);
         if ($count > $this->max) {
-            $retryAfter = $windowStart + $this->window - $now + 1;
+            $oldest = self::$store[$key][0];
+            $retryAfter = max(1, $oldest + $this->window - $now);
             return (new Response('Too Many Requests', StatusCode::TOO_MANY_REQUESTS))
                 ->withHeader('Retry-After', (string) max(1, $retryAfter));
         }

@@ -636,6 +636,24 @@ final class RouterTest extends TestCase
     }
 
     #[Test]
+    public function health_check_null_value_returns_503(): void
+    {
+        $this->router->health('/health2', fn() => ['db' => null]);
+        $req = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/health2']);
+        $res = $this->router->dispatch($req);
+        $this->assertSame(503, $res->getStatusCode());
+    }
+
+    #[Test]
+    public function health_check_zero_value_returns_503(): void
+    {
+        $this->router->health('/health3', fn() => ['db' => 0]);
+        $req = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/health3']);
+        $res = $this->router->dispatch($req);
+        $this->assertSame(503, $res->getStatusCode());
+    }
+
+    #[Test]
     public function match_with_empty_methods_throws(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -668,6 +686,21 @@ final class RouterTest extends TestCase
         $res = $this->router->dispatch($req);
         $this->assertSame(405, $res->getStatusCode());
         $this->assertStringContainsString('Allow', $res->getContent());
+    }
+
+    #[Test]
+    public function method_not_allowed_shows_all_methods_for_same_uri(): void
+    {
+        $this->router->get('/dual', 'DualController@read');
+        $this->router->post('/dual', 'DualController@write');
+        $this->router->delete('/dual', 'DualController@remove');
+        $req = new Request(server: ['REQUEST_METHOD' => 'PATCH', 'REQUEST_URI' => '/dual']);
+        $res = $this->router->dispatch($req);
+        $this->assertSame(405, $res->getStatusCode());
+        $allow = $res->getHeader('Allow');
+        $this->assertStringContainsString('GET', $allow);
+        $this->assertStringContainsString('POST', $allow);
+        $this->assertStringContainsString('DELETE', $allow);
     }
 
     #[Test]
