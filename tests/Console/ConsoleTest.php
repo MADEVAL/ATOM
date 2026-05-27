@@ -237,6 +237,18 @@ final class ConsoleTest extends TestCase
     }
 
     #[Test]
+    public function command_exception_caught_with_message(): void
+    {
+        $console = new Console($this->app);
+        $console->add('fail', function () { throw new \RuntimeException('boom!'); });
+        ob_start();
+        $code = $console->run(['atom', 'fail']);
+        $output = ob_get_clean();
+        $this->assertSame(1, $code);
+        $this->assertStringContainsString('boom!', $output);
+    }
+
+    #[Test]
     public function list_shows_custom_commands(): void
     {
         $console = new Console($this->app);

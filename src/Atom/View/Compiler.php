@@ -6,7 +6,7 @@ use Atom\Support\Regex;
 
 final class Compiler
 {
-    /** @var list<array{0:string,1:string|null}> */
+    /** @var list<array{0:string,1:string|null,2?:string,3?:string}> */
     private array $forStack = [];
 
     public function __construct(private Engine $engine) {}
@@ -176,14 +176,17 @@ final class Compiler
 
     private function compileFor(string $var, string $expr): string
     {
-        $this->forStack[] = [$var, null];
-        return '<?php foreach ((' . $this->compileExpression($expr) . ') ?? [] as $' . $var . '): $this->ctx[\'' . $var . '\'] = $' . $var . '; ?>';
+        $shadowKey = '_prev_' . $var;
+        $this->forStack[] = [$var, null, $shadowKey];
+        return '<?php if(isset($this->ctx[\'' . $var . '\'])){$this->ctx[\'' . $shadowKey . '\']=$this->ctx[\'' . $var . '\'];} foreach ((' . $this->compileExpression($expr) . ') ?? [] as $' . $var . '): $this->ctx[\'' . $var . '\'] = $' . $var . '; ?>';
     }
 
     private function compileForKeyVal(string $key, string $val, string $expr): string
     {
-        $this->forStack[] = [$key, $val];
-        return '<?php foreach ((' . $this->compileExpression($expr) . ') ?? [] as $' . $key . ' => $' . $val . '): $this->ctx[\'' . $key . '\'] = $' . $key . '; $this->ctx[\'' . $val . '\'] = $' . $val . '; ?>';
+        $shadowKey = '_prev_' . $key;
+        $shadowVal = '_prev_' . $val;
+        $this->forStack[] = [$key, $val, $shadowKey, $shadowVal];
+        return '<?php if(isset($this->ctx[\'' . $key . '\'])){$this->ctx[\'' . $shadowKey . '\']=$this->ctx[\'' . $key . '\'];} if(isset($this->ctx[\'' . $val . '\'])){$this->ctx[\'' . $shadowVal . '\']=$this->ctx[\'' . $val . '\'];} foreach ((' . $this->compileExpression($expr) . ') ?? [] as $' . $key . ' => $' . $val . '): $this->ctx[\'' . $key . '\'] = $' . $key . '; $this->ctx[\'' . $val . '\'] = $' . $val . '; ?>';
     }
 
     private function compileEndfor(): string
@@ -193,8 +196,12 @@ final class Compiler
         }
         $vars = array_pop($this->forStack);
         $cleanup = '';
-        foreach ($vars as $v) {
-            if ($v !== null) $cleanup .= "unset(\$this->ctx['{$v}']);";
+        $shadows = array_slice($vars, 2);
+        $iterVars = array_slice($vars, 0, 2);
+        foreach ($iterVars as $v) {
+            if ($v === null) continue;
+            $shadowKey = '_prev_' . $v;
+            $cleanup .= "if(isset(\$this->ctx['{$shadowKey}'])){\$this->ctx['{$v}']=\$this->ctx['{$shadowKey}'];unset(\$this->ctx['{$shadowKey}']);}else{unset(\$this->ctx['{$v}']);}";
         }
         return '<?php endforeach; ' . $cleanup . ' ?>';
     }

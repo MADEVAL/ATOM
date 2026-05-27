@@ -107,8 +107,13 @@ final class Console
             $this->out('red', "Unknown command: {$name}\n");
             return 1;
         }
-        $result = ($this->commands[$name])($args, $options);
-        return is_int($result) ? $result : 0;
+        try {
+            $result = ($this->commands[$name])($args, $options);
+            return is_int($result) ? $result : 0;
+        } catch (\Throwable $e) {
+            $this->out('red', "Command '{$name}' failed: " . $e->getMessage() . "\n");
+            return 1;
+        }
     }
 
     private function color(string $c, string $text): string

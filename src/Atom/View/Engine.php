@@ -78,7 +78,7 @@ final class Engine
             'length' => fn($v) => is_countable($v) ? count($v) : mb_strlen((string) $v),
             'nl2br'  => fn($v) => nl2br(htmlspecialchars((string) $v)),
             'json'   => fn($v) => json_encode($v, JSON_UNESCAPED_UNICODE),
-            'default'=> fn($v, $d = '') => ($v ?? '') !== '' ? $v : $d,
+            'default'=> fn($v, $d = '') => ($v !== null && $v !== false && $v !== '' && $v !== []) ? $v : $d,
             'raw'    => fn($v) => $v,
         ];
     }

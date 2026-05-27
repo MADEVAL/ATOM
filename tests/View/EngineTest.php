@@ -116,11 +116,29 @@ final class EngineTest extends TestCase
     }
 
     #[Test]
-    public function render_set_variable(): void
+    public function render_with_numeric_and_bool_literals(): void
     {
-        file_put_contents($this->tmpViewsDir . '/set.twig', '{% set x = 5 %}{{ x }}');
-        $result = $this->engine->render('set.twig', []);
-        $this->assertStringContainsString('5', trim($result));
+        file_put_contents($this->tmpViewsDir . '/lit.twig', '{{ 42 }}-{{ true }}-{{ false }}-{{ null }}');
+        $result = $this->engine->render('lit.twig');
+        $this->assertStringContainsString('42', $result);
+        $this->assertStringContainsString('1', $result);
+    }
+
+    #[Test]
+    public function default_filter_handles_false_value(): void
+    {
+        file_put_contents($this->tmpViewsDir . '/def.twig', '{{ val | default("n/a") }}');
+        $this->assertStringContainsString('n/a', $this->engine->render('def.twig', ['val' => false]));
+        $this->assertStringNotContainsString('n/a', $this->engine->render('def.twig', ['val' => 0]));
+        $this->assertStringContainsString('n/a', $this->engine->render('def.twig', ['val' => null]));
+    }
+
+    #[Test]
+    public function for_loop_restores_shadowed_variable(): void
+    {
+        file_put_contents($this->tmpViewsDir . '/shadow.twig', '{{ title }}{% for title in items %}[{{ title }}]{% endfor %}{{ title }}');
+        $result = $this->engine->render('shadow.twig', ['title' => 'TOP', 'items' => ['a', 'b']]);
+        $this->assertStringContainsString('TOP[a][b]TOP', $result);
     }
 
     #[Test]
