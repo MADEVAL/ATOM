@@ -230,6 +230,7 @@ Model::setConnection(<span class="var">$db</span>);</code></pre>
 <span class="var">$user</span>  = <span class="var">$query</span>->first();             <span class="cm">// first result or null</span>
 <span class="var">$total</span> = <span class="var">$query</span>->count();             <span class="cm">// int — COUNT(*)</span>
 <span class="var">$exists</span> = <span class="var">$query</span>->exists();           <span class="cm">// bool</span></code></pre>
+<p>Query validates identifiers and operators before SQL generation. Empty <code>whereIn()</code> returns no rows; empty <code>whereNotIn()</code> is treated as a no-op.</p>
 
 <h3>Magic whereX methods</h3>
 <pre><code><span class="cm">// whereRole('admin')  →  WHERE "role" = 'admin'</span>
@@ -292,12 +293,12 @@ Model::setConnection(<span class="var">$db</span>);</code></pre>
     ->get();
 
 <span class="kw">foreach</span> (<span class="var">$posts</span> <span class="kw">as</span> <span class="var">$post</span>) {
-    <span class="kw">echo</span> <span class="var">$post</span>->author->name;       <span class="cm">// already loaded</span>
-    <span class="kw">foreach</span> (<span class="var">$post</span>->comments <span class="kw">as</span> <span class="var">$c</span>) {  <span class="cm">// already loaded</span>
+    <span class="kw">echo</span> <span class="var">$post</span>->author()->getResults()->name;       <span class="cm">// already loaded</span>
+    <span class="kw">foreach</span> (<span class="var">$post</span>->comments()->getResults() <span class="kw">as</span> <span class="var">$c</span>) {  <span class="cm">// already loaded</span>
         <span class="kw">echo</span> <span class="var">$c</span>->body;
     }
 }</code></pre>
-<p>Eager loading works as follows: relation methods on the first model are introspected to determine foreign/local keys, a single <code>SELECT ... WHERE fk IN (...)</code> query fetches all related records, and results are distributed to parent models by key mapping.</p>
+<p>Eager loading works as follows: relation methods on the first model are introspected to determine foreign/local keys, a single <code>SELECT ... WHERE fk IN (...)</code> query fetches all related records, and results are distributed to parent models by key mapping. Column/property mappings from <code>#[Column]</code> are respected.</p>
 
 <h2 id="orm-advanced">Advanced</h2>
 

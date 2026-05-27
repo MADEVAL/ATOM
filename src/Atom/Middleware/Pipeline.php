@@ -7,15 +7,18 @@ use Atom\Container\Container;
 
 final readonly class Pipeline
 {
+    /** @param list<string|\Closure|MiddlewareInterface> $layers */
     public static function run(array $layers, Request $request, \Closure $core, Container $c): Response
     {
-        $resolve = static fn(string|\Closure|MiddlewareInterface $m): string|\Closure|MiddlewareInterface => match (true) {
-            $m instanceof \Closure     => $m,
-            $m instanceof MiddlewareInterface => $m,
-            is_string($m)              => $c->make($m),
-            default => throw new \InvalidArgumentException(
-                'Middleware must be a Closure, MiddlewareInterface, or class name'
-            ),
+        $resolve = static function (string|\Closure|MiddlewareInterface $m) use ($c): \Closure|MiddlewareInterface {
+            if ($m instanceof \Closure || $m instanceof MiddlewareInterface) {
+                return $m;
+            }
+            $resolved = $c->make($m);
+            if (!$resolved instanceof MiddlewareInterface) {
+                throw new \InvalidArgumentException('Middleware class must implement MiddlewareInterface');
+            }
+            return $resolved;
         };
         $pipeline = array_reduce(
             array_reverse($layers),

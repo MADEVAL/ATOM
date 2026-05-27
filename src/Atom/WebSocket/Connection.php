@@ -4,19 +4,20 @@ namespace Atom\WebSocket;
 
 final class Connection
 {
+    private const MAX_PAYLOAD_BYTES = 1_048_576;
+
     private string $id;
     /** @var resource */
     private $socket;
     private string $buffer = '';
     private bool $open = true;
-    private bool $masked = true;
     /** @var array<string,mixed> */
     public array $data = [];
 
     /**
      * @param resource $socket
      */
-    public function __construct($socket)
+    public function __construct($socket, private bool $requireMaskedFrames = false)
     {
         $this->id = bin2hex(random_bytes(16));
         $this->socket = $socket;
@@ -33,7 +34,7 @@ final class Connection
         return base64_encode(sha1($key . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11', true));
     }
 
-    /** @return array<string,string> */
+    /** @param list<string> $protocols @return list<string> */
     public static function createHandshakeHeaders(string $acceptKey, array $protocols = []): array
     {
         return [
@@ -49,13 +50,29 @@ final class Connection
      */
     public static function accept($client, string $requestHeaders): ?self
     {
-        if (!preg_match('#Sec-WebSocket-Key:\s*(\S+)#i', $requestHeaders, $m)) {
+        if (!preg_match('#^GET\s+\S+\s+HTTP/1\.[01]\r?$#im', $requestHeaders)) {
+            return null;
+        }
+        if (!preg_match('#^Upgrade:\s*websocket\r?$#im', $requestHeaders)) {
+            return null;
+        }
+        if (!preg_match('#^Connection:\s*.*\bUpgrade\b.*\r?$#im', $requestHeaders)) {
+            return null;
+        }
+        if (!preg_match('#^Sec-WebSocket-Version:\s*13\r?$#im', $requestHeaders)) {
+            return null;
+        }
+        if (!preg_match('#^Sec-WebSocket-Key:\s*(\S+)\r?$#im', $requestHeaders, $m)) {
+            return null;
+        }
+        $decoded = base64_decode($m[1], true);
+        if ($decoded === false || strlen($decoded) !== 16) {
             return null;
         }
         $acceptKey = self::generateAcceptKey($m[1]);
         $headers = self::createHandshakeHeaders($acceptKey);
         fwrite($client, implode("\r\n", $headers) . "\r\n\r\n");
-        return new self($client);
+        return new self($client, true);
     }
 
     /** @return array{opcode:int,payload:string}|null */
@@ -75,13 +92,31 @@ final class Connection
             return false;
         }
         $frame = $this->encodeFrame($payload, $opcode);
-        $written = @fwrite($this->socket, $frame);
-        return $written !== false && $written === strlen($frame);
+        $offset = 0;
+        $length = strlen($frame);
+        $emptyWrites = 0;
+        while ($offset < $length) {
+            $written = @fwrite($this->socket, substr($frame, $offset));
+            if ($written === false) {
+                $this->open = false;
+                return false;
+            }
+            if ($written === 0) {
+                if (++$emptyWrites > 5) {
+                    return false;
+                }
+                usleep(1000);
+                continue;
+            }
+            $offset += $written;
+            $emptyWrites = 0;
+        }
+        return true;
     }
 
     public function sendJson(mixed $data): bool
     {
-        return $this->send(json_encode($data, JSON_UNESCAPED_UNICODE));
+        return $this->send(json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
     }
 
     public function ping(): bool
@@ -122,6 +157,10 @@ final class Connection
         $opcode = $first & 0x0F;
         $masked = ($second & 0x80) !== 0;
         $len = $second & 0x7F;
+        if ($this->requireMaskedFrames && !$masked) {
+            $this->close(1002);
+            return null;
+        }
 
         $offset = 2;
         if ($len === 126) {
@@ -132,6 +171,10 @@ final class Connection
             if (strlen($this->buffer) < 10) return null;
             $len = unpack('J', substr($this->buffer, 2, 8))[1];
             $offset = 10;
+        }
+        if ($len > self::MAX_PAYLOAD_BYTES) {
+            $this->close(1009);
+            return null;
         }
 
         $maskLen = $masked ? 4 : 0;
@@ -158,8 +201,7 @@ final class Connection
         };
     }
 
-    /** @return null */
-    private function closeReceived(string $payload): ?array
+    private function closeReceived(string $payload): null
     {
         $code = strlen($payload) >= 2 ? unpack('n', substr($payload, 0, 2))[1] : 1000;
         if ($this->open) {
@@ -169,8 +211,7 @@ final class Connection
         return null;
     }
 
-    /** @return null */
-    private function handlePing(string $payload): ?array
+    private function handlePing(string $payload): null
     {
         @fwrite($this->socket, $this->encodeFrame($payload, 0xA));
         return null;

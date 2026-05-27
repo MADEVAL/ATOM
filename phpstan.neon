@@ -1,5 +1,5 @@
 parameters:
-    level: max
+    level: 5
     paths:
         - src/
     bootstrapFiles:
@@ -8,3 +8,10 @@ parameters:
         maximumNumberOfProcesses: 4
     treatPhpDocTypesAsCertain: false
     reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        -
+            identifier: assign.propertyReadOnly
+            path: src/Atom/Http/Request.php
+        -
+            identifier: assign.propertyReadOnly
+            path: src/Atom/Http/UploadedFile.php

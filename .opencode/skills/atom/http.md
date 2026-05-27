@@ -41,7 +41,7 @@ Nested upload arrays (`<input name="photos[]" multiple>`) return `UploadedFile::
 
 ### JSON body auto-parse
 
-When `Content-Type: application/json`, body is auto-decoded from `php://input`. Uses `ini_parse_quantity(ini_get('post_max_size'))` for content-length check.
+When `Content-Type: application/json`, body is auto-decoded from `php://input`. Detection supports both standard `CONTENT_TYPE` and `HTTP_CONTENT_TYPE` server keys. Uses `ini_parse_quantity(ini_get('post_max_size'))` for content-length check.
 
 ```php
 // POST /api {"name": "Alice"} → $req->input('name') === 'Alice'

@@ -2,6 +2,25 @@
 
 All notable changes to Atom will be documented in this file.
 
+## [0.0.5] - 2026-05-28
+
+### Fixed
+- **Router cache** - compiled route cache now includes a version and route signature; stale cache entries are ignored instead of dispatching old routes.
+- **Templates** - `{% for %}` over null or non-iterable values now behaves as an empty loop instead of emitting warnings.
+- **ORM eager loading** - relation eager loading now respects `#[Column]` property mapping for `belongsTo`, `hasOne`, and `hasMany`.
+- **Request JSON parsing** - accepts both `CONTENT_TYPE` and `HTTP_CONTENT_TYPE` SAPI keys.
+- **CORS** - reflected wildcard origins now include `Vary: Origin` on normal and preflight responses.
+- **WebSocket** - handshake validates method, upgrade headers, version 13, and key length; server-side connections reject unmasked client frames and oversized payloads.
+
+### Changed
+- **Query builder** - validates SQL identifiers, whitelists operators, rejects invalid sort directions, and defines deterministic empty `whereIn` / `whereNotIn` semantics.
+- **Static analysis** - added `phpstan/phpstan` as a dev dependency, `composer stan`, and a clean PHPStan level 5 configuration.
+- **Documentation and opencode skills** - synced routing cache, ORM, HTTP, CORS, WebSocket, test, and coverage notes with implementation.
+
+### Tests
+- Running: **728 tests, 1108 assertions, 0 failures**
+- Coverage: **85.29% lines**
+
 ## [0.0.4] - 2026-05-28
 
 ### Added
@@ -13,7 +32,7 @@ All notable changes to Atom will be documented in this file.
 - **Security headers** in `Response::send()`: `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`
 - **Config: `routeCache` + `viewCache`** — cache strategy per subsystem (`'file'` = var_export/require, `'cache'` = Cache abstraction)
 - **Documentation** — `docs/cache.html`, `docs/orm.html` added; all 12 doc pages + sidebars synced with code
-- **PHPStan** config (`phpstan.neon` level max)
+- **PHPStan** config
 - **CHANGELOG.md**, **CONTRIBUTING.md**
 
 ### Changed
@@ -63,7 +82,7 @@ All notable changes to Atom will be documented in this file.
 ### Added
 - **Response::send()** — added built-in security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`
 - **Logger::log()** — added exclusive file lock (`flock`) around size-check → rotate → write cycle to prevent race conditions in concurrent environments
-- **PHPStan** configuration (`phpstan.neon`) at level `max`
+- **PHPStan** configuration (`phpstan.neon`)
 - **CHANGELOG.md** and **CONTRIBUTING.md**
 
 ### Changed

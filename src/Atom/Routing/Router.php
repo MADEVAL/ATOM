@@ -12,6 +12,8 @@ use ReflectionClass, ReflectionMethod;
 
 final class Router
 {
+    private const CACHE_VERSION = 2;
+
     /** @var CompiledRoute[] */
     private array $routes = [];
     private array $namedRoutes = [];
@@ -213,8 +215,10 @@ final class Router
         $hasRequest = array_any($ref->getParameters(), fn($p) => $p->getName() === 'request');
         $params = $hasRequest ? ['request' => $request, ...$named] : $named;
 
-        $handler = fn() => $controller->{$action}(...$params)
-            |> (fn($r) => $r instanceof Response ? $r : Response::html((string) $r));
+        $handler = function () use ($controller, $action, $params): Response {
+            $result = $controller->{$action}(...$params);
+            return $result instanceof Response ? $result : Response::html((string) $result);
+        };
 
         return Pipeline::run($meta['middleware'], $request, $handler, $this->container);
     }
@@ -266,9 +270,10 @@ final class Router
     {
         if ($this->compiled !== null) return $this->compiled;
 
+        $signature = $this->signature();
         if ($this->cacheStrategy === 'cache' && $this->cache !== null) {
             return $this->compiled = $this->cache->remember(
-                'routes_compiled',
+                'routes_compiled:' . $signature,
                 fn() => $this->compileRoutes(),
                 0,
             );
@@ -281,23 +286,51 @@ final class Router
                 unlink($this->cacheFile);
                 $cached = null;
             }
-            if (is_array($cached) && isset($cached['regex'], $cached['map'], $cached['altRegex'])) {
+            if (
+                is_array($cached)
+                && ($cached['version'] ?? null) === self::CACHE_VERSION
+                && ($cached['signature'] ?? null) === $signature
+                && isset($cached['regex'], $cached['map'], $cached['altRegex'])
+            ) {
+                unset($cached['version'], $cached['signature']);
                 return $this->compiled = $cached;
             }
         }
         $this->compiled = $this->compileRoutes();
-        $export = $this->compiled;
+        $export = ['version' => self::CACHE_VERSION, 'signature' => $signature, ...$this->compiled];
         foreach ($export['map'] as &$entry) unset($entry['route']);
         unset($entry);
         $dir = dirname($this->cacheFile);
         if (!is_dir($dir) && !@mkdir($dir, Constants::DIR_PERMISSIONS, true) && !is_dir($dir)) {
             return $this->compiled;
         }
-        file_put_contents(
-            $this->cacheFile,
-            "<?php\nreturn " . var_export($export, true) . ";\n",
-        );
+        $tmp = $this->cacheFile . '.' . bin2hex(random_bytes(8)) . '.tmp';
+        if (file_put_contents($tmp, "<?php\nreturn " . var_export($export, true) . ";\n", LOCK_EX) !== false) {
+            @rename($tmp, $this->cacheFile);
+        } elseif (is_file($tmp)) {
+            @unlink($tmp);
+        }
         return $this->compiled;
+    }
+
+    private function signature(): string
+    {
+        $routes = array_map(
+            fn(CompiledRoute $r) => [
+                'path' => $r->path,
+                'methods' => $r->methods,
+                'name' => $r->name,
+                'middleware' => array_map(
+                    fn(mixed $m) => is_string($m) ? $m : (is_object($m) ? $m::class : get_debug_type($m)),
+                    $r->middleware,
+                ),
+                'controller' => $r->controller,
+                'action' => $r->action,
+            ],
+            $this->routes,
+        );
+
+        return sha1(serialize([self::CACHE_VERSION, $routes, $this->patterns]));
     }
 
     private function compileRoutes(): array
@@ -327,4 +360,3 @@ final class Router
         return $cls !== null ? ($ns !== '' ? $ns . '\\' . $cls : $cls) : null;
     }
 }
-

@@ -23,7 +23,7 @@ final class CompilerTest extends TestCase
         mkdir($this->tmpViewsDir, 0777, true);
         mkdir($this->tmpCacheDir, 0777, true);
         $this->engine = new Engine($this->tmpViewsDir, $this->tmpCacheDir);
-        $this->compiler = new Compiler($this->engine);
+        $this->compiler = new Compiler();
     }
 
     protected function tearDown(): void

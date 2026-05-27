@@ -295,6 +295,8 @@ final class RouterTest extends TestCase
 
         $raw = file_get_contents($cacheFile);
         $this->assertNotEmpty($raw);
+        $this->assertStringContainsString("'signature'", $raw);
+        $this->assertStringContainsString("'version'", $raw);
     }
 
     #[Test]
@@ -335,6 +337,7 @@ final class RouterTest extends TestCase
         // Create a fresh router with same cache dir - should load from disk
         $container2 = new Container();
         $router2 = new Router($container2, $this->tmpCacheDir);
+        $router2->get('/disk-cache', 'DiskCacheController@test');
         $container2->bind('DiskCacheController', fn() => new class {
             public function test(): string { return 'disk-cached'; }
         });
@@ -342,6 +345,35 @@ final class RouterTest extends TestCase
         $req2 = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/disk-cache']);
         $res2 = $router2->dispatch($req2);
         $this->assertStringContainsString('disk-cached', $res2->getContent());
+    }
+
+    #[Test]
+    public function stale_disk_cache_is_ignored_when_routes_change(): void
+    {
+        $container1 = new Container();
+        $router1 = new Router($container1, $this->tmpCacheDir);
+        $router1->get('/old', 'StaleCacheController@old');
+        $container1->bind('StaleCacheController', fn() => new class {
+            public function old(): string { return 'old'; }
+            public function fresh(): string { return 'fresh'; }
+        });
+
+        $router1->dispatch(new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/old']));
+
+        $container2 = new Container();
+        $router2 = new Router($container2, $this->tmpCacheDir);
+        $router2->get('/fresh', 'StaleCacheController@fresh');
+        $container2->bind('StaleCacheController', fn() => new class {
+            public function old(): string { return 'old'; }
+            public function fresh(): string { return 'fresh'; }
+        });
+
+        $fresh = $router2->dispatch(new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/fresh']));
+        $old = $router2->dispatch(new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/old']));
+
+        $this->assertSame(200, $fresh->getStatusCode());
+        $this->assertSame('fresh', $fresh->getContent());
+        $this->assertSame(404, $old->getStatusCode());
     }
 
     #[Test]

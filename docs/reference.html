@@ -217,8 +217,8 @@ User::destroy(<span class="num">1</span>, <span class="num">2</span>, <span clas
 <span class="cm">// Eager loading</span>
 <span class="var">$posts</span> = Post::query()->with(<span class="str">'author'</span>, <span class="str">'comments'</span>)->get();
 <span class="kw">foreach</span> (<span class="var">$posts</span> <span class="kw">as</span> <span class="var">$post</span>) {
-    <span class="var">$post</span>->author->name;     <span class="cm">// user model</span>
-    <span class="kw">foreach</span> (<span class="var">$post</span>->comments <span class="kw">as</span> <span class="var">$c</span>) <span class="kw">echo</span> <span class="var">$c</span>->body;
+    <span class="var">$post</span>->author()->getResults()->name;     <span class="cm">// user model</span>
+    <span class="kw">foreach</span> (<span class="var">$post</span>->comments()->getResults() <span class="kw">as</span> <span class="var">$c</span>) <span class="kw">echo</span> <span class="var">$c</span>->body;
 }
 
 <span class="cm">// Paginate via query builder</span>

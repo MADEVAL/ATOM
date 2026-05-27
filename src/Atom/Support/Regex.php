@@ -4,6 +4,7 @@ namespace Atom\Support;
 
 final readonly class Regex
 {
+    /** @param int-mask<PREG_OFFSET_CAPTURE, PREG_UNMATCHED_AS_NULL> $flags */
     public static function match(string $pattern, string $subject, int $flags = 0): ?array
     {
         $r = @preg_match($pattern, $subject, $m, $flags);
@@ -11,6 +12,7 @@ final readonly class Regex
         return $r === 1 ? $m : null;
     }
 
+    /** @param int-mask<PREG_PATTERN_ORDER, PREG_SET_ORDER, PREG_OFFSET_CAPTURE, PREG_UNMATCHED_AS_NULL> $flags */
     public static function matchAll(string $pattern, string $subject, int $flags = 0): array
     {
         $r = @preg_match_all($pattern, $subject, $m, $flags);
@@ -26,6 +28,7 @@ final readonly class Regex
         return $r ?? throw new \RuntimeException('PCRE error: ' . preg_last_error_msg());
     }
 
+    /** @param int-mask<PREG_SPLIT_NO_EMPTY, PREG_SPLIT_DELIM_CAPTURE, PREG_SPLIT_OFFSET_CAPTURE> $flags */
     public static function split(string $pattern, string $subject, int $flags = PREG_SPLIT_NO_EMPTY): array
     {
         $r = preg_split($pattern, $subject, -1, $flags);

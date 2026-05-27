@@ -108,7 +108,7 @@
     <span class="str">allowCredentials</span>: <span class="kw">true</span>,
     <span class="str">exposeHeaders</span>: <span class="str">'X-Total-Count'</span>,
 )], <span class="kw">fn</span>(<span class="var">$r</span>) => { ... });</code></pre>
-<p>Handles OPTIONS preflight. Reflects Origin when <code>allowOrigin: '*'</code>. <code>* + credentials</code> throws <code>InvalidArgumentException</code> per CORS spec.</p>
+<p>Handles OPTIONS preflight. Reflects Origin when <code>allowOrigin: '*'</code> and adds <code>Vary: Origin</code> for reflected responses. <code>* + credentials</code> throws <code>InvalidArgumentException</code> per CORS spec.</p>
 
 <h2 id="mw-csrf">CSRF middleware</h2>
 <pre><code><span class="kw">use</span> Atom\Middleware\Csrf;

@@ -150,6 +150,20 @@ final class CorsTest extends TestCase
         $response = $cors->handle($req, fn() => new Response('ok'));
         $headers = $this->getHeaders($response);
         $this->assertSame('https://myapp.com', $headers['Access-Control-Allow-Origin']);
+        $this->assertSame('Origin', $headers['Vary']);
+    }
+
+    #[Test]
+    public function wildcard_preflight_with_request_origin_adds_vary(): void
+    {
+        $cors = new Cors();
+        $req = new Request(
+            server: ['REQUEST_METHOD' => 'OPTIONS', 'REQUEST_URI' => '/'],
+            headers: ['origin' => 'https://myapp.com'],
+        );
+        $response = $cors->handle($req, fn() => new Response(''));
+        $headers = $this->getHeaders($response);
+        $this->assertSame('Origin', $headers['Vary']);
     }
 
     #[Test]

@@ -189,7 +189,7 @@ final class Server
             usleep(10000);
         }
 
-        if (!str_contains($buffer, 'Upgrade: websocket')) {
+        if (!preg_match('#^Upgrade:\s*websocket\r?$#im', $buffer)) {
             fwrite($client, "HTTP/1.1 400 Bad Request\r\n\r\n");
             fclose($client);
             return;

@@ -146,7 +146,7 @@
 }
 <span class="var">$id</span> = (<span class="kw">int</span>) <span class="var">$m</span>[<span class="str">'MARK'</span>]; <span class="cm">// → route index</span>
 <span class="var">$params</span> = array_filter(<span class="var">$m</span>, <span class="str">'is_string'</span>, ARRAY_FILTER_USE_KEY);</code></pre>
-<p>Cache invalidation: <code>$app->router->clearCache()</code>. Corrupted cache files are auto-detected and regenerated.</p>
+<p>Cache invalidation: <code>$app->router->clearCache()</code>. Cache files include a framework cache version and route signature; stale or corrupted files are auto-detected and regenerated.</p>
 
 <h3>Cache strategy</h3>
 <p>Control where compiled routes are stored via <code>APP_ROUTE_CACHE</code> (<code>Config::routeCache</code>):</p>

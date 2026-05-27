@@ -77,7 +77,7 @@ final class Request
             return UploadedFile::empty();
         }
         $file = $this->files[$key];
-        if (is_array($file) && !isset($file['error'])) {
+        if (!is_array($file) || !isset($file['error'])) {
             return UploadedFile::empty();
         }
         $error = $file['error'] ?? UPLOAD_ERR_NO_FILE;
@@ -126,7 +126,8 @@ final class Request
     /** @param array<string,mixed> $server @return array<string,mixed> */
     private function parseJsonBody(array $server): array
     {
-        if (!isset($server['HTTP_CONTENT_TYPE']) || !str_starts_with($server['HTTP_CONTENT_TYPE'], 'application/json')) {
+        $contentType = strtolower((string) ($server['HTTP_CONTENT_TYPE'] ?? $server['CONTENT_TYPE'] ?? ''));
+        if (!str_starts_with($contentType, 'application/json')) {
             return [];
         }
         $maxLength = ini_parse_quantity(ini_get('post_max_size')) ?: Constants::JSON_BODY_MAX_FALLBACK;

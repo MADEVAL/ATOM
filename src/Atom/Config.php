@@ -24,6 +24,7 @@ final readonly class Config
 
     public static function fromEnv(string $path = '.env', bool $setGlobal = true): self
     {
+        /** @var array<string,string> $env */
         $env = [];
         self::loadEnvFile($path, $env, $setGlobal);
 
@@ -59,25 +60,31 @@ final readonly class Config
         return $v !== false ? $v : $default;
     }
 
-    /** @param array<string,string> $env */
+    /**
+     * @param array<string,string> $env
+     * @param-out array<string,string> $env
+     */
     private static function loadEnvFile(string $path, array &$env, bool $setGlobal): void
     {
         if (!is_file($path)) return;
-        foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if ($lines === false) return;
+        foreach ($lines as $line) {
             $line = ltrim($line);
             if ($line === '' || $line[0] === '#') continue;
             if ($m = Regex::match('#^([A-Z_][A-Z0-9_]*)\s*=\s*(.*)$#', $line)) {
-                $v = trim($m[2]);
+                $key = (string) $m[1];
+                $v = trim((string) $m[2]);
                 $dq = Regex::match('#^"((?:[^"\\\\]|\\\\.)*)"$#', $v);
                 if ($dq !== null) {
-                    $v = stripcslashes($dq[1]);
+                    $v = stripcslashes((string) $dq[1]);
                 } else {
                     $sq = Regex::match("#^'([^']*)'$#", $v);
-                    if ($sq !== null) $v = $sq[1];
+                    if ($sq !== null) $v = (string) $sq[1];
                 }
-                $env[$m[1]] = $v;
+                $env[$key] = $v;
                 if ($setGlobal) {
-                    $_ENV[$m[1]] = $v;
+                    $_ENV[$key] = $v;
                 }
             }
         }

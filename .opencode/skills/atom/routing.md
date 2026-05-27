@@ -73,7 +73,7 @@ echo $app->router->url('v1.users.show', ['id' => 5]); // /5
 
 ## Cache invalidation
 
-Routes are compiled once and cached to disk. Corrupted cache files are automatically detected and regenerated. Clear the cache when routes change:
+Routes are compiled once and cached to disk. Cache entries include a framework cache version and a signature of registered routes, so stale or corrupted files are automatically ignored and regenerated. Clear the cache when you need to remove generated files:
 
 ```php
 $app->router->clearCache();

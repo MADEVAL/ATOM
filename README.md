@@ -6,7 +6,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/php-8.5-blue" alt="PHP 8.5">
   <img src="https://img.shields.io/badge/tests-passing-green" alt="tests passing">
-  <img src="https://img.shields.io/badge/coverage-99%25-brightgreen" alt="99% coverage">
+  <img src="https://img.shields.io/badge/coverage-85.29%25-yellowgreen" alt="85.29% line coverage">
   <img src="https://img.shields.io/badge/license-GPL--3.0-orange" alt="GPL-3.0">
   <br>
   <img src="https://img.shields.io/badge/topic-router-red" alt="router">
@@ -22,7 +22,7 @@
 
 **Zero dependencies.** Just PHP 8.5. No HTTP factory, no annotations - pure PHP with PCRE at its core.
 
-**Minimal codebase.** Read the entire framework in 20 minutes. Every line tested — 99%+ coverage, zero warnings.
+**Minimal codebase.** Read the entire framework in 20 minutes. Current suite: 728 tests, 1108 assertions, 85.29% line coverage, clean PHPStan level 5.
 
 **One regex dispatches all routes.** 10 000 routes = one `preg_match` via `(?|...(*:N))` branch-reset + MARK. JIT-compiled, O(1) per request.
 
@@ -79,7 +79,7 @@ $app->run();
 
 | Component | Description |
 |---|---|
-| **Router** | Single `preg_match` dispatch via `(?\|...(*:N))`. Groups, URL gen, attributes, cache. |
+| **Router** | Single `preg_match` dispatch via `(?\|...(*:N))`. Groups, URL gen, attributes, signature-aware cache. |
 | **Templates** | Twig-like → compiled PHP classes. Extends, blocks, filters, raw blocks. |
 | **Validation** | 18 attribute rules: `#[Required]` `#[Email]` `#[Regex]` `#[Min]` `#[Max]` `#[Integer]` `#[Between]` `#[In]` `#[Url]` `#[Nullable]` `#[Confirmed]` `#[Ip]` `#[Domain]` `#[Mac]` `#[FloatVal]` `#[Boolean]` `#[Uuid]` `#[Each]` |
 | **Database** | Minimal PDO wrapper: `all()`, `one()`, `single()`, `run()`, prepared statements. |
@@ -97,8 +97,8 @@ $app->run();
 | **Paginator** | `Paginator::from($req)->paginate($items, $total)` — page/perPage/total/pages. |
 | **Encryption** | \`Encrypt::encrypt()\` / \`Encrypt::decrypt()\` — AES-256-GCM with key derivation. |
 | **Cache** | \`$app->cache()\`, PSR-16-like: \`set/get/has/delete/flush\`, TTL, \`remember\`, atomic counters, ArrayDriver, FileDriver. |
-| **ORM** | Model, Query builder, Relations (\`hasMany\`, \`belongsTo\`, \`hasOne\`), Pagination. |
-| **WebSocket** | \`$app->ws()\`, room management, broadcast, RFC 6455 event loop, CLI \`ws:serve\`. |
+| **ORM** | Model, guarded Query builder, Relations (\`hasMany\`, \`belongsTo\`, \`hasOne\`), eager loading, Pagination. |
+| **WebSocket** | \`$app->ws()\`, room management, broadcast, RFC 6455 handshake/frame validation, CLI \`ws:serve\`. |
 
 ## Example
 
@@ -221,12 +221,13 @@ src/Atom/
 ```bash
 composer test
 composer test-coverage
+composer stan
 ```
 
 ## Docs & resources
 
 - [Full documentation](docs/index.html) — sidebar, all components, code examples
-- [Skill set](.opencode/skills/atom/) — AI‑assistant knowledge: routing, HTTP, templates, validation, DI, CLI, middleware
+- [Skill set](.opencode/skills/atom/) — AI‑assistant knowledge: routing, HTTP, templates, validation, ORM, DI, CLI, middleware
 - [License](LICENSE) — GPL-3.0-or-later
 
 ## License

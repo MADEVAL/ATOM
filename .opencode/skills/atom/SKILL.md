@@ -2,7 +2,7 @@
 
 PHP 8.5 micro-framework. Single-regex router, PCRE template engine, DI, validation (18 attribute rules), sessions, database with transactions, logger with rotation, CLI with help & NO_COLOR, .env.
 
-> Topic files: `routing.md`, `http.md`, `templates.md`, `validation.md`, `middleware.md`, `di.md`, `database.md`, `cli.md`, `logger.md`, `test-client.md`, `rate-limit.md`, `encryption.md`
+> Topic files: `routing.md`, `http.md`, `templates.md`, `validation.md`, `orm.md`, `middleware.md`, `di.md`, `database.md`, `cli.md`, `logger.md`, `test-client.md`, `rate-limit.md`, `encryption.md`
 
 ## Scope of application
 
@@ -98,7 +98,7 @@ Env vars: `APP_ROUTE_CACHE` (default `file`), `APP_VIEW_CACHE` (default `file`).
 - Router: **one** `preg_match` per request via `(?|...(*:N))` branch-reset + MARK
 - Named routes: O(1) lookup, O(1) URL generation
 - 405 Method Not Allowed: O(1) via altRegex
-- Routes cache: PHP `var_export` include (no unserialize). `cacheStrategy` option: `file` (default) or `cache` (framework Cache).
+- Routes cache: PHP `var_export` include (no unserialize), versioned and route-signature-aware. `cacheStrategy` option: `file` (default) or `cache` (framework Cache).
 - Templates: compile to PHP classes, disk cache, OPCache-friendly
 - Property hooks: zero-overhead computed properties
 
@@ -148,7 +148,7 @@ $server->broadcastJson($data)          // All connections JSON
 php atom ws:serve --port=8080 --host=0.0.0.0
 ```
 
-Key features: RFC 6455 frame encoding/decoding, non-blocking stream_select event loop, room/channel management, client→server frame masking handled, auto-pong, close handshake, graceful `stop()`.
+Key features: RFC 6455 frame encoding/decoding, strict handshake checks, client frame masking enforcement, max payload guard, non-blocking stream_select event loop, room/channel management, auto-pong, close handshake, graceful `stop()`.
 
 ## Cache
 
@@ -196,28 +196,29 @@ class User extends Model {
 
 // Query builder
 User::query()->where('name', 'LIKE', '%john%')->orderBy('id', 'DESC')->limit(10)->get();
-User::query()->find(1);                    // single by primary key
+User::find(1);                             // single by primary key
 User::query()->whereIn('id', [1,2,3])->get();
 User::query()->whereBetween('age', 18, 65)->count();
 
 // CRUD
-$user = new User(['name' => 'John', 'email' => 'john@example.com']);
+$user = new User();
+$user->fill(['name' => 'John', 'email' => 'john@example.com']);
 $user->save();          // INSERT
 $user->name = 'Jane';
 $user->save();          // UPDATE
 $user->delete();        // DELETE
 
-// Relations (lazy loading with caching)
-$comments = $user->comments()->get();       // hasMany
-$user = $comment->belongsTo(User::class);   // belongsTo
-$profile = $user->profile()->get();         // hasOne
+// Relations
+$comments = $user->comments()->getResults(); // hasMany
+$author = $comment->user()->getResults();    // belongsTo
+$profile = $user->profile()->getResults();   // hasOne
 
 // Pagination
-$page = User::query()->paginate($request, perPage: 15);
+$page = User::query()->paginate(15, $request);
 // → ['data' => [...], 'page' => 1, 'perPage' => 15, 'total' => 42, 'pages' => 3]
 ```
 
-Key features: Model attributes autodiscovery via #[Column], lazy-loading relations with per-model caching, query builder with fluent API, pagination from Request.
+Key features: Model attributes autodiscovery via #[Column], column/property mapping in relations, lazy and eager loading, guarded identifiers/operators in Query, pagination from Request.
 
 ## Logger
 
@@ -260,4 +261,3 @@ $response->withStatus(StatusCode::NOT_FOUND); // clone with new status
 // X-Content-Type-Options: nosniff
 // X-Frame-Options: SAMEORIGIN
 ```
-

@@ -7,6 +7,7 @@ use Atom\Support\Regex;
 use Attribute;
 use ReflectionClass;
 
+/** @phpstan-consistent-constructor */
 abstract class Model
 {
     private static ?Database $connection = null;
@@ -33,6 +34,11 @@ abstract class Model
     {
         $cls = static::class;
         return self::meta($cls)['pk'];
+    }
+
+    public static function primaryKeyProperty(): string
+    {
+        return self::propertyForColumn(static::class, static::primaryKey()) ?? static::primaryKey();
     }
 
     /** @return array{pk:string,table:string,cols:array<string,string>,props:array<string,string>} */
@@ -68,7 +74,7 @@ abstract class Model
         return self::$meta[$class] = ['pk' => $pk, 'table' => $table, 'cols' => $cols, 'props' => $props];
     }
 
-    /** @return static */
+    /** @return Query<static> */
     public static function query(): Query
     {
         return new Query(static::db(), static::class);
@@ -91,7 +97,7 @@ abstract class Model
     /** @return static */
     public static function create(array $attributes): static
     {
-        $model = new static();
+        $model = self::newInstance();
         $model->fill($attributes);
         $model->save();
         return $model;
@@ -146,7 +152,8 @@ abstract class Model
     {
         $data = $this->toRow();
         $pk = static::primaryKey();
-        $pkVal = $this->{$pk} ?? null;
+        $pkProp = static::primaryKeyProperty();
+        $pkVal = $this->{$pkProp} ?? null;
 
         if ($this->timestamps) {
             $now = date('Y-m-d H:i:s');
@@ -180,7 +187,7 @@ abstract class Model
             );
             $newId = static::db()->lastId();
             if ($newId !== false && !$this->exists) {
-                $this->{$pk} = $this->castBack($pk, $newId);
+                $this->{$pkProp} = $this->castBack($pkProp, $newId);
             }
             $this->syncTimestamps($insertData);
         }
@@ -193,9 +200,10 @@ abstract class Model
     {
         if (!$this->exists) return false;
         $pk = static::primaryKey();
+        $pkProp = static::primaryKeyProperty();
         static::db()->run(
             'DELETE FROM ' . static::table() . " WHERE \"{$pk}\" = :id",
-            ['id' => $this->{$pk}],
+            ['id' => $this->{$pkProp}],
         );
         $this->exists = false;
         return true;
@@ -210,7 +218,7 @@ abstract class Model
         $row = [];
         foreach ($meta['cols'] as $prop => $col) {
             if ($col === $meta['pk']) {
-                $val = $this->{$prop};
+                $val = $this->{$prop} ?? null;
                 if ($val !== null) $row[$col] = $val;
                 continue;
             }
@@ -222,7 +230,7 @@ abstract class Model
     /** @param array<string,mixed> $row @return static */
     public static function hydrateRow(array $row): static
     {
-        $model = new static();
+        $model = self::newInstance();
         $meta = self::meta(static::class);
         foreach ($meta['cols'] as $prop => $col) {
             if (array_key_exists($col, $row)) {
@@ -244,34 +252,36 @@ abstract class Model
             $related,
             $foreignKey !== '' ? $foreignKey : self::defaultForeignKey(static::class),
             $localKey !== '' ? $localKey : static::primaryKey(),
-            $this->{static::primaryKey()},
+            self::valueForColumn($this, $localKey !== '' ? $localKey : static::primaryKey()),
         );
-        return $rel;
+        return $this->withLoadedRelation($rel);
     }
 
     /** @return BelongsTo<static> */
     protected function belongsTo(string $related, string $column = '', string $ownerKey = ''): BelongsTo
     {
         $col = $column !== '' ? $column : self::defaultForeignKey($related);
-        return new BelongsTo(
+        $rel = new BelongsTo(
             static::db(),
             $related,
             $col,
             $ownerKey !== '' ? $ownerKey : (new $related())::primaryKey(),
-            $this->propForColumn($col) !== null ? ($this->{$this->propForColumn($col)} ?? null) : null,
+            self::valueForColumn($this, $col),
         );
+        return $this->withLoadedRelation($rel);
     }
 
     /** @return HasOne<static> */
     protected function hasOne(string $related, string $foreignKey = '', string $localKey = ''): HasOne
     {
-        return new HasOne(
+        $rel = new HasOne(
             static::db(),
             $related,
             $foreignKey !== '' ? $foreignKey : self::defaultForeignKey(static::class),
             $localKey !== '' ? $localKey : static::primaryKey(),
-            $this->{static::primaryKey()},
+            self::valueForColumn($this, $localKey !== '' ? $localKey : static::primaryKey()),
         );
+        return $this->withLoadedRelation($rel);
     }
 
     /** @param list<static> $models */
@@ -283,26 +293,56 @@ abstract class Model
         $relatedClass = $rel->relatedClass();
         $fk = $rel->foreignKey();
         $lk = $rel->localKey();
-        $ids = array_unique(array_map(fn(Model $m) => $m->{$lk}, $models));
+        $sourceColumn = $rel instanceof BelongsTo ? $fk : $lk;
+        $targetColumn = $rel instanceof BelongsTo ? $lk : $fk;
+        $ids = array_values(array_unique(array_filter(
+            array_map(fn(Model $m) => self::valueForColumn($m, $sourceColumn), $models),
+            fn(mixed $v) => $v !== null,
+        )));
 
         $q = new Query($db, $relatedClass);
-        $q->whereIn($fk, $ids);
+        $q->whereIn($targetColumn, $ids);
         $related = $q->get();
 
         $grouped = [];
         foreach ($related as $r) {
-            $grouped[$r->{$fk}][] = $r;
+            $grouped[self::valueForColumn($r, $targetColumn)][] = $r;
         }
         foreach ($models as $m) {
-            $key = $m->{$lk};
-            $m->setLoaded($name, $grouped[$key] ?? []);
+            $key = self::valueForColumn($m, $sourceColumn);
+            $matches = $grouped[$key] ?? [];
+            $m->setLoaded($name, match (true) {
+                $rel instanceof BelongsTo, $rel instanceof HasOne => $matches[0] ?? null,
+                default => $matches,
+            });
         }
     }
 
-    /** @param list<Model> $data */
-    private function setLoaded(string $name, array $data): void
+    /** @param list<Model>|Model|null $data */
+    private function setLoaded(string $name, mixed $data): void
     {
         $this->relations[$name] = $data;
+    }
+
+    private function withLoadedRelation(Relation $relation): Relation
+    {
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        $name = $trace[1]['function'] ?? '';
+        if ($name !== '' && array_key_exists($name, $this->relations)) {
+            $relation->setResults($this->relations[$name]);
+        }
+        return $relation;
+    }
+
+    public function __call(string $name, array $args): mixed
+    {
+        if (array_key_exists($name, $this->relations)) {
+            return new class($this->relations[$name]) {
+                public function __construct(private mixed $data) {}
+                public function getResults(): mixed { return $this->data; }
+            };
+        }
+        throw new \BadMethodCallException("Unknown relation or method: {$name}");
     }
 
     // ──────────────────────────── Helpers ────────────────────────────
@@ -336,7 +376,27 @@ abstract class Model
 
     private function propForColumn(string $column): ?string
     {
-        return self::meta(static::class)['props'][$column] ?? null;
+        return self::propertyForColumn(static::class, $column);
+    }
+
+    private static function propertyForColumn(string $class, string $column): ?string
+    {
+        return self::meta($class)['props'][$column] ?? null;
+    }
+
+    private static function valueForColumn(Model $model, string $column): mixed
+    {
+        $prop = self::propertyForColumn($model::class, $column) ?? $column;
+        return $model->{$prop} ?? null;
+    }
+
+    /** @return static */
+    private static function newInstance(): self
+    {
+        $ref = new ReflectionClass(static::class);
+        /** @var static $model */
+        $model = $ref->newInstance();
+        return $model;
     }
 
     private function syncTimestamps(array $data): void

@@ -102,6 +102,7 @@
 
 <h3>JSON body auto‑parse</h3>
 <pre><code><span class="cm">// Content-Type: application/json  →  auto‑parsed from php://input</span>
+<span class="cm">// Supports CONTENT_TYPE and HTTP_CONTENT_TYPE server keys</span>
 <span class="cm">// POST {"name":"Alice"}  →  $req->input('name') = 'Alice'</span>
 <span class="cm">// Post‑max‑size respected via ini_parse_quantity()</span></code></pre>
 

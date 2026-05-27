@@ -63,7 +63,7 @@ final class Response
         return $clone;
     }
 
-    /** @param array{ttl?:int, path?:string, secure?:bool, httponly?:bool, samesite?:string, domain?:string} $options */
+    /** @param int|array{name?:string, value?:string, ttl?:int, path?:string, secure?:bool, httponly?:bool, samesite?:string, domain?:string} $ttl_or_options */
     public function withCookie(string $name, string $value, int|array $ttl_or_options = Constants::COOKIE_TTL_DEFAULT, string $path = '/'): self
     {
         $clone = clone $this;

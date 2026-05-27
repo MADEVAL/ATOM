@@ -322,6 +322,16 @@ final class RequestTest extends TestCase
     }
 
     #[Test]
+    public function json_content_type_accepts_standard_sapi_key(): void
+    {
+        $req = new Request(
+            body: [],
+            server: ['CONTENT_TYPE' => 'application/json', 'CONTENT_LENGTH' => '999999999'],
+        );
+        $this->assertSame([], $req->body);
+    }
+
+    #[Test]
     public function body_not_parsed_for_non_json_ctype(): void
     {
         $req = new Request(

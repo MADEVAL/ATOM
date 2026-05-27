@@ -68,7 +68,7 @@ final class Engine
         }
 
         if ($needsCompile) {
-            $compiler = new Compiler($this);
+            $compiler = new Compiler();
             $code = $compiler->compile(file_get_contents($real), $cls, $template);
             $fileDir = dirname($file);
             if (!is_dir($fileDir) && !@mkdir($fileDir, Constants::DIR_PERMISSIONS, true) && !is_dir($fileDir)) {

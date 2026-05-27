@@ -51,7 +51,7 @@ $app->router->group('/api', [new Cors(
 )], fn($r) => { ... });
 ```
 
-Automatically handles OPTIONS preflight with 204. Reflects request Origin header when `allowOrigin: '*'`. Throws `InvalidArgumentException` for `allowOrigin='*' + allowCredentials=true` (CORS spec violation).
+Automatically handles OPTIONS preflight with 204. Reflects request Origin header when `allowOrigin: '*'` and adds `Vary: Origin` for reflected responses. Throws `InvalidArgumentException` for `allowOrigin='*' + allowCredentials=true` (CORS spec violation).
 
 ## CSRF middleware
 
@@ -77,4 +77,3 @@ $app->router->group('/api', [new RateLimit(max: 100, window: 60)], fn($r) => { .
 ```
 
 Exceeded limit → `429 Too Many Requests`.
-

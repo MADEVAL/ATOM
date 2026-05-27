@@ -6,8 +6,11 @@ use Atom\Database\Database;
 use Atom\Http\Request;
 use Atom\Support\{Regex, Paginator};
 
+/** @template TModel of Model */
 final class Query
 {
+    private const ALLOWED_OPERATORS = ['=', '!=', '<>', '<', '>', '<=', '>=', 'LIKE', 'NOT LIKE'];
+
     private string $table;
     private array $wheres = [];
     private array $bindings = [];
@@ -15,10 +18,12 @@ final class Query
     private array $orders = [];
     private int $limitVal = 0;
     private int $offsetVal = 0;
+    /** @var class-string<TModel> */
     private string $modelClass;
     /** @var list<string> */
     private array $with = [];
 
+    /** @param class-string<TModel> $modelClass */
     public function __construct(
         private readonly Database $db,
         string $modelClass,
@@ -34,8 +39,9 @@ final class Query
             $value = $operator;
             $operator = '=';
         }
+        $op = $this->operator($operator);
         $colon = $this->bindCol($column);
-        $this->wheres[] = ['AND', "{$this->quote($column)} {$operator} {$colon}"];
+        $this->wheres[] = ['AND', "{$this->quote($column)} {$op} {$colon}"];
         $this->bindings[] = $value;
         return $this;
     }
@@ -47,8 +53,9 @@ final class Query
             $value = $operator;
             $operator = '=';
         }
+        $op = $this->operator($operator);
         $colon = $this->bindCol($column);
-        $this->wheres[] = ['OR', "{$this->quote($column)} {$operator} {$colon}"];
+        $this->wheres[] = ['OR', "{$this->quote($column)} {$op} {$colon}"];
         $this->bindings[] = $value;
         return $this;
     }
@@ -56,6 +63,10 @@ final class Query
     /** @param list<int|string> $values @return $this */
     public function whereIn(string $column, array $values): self
     {
+        if ($values === []) {
+            $this->wheres[] = ['AND', '0 = 1'];
+            return $this;
+        }
         $placeholders = implode(', ', array_map(fn($v) => $this->bind($v), $values));
         $this->wheres[] = ['AND', "{$this->quote($column)} IN ({$placeholders})"];
         return $this;
@@ -64,6 +75,10 @@ final class Query
     /** @param list<int|string> $values @return $this */
     public function whereNotIn(string $column, array $values): self
     {
+        if ($values === []) {
+            $this->wheres[] = ['AND', '1 = 1'];
+            return $this;
+        }
         $placeholders = implode(', ', array_map(fn($v) => $this->bind($v), $values));
         $this->wheres[] = ['AND', "{$this->quote($column)} NOT IN ({$placeholders})"];
         return $this;
@@ -95,7 +110,11 @@ final class Query
     /** @return $this */
     public function orderBy(string $column, string $direction = 'ASC'): self
     {
-        $this->orders[] = "{$this->quote($column)} " . strtoupper($direction);
+        $dir = strtoupper($direction);
+        if (!in_array($dir, ['ASC', 'DESC'], true)) {
+            throw new \InvalidArgumentException("Invalid order direction: {$direction}");
+        }
+        $this->orders[] = "{$this->quote($column)} {$dir}";
         return $this;
     }
 
@@ -119,14 +138,14 @@ final class Query
         return $this;
     }
 
-    /** @param list<string> $relations @return $this */
+    /** @return $this */
     public function with(string ...$relations): self
     {
         $this->with = $relations;
         return $this;
     }
 
-    /** @return list<Model> */
+    /** @return list<TModel> */
     public function get(): array
     {
         $sql = $this->toSql();
@@ -134,12 +153,14 @@ final class Query
         return $this->hydrate($rows);
     }
 
+    /** @return TModel|null */
     public function first(): ?Model
     {
         return $this->limit(1)->get()[0] ?? null;
     }
 
     /** @throws \RuntimeException */
+    /** @return TModel */
     public function firstOrFail(): Model
     {
         return $this->first() ?? throw new \RuntimeException("No {$this->modelClass} record found");
@@ -188,8 +209,25 @@ final class Query
 
     private function quote(string $name): string
     {
-        if (str_contains($name, '.')) return $name;
-        return '"' . $name . '"';
+        $parts = explode('.', $name);
+        return implode('.', array_map(function (string $part) use ($name): string {
+            if ($part === '*') {
+                return '*';
+            }
+            if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $part)) {
+                throw new \InvalidArgumentException("Invalid SQL identifier: {$name}");
+            }
+            return '"' . $part . '"';
+        }, $parts));
+    }
+
+    private function operator(mixed $operator): string
+    {
+        $op = strtoupper(trim((string) $operator));
+        if (!in_array($op, self::ALLOWED_OPERATORS, true)) {
+            throw new \InvalidArgumentException("Invalid SQL operator: {$operator}");
+        }
+        return $op;
     }
 
     private function snake(string $camel): string
@@ -239,7 +277,7 @@ final class Query
         return $clause;
     }
 
-    /** @param list<array<string,mixed>> $rows @return list<Model> */
+    /** @param list<array<string,mixed>> $rows @return list<TModel> */
     private function hydrate(array $rows): array
     {
         $models = array_map(fn(array $row) => $this->modelClass::hydrateRow($row), $rows);

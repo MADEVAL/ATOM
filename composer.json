@@ -14,7 +14,8 @@
         "php": ">=8.5"
     },
     "require-dev": {
-        "phpunit/phpunit": "^12.0"
+        "phpunit/phpunit": "^12.0",
+        "phpstan/phpstan": "^2.1"
     },
     "autoload": {
         "psr-4": {
@@ -32,6 +33,7 @@
     "scripts": {
         "serve": "php -S localhost:8000 -t public",
         "test": "phpunit",
-        "test-coverage": "phpunit --coverage-text"
+        "test-coverage": "phpunit --coverage-text",
+        "stan": "phpstan analyse"
     }
 }

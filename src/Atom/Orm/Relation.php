@@ -36,8 +36,15 @@ abstract class Relation
     /** @return list<TModel>|TModel|null */
     abstract protected function load(): mixed;
 
+    public function setResults(mixed $results): void
+    {
+        $this->results = $results;
+        $this->loaded = true;
+    }
+
     /** @return class-string<TModel> */
     public function relatedClass(): string { return $this->related; }
     public function foreignKey(): string { return $this->foreignKey; }
     public function localKey(): string { return $this->localKey; }
+    public function localValue(): mixed { return $this->localValue; }
 }

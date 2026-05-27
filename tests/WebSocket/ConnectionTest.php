@@ -81,7 +81,7 @@ final class ConnectionTest extends TestCase
     public function accept_parses_key_and_creates_connection(): void
     {
         $key = base64_encode(random_bytes(16));
-        $headers = "GET /chat HTTP/1.1\r\nHost: localhost\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: {$key}\r\n\r\n";
+        $headers = "GET /chat HTTP/1.1\r\nHost: localhost\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: {$key}\r\n\r\n";
         [$client, $server] = $this->makePipe();
         $conn = Connection::accept($server, $headers);
         $this->assertNotNull($conn);
@@ -96,6 +96,29 @@ final class ConnectionTest extends TestCase
     public function accept_returns_null_without_key_header(): void
     {
         $headers = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
+        [$client, $server] = $this->makePipe();
+        $conn = Connection::accept($server, $headers);
+        $this->assertNull($conn);
+        fclose($client);
+        fclose($server);
+    }
+
+    #[Test]
+    public function accept_returns_null_for_bad_key_length(): void
+    {
+        $headers = "GET /chat HTTP/1.1\r\nHost: localhost\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: " . base64_encode('short') . "\r\n\r\n";
+        [$client, $server] = $this->makePipe();
+        $conn = Connection::accept($server, $headers);
+        $this->assertNull($conn);
+        fclose($client);
+        fclose($server);
+    }
+
+    #[Test]
+    public function accept_returns_null_for_missing_version(): void
+    {
+        $key = base64_encode(random_bytes(16));
+        $headers = "GET /chat HTTP/1.1\r\nHost: localhost\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: {$key}\r\n\r\n";
         [$client, $server] = $this->makePipe();
         $conn = Connection::accept($server, $headers);
         $this->assertNull($conn);
@@ -201,6 +224,34 @@ final class ConnectionTest extends TestCase
         $result = $this->decodeFrame($conn, $frame);
         $this->assertNotNull($result);
         $this->assertSame($payload, $result['payload']);
+    }
+
+    #[Test]
+    public function server_side_connection_rejects_unmasked_client_frame(): void
+    {
+        [$local, $remote] = $this->makePipe();
+        $conn = new Connection($local, true);
+        $frame = $this->encodeViaReflection('unmasked', 0x1);
+
+        $result = $this->decodeFrame($conn, $frame);
+
+        $this->assertNull($result);
+        $this->assertFalse($conn->isOpen());
+        fclose($remote);
+    }
+
+    #[Test]
+    public function oversized_frame_closes_connection(): void
+    {
+        [$local, $remote] = $this->makePipe();
+        $conn = new Connection($local);
+        $frame = chr(0x81) . chr(127) . pack('J', 1_048_577);
+
+        $result = $this->decodeFrame($conn, $frame);
+
+        $this->assertNull($result);
+        $this->assertFalse($conn->isOpen());
+        fclose($remote);
     }
 
     #[Test]

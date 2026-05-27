@@ -25,8 +25,10 @@ final readonly class Cors implements MiddlewareInterface
     {
         $origin = $this->allowOrigin;
         $requestOrigin = $req->header('Origin');
+        $reflected = false;
         if ($origin === '*') {
             $origin = $requestOrigin !== '' ? $requestOrigin : '*';
+            $reflected = $requestOrigin !== '';
         }
 
         if ($req->method === 'OPTIONS') {
@@ -41,7 +43,7 @@ final readonly class Cors implements MiddlewareInterface
             if ($this->exposeHeaders !== '') {
                 $res = $res->withHeader('Access-Control-Expose-Headers', $this->exposeHeaders);
             }
-            return $res;
+            return $reflected ? $res->withHeader('Vary', 'Origin') : $res;
         }
         $res = $next($req)->withHeader('Access-Control-Allow-Origin', $origin);
         if ($this->allowCredentials) {
@@ -49,6 +51,9 @@ final readonly class Cors implements MiddlewareInterface
         }
         if ($this->exposeHeaders !== '') {
             $res = $res->withHeader('Access-Control-Expose-Headers', $this->exposeHeaders);
+        }
+        if ($reflected) {
+            $res = $res->withHeader('Vary', 'Origin');
         }
         return $res;
     }

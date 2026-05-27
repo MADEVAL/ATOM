@@ -283,6 +283,32 @@ final class OrmTest extends TestCase
     }
 
     #[Test]
+    public function eager_loading_belongs_to_uses_column_mapping(): void
+    {
+        $u = TestUser::create(['name' => 'Parent', 'email' => 'parent@t.com']);
+        TestPost::create(['title' => 'Child', 'user_id' => $u->id]);
+
+        $posts = TestPost::query()->with('user')->get();
+        $this->assertCount(1, $posts);
+        $owner = $posts[0]->user()->getResults();
+        $this->assertInstanceOf(TestUser::class, $owner);
+        $this->assertSame('Parent', $owner->name);
+    }
+
+    #[Test]
+    public function eager_loading_has_one_returns_single_model(): void
+    {
+        $u = TestUser::create(['name' => 'AvatarUser', 'email' => 'avatar@t.com']);
+        TestAvatar::create(['url' => '/avatar.png', 'user_id' => $u->id]);
+
+        $users = TestUser::query()->with('avatar')->get();
+        $avatar = $users[0]->avatar()->getResults();
+
+        $this->assertInstanceOf(TestAvatar::class, $avatar);
+        $this->assertSame('/avatar.png', $avatar->url);
+    }
+
+    #[Test]
     public function pagination(): void
     {
         for ($i = 1; $i <= 25; $i++) {
@@ -319,5 +345,40 @@ final class OrmTest extends TestCase
         }
         $results = TestUser::query()->whereBetween('id', 2, 4)->get();
         $this->assertCount(3, $results);
+    }
+
+    #[Test]
+    public function where_in_empty_returns_no_rows(): void
+    {
+        TestUser::create(['name' => 'A', 'email' => 'a@t.com']);
+        $this->assertSame([], TestUser::query()->whereIn('id', [])->get());
+    }
+
+    #[Test]
+    public function where_not_in_empty_is_noop(): void
+    {
+        TestUser::create(['name' => 'A', 'email' => 'a@t.com']);
+        $this->assertCount(1, TestUser::query()->whereNotIn('id', [])->get());
+    }
+
+    #[Test]
+    public function invalid_where_operator_is_rejected(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        TestUser::query()->where('name', 'IS NOT NULL; DROP TABLE users', 'x')->get();
+    }
+
+    #[Test]
+    public function invalid_order_direction_is_rejected(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        TestUser::query()->orderBy('name', 'DESC; DROP TABLE users')->get();
+    }
+
+    #[Test]
+    public function invalid_identifier_is_rejected(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        TestUser::query()->where('name; DROP TABLE users', 'x')->get();
     }
 }

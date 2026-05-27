@@ -9,8 +9,6 @@ final class Compiler
     /** @var list<array{0:string,1:string|null,2?:string,3?:string}> */
     private array $forStack = [];
 
-    public function __construct(private Engine $engine) {}
-
     public function compile(string $source, string $className, string $selfName): string
     {
         // Extract {% raw %}...{% endraw %} blocks before any processing
@@ -182,8 +180,9 @@ final class Compiler
     private function compileFor(string $var, string $expr): string
     {
         $shadowKey = '_prev_' . $var;
+        $iterKey = '_iter_' . $var . '_' . count($this->forStack);
         $this->forStack[] = [$var, null, $shadowKey];
-        return '<?php if(isset($this->ctx[\'' . $var . '\'])){$this->ctx[\'' . $shadowKey . '\']=$this->ctx[\'' . $var . '\'];} foreach ((' . $this->compileExpression($expr) . ') ?? [] as $' . $var . '): $this->ctx[\'' . $var . '\'] = $' . $var . '; ?>';
+        return '<?php if(isset($this->ctx[\'' . $var . '\'])){$this->ctx[\'' . $shadowKey . '\']=$this->ctx[\'' . $var . '\'];} $this->ctx[\'' . $iterKey . '\']=' . $this->compileExpression($expr) . '; foreach (is_iterable($this->ctx[\'' . $iterKey . '\']) ? $this->ctx[\'' . $iterKey . '\'] : [] as $' . $var . '): $this->ctx[\'' . $var . '\'] = $' . $var . '; ?>';
     }
 
     /** Compiles {% for key, val in expr %} opening tag */
@@ -191,8 +190,9 @@ final class Compiler
     {
         $shadowKey = '_prev_' . $key;
         $shadowVal = '_prev_' . $val;
+        $iterKey = '_iter_' . $key . '_' . $val . '_' . count($this->forStack);
         $this->forStack[] = [$key, $val, $shadowKey, $shadowVal];
-        return '<?php if(isset($this->ctx[\'' . $key . '\'])){$this->ctx[\'' . $shadowKey . '\']=$this->ctx[\'' . $key . '\'];} if(isset($this->ctx[\'' . $val . '\'])){$this->ctx[\'' . $shadowVal . '\']=$this->ctx[\'' . $val . '\'];} foreach ((' . $this->compileExpression($expr) . ') ?? [] as $' . $key . ' => $' . $val . '): $this->ctx[\'' . $key . '\'] = $' . $key . '; $this->ctx[\'' . $val . '\'] = $' . $val . '; ?>';
+        return '<?php if(isset($this->ctx[\'' . $key . '\'])){$this->ctx[\'' . $shadowKey . '\']=$this->ctx[\'' . $key . '\'];} if(isset($this->ctx[\'' . $val . '\'])){$this->ctx[\'' . $shadowVal . '\']=$this->ctx[\'' . $val . '\'];} $this->ctx[\'' . $iterKey . '\']=' . $this->compileExpression($expr) . '; foreach (is_iterable($this->ctx[\'' . $iterKey . '\']) ? $this->ctx[\'' . $iterKey . '\'] : [] as $' . $key . ' => $' . $val . '): $this->ctx[\'' . $key . '\'] = $' . $key . '; $this->ctx[\'' . $val . '\'] = $' . $val . '; ?>';
     }
 
     /** Compiles {% endfor %} closing tag with variable shadow cleanup */
