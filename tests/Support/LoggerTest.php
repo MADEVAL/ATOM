@@ -134,4 +134,38 @@ final class LoggerTest extends TestCase
             unlink($blockFile);
         }
     }
+
+    #[Test]
+    public function clear_removes_log_file(): void
+    {
+        $logger = new Logger($this->tmpFile);
+        $logger->info('test');
+        $this->assertFileExists($this->tmpFile);
+        $logger->clear();
+        $this->assertFileDoesNotExist($this->tmpFile);
+    }
+
+    #[Test]
+    public function rotate_renames_log_file(): void
+    {
+        $logger = new Logger($this->tmpFile);
+        $logger->info('before rotate');
+        $logger->rotate();
+        $this->assertFileDoesNotExist($this->tmpFile);
+        $rotated = glob(dirname($this->tmpFile) . '/*_*.log');
+        $this->assertNotEmpty($rotated);
+        foreach ($rotated as $f) unlink($f);
+    }
+
+    #[Test]
+    public function autorotate_on_max_size(): void
+    {
+        $logger = new Logger($this->tmpFile, maxSize: 50);
+        $logger->info(str_repeat('x', 60));
+        $logger->info('second write triggers rotation');
+        $rotated = glob(dirname($this->tmpFile) . '/*_*.log');
+        $this->assertNotEmpty($rotated);
+        foreach ($rotated as $f) unlink($f);
+        if (is_file($this->tmpFile)) unlink($this->tmpFile);
+    }
 }

@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Atom\Tests\Validation;
 
-use Atom\Validation\{Required, Regex, Email, Min, Max, Integer, Between, In, Url, Nullable, Confirmed, Validator, ValidationException};
+use Atom\Validation\{Required, Regex, Email, Min, Max, Integer, Between, In, Url, Nullable, Confirmed, Ip, Uuid, Boolean as VBoolean, Each, Validator, ValidationException};
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -19,6 +19,10 @@ use PHPUnit\Framework\Attributes\Test;
 #[CoversClass(Url::class)]
 #[CoversClass(Nullable::class)]
 #[CoversClass(Confirmed::class)]
+#[CoversClass(Ip::class)]
+#[CoversClass(Uuid::class)]
+#[CoversClass(VBoolean::class)]
+#[CoversClass(Each::class)]
 #[CoversClass(ValidationException::class)]
 final class ValidatorTest extends TestCase
 {
@@ -390,6 +394,95 @@ final class ValidatorTest extends TestCase
     }
 
     #[Test]
+    public function validator_class_is_covered(): void
+    {
+        $this->assertTrue(class_exists(Validator::class));
+        $this->assertTrue(method_exists(Validator::class, 'validate'));
+    }
+
+    #[Test]
+    public function ip_valid_passes(): void
+    {
+        $dto = new class { #[Ip] public string $ip = '192.168.1.1'; };
+        $this->assertSame([], Validator::validate($dto));
+    }
+
+    #[Test]
+    public function ip_v6_passes(): void
+    {
+        $dto = new class { #[Ip] public string $ip = '::1'; };
+        $this->assertSame([], Validator::validate($dto));
+    }
+
+    #[Test]
+    public function ip_invalid_fails(): void
+    {
+        $dto = new class { #[Ip] public string $ip = '999.999.999.999'; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('ip', $errors);
+    }
+
+    #[Test]
+    public function uuid_valid_passes(): void
+    {
+        $dto = new class { #[Uuid] public string $id = '550e8400-e29b-41d4-a716-446655440000'; };
+        $this->assertSame([], Validator::validate($dto));
+    }
+
+    #[Test]
+    public function uuid_invalid_fails(): void
+    {
+        $dto = new class { #[Uuid] public string $id = 'not-a-uuid'; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('id', $errors);
+    }
+
+    #[Test]
+    public function boolean_true_passes(): void
+    {
+        foreach (['1', 'true', 1, true] as $v) {
+            $dto = new class { #[VBoolean] public mixed $flag = null; };
+            $dto->flag = $v;
+            $this->assertSame([], Validator::validate($dto));
+        }
+    }
+
+    #[Test]
+    public function boolean_invalid_fails(): void
+    {
+        $dto = new class { #[VBoolean] public string $flag = 'yes'; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('flag', $errors);
+    }
+
+    #[Test]
+    public function each_validates_array_of_dtos(): void
+    {
+        $dto = new class {
+            #[Each(SomeItem::class)] public array $items = [];
+        };
+        $dto->items = [
+            ['name' => 'a', 'count' => 5],
+            ['name' => 'b', 'count' => -1],
+        ];
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('items', $errors);
+    }
+
+    #[Test]
+    public function each_passes_for_valid_items(): void
+    {
+        $dto = new class {
+            #[Each(SomeItem::class)] public array $items = [];
+        };
+        $dto->items = [
+            ['name' => 'a', 'count' => 5],
+            ['name' => 'b', 'count' => 10],
+        ];
+        $this->assertSame([], Validator::validate($dto));
+    }
+
+    #[Test]
     public function min_max_accept_decimal_numeric_strings(): void
     {
         $dto = new class {
@@ -398,11 +491,10 @@ final class ValidatorTest extends TestCase
         $errors = Validator::validate($dto);
         $this->assertSame([], $errors);
     }
+}
 
-    #[Test]
-    public function validator_class_is_covered(): void
-    {
-        $this->assertTrue(class_exists(Validator::class));
-        $this->assertTrue(method_exists(Validator::class, 'validate'));
-    }
+final class SomeItem
+{
+    #[Required] public string $name = '';
+    #[Min(0)] public int $count = 0;
 }

@@ -17,6 +17,7 @@ final class Logger
     public function __construct(
         private string $file,
         private int $minLevel = self::DEBUG,
+        private int $maxSize = 0,
     ) {}
 
     public function debug(string $msg, array $ctx = []): void     { $this->log(self::DEBUG, $msg, $ctx); }
@@ -27,11 +28,31 @@ final class Logger
     public function alert(string $msg, array $ctx = []): void     { $this->log(self::ALERT, $msg, $ctx); }
     public function emergency(string $msg, array $ctx = []): void { $this->log(self::EMERGENCY, $msg, $ctx); }
 
+    public function clear(): bool
+    {
+        if (is_file($this->file)) {
+            return unlink($this->file);
+        }
+        return true;
+    }
+
+    public function rotate(): void
+    {
+        if (!is_file($this->file)) return;
+        $info = pathinfo($this->file);
+        $rotated = $info['dirname'] . '/' . $info['filename'] . '_' . date('Ymd_His') . '.' . ($info['extension'] ?? 'log');
+        rename($this->file, $rotated);
+    }
+
     private function log(int $level, string $msg, array $ctx): void
     {
         if ($level < $this->minLevel) return;
         if (!isset(self::$levels[$level])) {
             $level = self::ERROR;
+        }
+
+        if ($this->maxSize > 0 && is_file($this->file) && filesize($this->file) >= $this->maxSize) {
+            $this->rotate();
         }
 
         $ctxStr = '';

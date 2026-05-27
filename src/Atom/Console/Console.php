@@ -8,6 +8,8 @@ use Atom\Support\Regex;
 final class Console
 {
     private array $commands = [];
+    private array $descriptions = [];
+    private bool $noColor;
 
     private const COLOR = [
         'reset'  => "\033[0m",
@@ -20,11 +22,18 @@ final class Console
 
     public function __construct(
         private Application $app,
-    ) {}
+    ) {
+        $this->noColor = ($_ENV['NO_COLOR'] ?? getenv('NO_COLOR')) !== false
+            && ($_ENV['NO_COLOR'] ?? getenv('NO_COLOR')) !== ''
+            && ($_ENV['NO_COLOR'] ?? getenv('NO_COLOR')) !== '0';
+    }
 
-    public function add(string $name, callable $handler): self
+    public function add(string $name, callable $handler, string $desc = ''): self
     {
         $this->commands[$name] = $handler;
+        if ($desc !== '') {
+            $this->descriptions[$name] = $desc;
+        }
         return $this;
     }
 
@@ -33,11 +42,12 @@ final class Console
         $cmd = $argv[1] ?? 'list';
         $args = array_slice($argv, 2);
 
-        // Parse options: --flag and --key=value
         $options = [];
         $positional = [];
         foreach ($args as $arg) {
-            if ($m = Regex::match('#^--([a-zA-Z][a-zA-Z0-9_-]*)(?:=(.+))?$#', $arg)) {
+            if ($arg === '--no-color') {
+                $this->noColor = true;
+            } elseif ($m = Regex::match('#^--([a-zA-Z][a-zA-Z0-9_-]*)(?:=(.+))?$#', $arg)) {
                 $options[$m[1]] = $m[2] ?? true;
             } else {
                 $positional[] = $arg;
@@ -45,10 +55,10 @@ final class Console
         }
 
         return match ($cmd) {
-            'list'    => $this->listCommands(),
-            'routes'  => $this->listRoutes(),
-            'cache'   => $this->clearCache(),
-            default   => $this->executeCommand($cmd, $positional, $options),
+            'list', 'help' => $this->listCommands(),
+            'routes'       => $this->listRoutes(),
+            'cache'        => $this->clearCache(),
+            default        => $this->executeCommand($cmd, $positional, $options),
         };
     }
 
@@ -56,10 +66,16 @@ final class Console
     {
         $this->out('bold', "Atom CLI\n");
         $this->out('cyan', "  list        Show available commands\n");
+        $this->out('cyan', "  help        Show available commands\n");
         $this->out('cyan', "  routes      List registered routes\n");
         $this->out('cyan', "  cache       Clear compiled cache\n");
-        foreach (array_keys($this->commands) as $name) {
-            $this->out('green', "  {$name}\n");
+        foreach ($this->commands as $name => $handler) {
+            $desc = $this->descriptions[$name] ?? '';
+            $line = "  {$name}";
+            if ($desc !== '') {
+                $line .= str_repeat(' ', max(1, 14 - strlen($name))) . $desc;
+            }
+            $this->out('green', "{$line}\n");
         }
         return 0;
     }
@@ -118,6 +134,7 @@ final class Console
 
     private function color(string $c, string $text): string
     {
+        if ($this->noColor) return $text;
         return (self::COLOR[$c] ?? '') . $text . self::COLOR['reset'];
     }
 

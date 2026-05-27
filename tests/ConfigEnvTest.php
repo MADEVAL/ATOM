@@ -71,6 +71,38 @@ final class ConfigEnvTest extends TestCase
     }
 
     #[Test]
+    public function reads_timezone_from_env(): void
+    {
+        $file = sys_get_temp_dir() . '/atom_env_' . uniqid();
+        file_put_contents($file, "APP_TIMEZONE=Europe/Berlin\n");
+        $config = Config::fromEnv($file, false);
+        unlink($file);
+        $this->assertSame('Europe/Berlin', $config->timezone);
+    }
+
+    #[Test]
+    public function reads_log_settings_from_env(): void
+    {
+        $file = sys_get_temp_dir() . '/atom_env_' . uniqid();
+        file_put_contents($file, "APP_LOG_FILE=/var/log/app.log\nAPP_LOG_LEVEL=WARN\nAPP_LOG_MAX_SIZE=1048576\n");
+        $config = Config::fromEnv($file, false);
+        unlink($file);
+        $this->assertSame('/var/log/app.log', $config->logFile);
+        $this->assertSame(2, $config->logLevel);
+        $this->assertSame(1048576, $config->logMaxSize);
+    }
+
+    #[Test]
+    public function reads_app_name_from_env(): void
+    {
+        $file = sys_get_temp_dir() . '/atom_env_' . uniqid();
+        file_put_contents($file, "APP_NAME=MyApp\n");
+        $config = Config::fromEnv($file, false);
+        unlink($file);
+        $this->assertSame('MyApp', $config->appName);
+    }
+
+    #[Test]
     public function debug_false_by_default(): void
     {
         $config = Config::fromEnv(sys_get_temp_dir() . '/atom_missing_' . uniqid());

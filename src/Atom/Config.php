@@ -6,11 +6,16 @@ use Atom\Support\Regex;
 
 final readonly class Config
 {
+    /** @param array<string,string> $env */
     public function __construct(
         public bool $debug = false,
         public string $cacheDir = '',
         public string $viewsDir = '',
-        /** @var array<string,string> */
+        public string $timezone = 'UTC',
+        public string $logFile = '',
+        public int $logLevel = 0,
+        public int $logMaxSize = 0,
+        public string $appName = 'Atom',
         public array $env = [],
     ) {}
 
@@ -37,10 +42,19 @@ final readonly class Config
                 }
             }
         }
+
+        $logLevels = ['DEBUG' => 0, 'INFO' => 1, 'WARN' => 2, 'ERROR' => 3, 'CRITICAL' => 4, 'ALERT' => 5, 'EMERGENCY' => 6];
+        $level = $logLevels[strtoupper($env['APP_LOG_LEVEL'] ?? '')] ?? 0;
+
         return new self(
             debug: in_array($env['APP_DEBUG'] ?? '', ['1', 'true'], true),
             cacheDir: $env['APP_CACHE_DIR'] ?? '',
             viewsDir: $env['APP_VIEWS_DIR'] ?? '',
+            timezone: $env['APP_TIMEZONE'] ?? 'UTC',
+            logFile: $env['APP_LOG_FILE'] ?? '',
+            logLevel: $level,
+            logMaxSize: (int) ($env['APP_LOG_MAX_SIZE'] ?? 0),
+            appName: $env['APP_NAME'] ?? 'Atom',
             env: $env,
         );
     }

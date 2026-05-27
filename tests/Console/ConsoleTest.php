@@ -249,6 +249,51 @@ final class ConsoleTest extends TestCase
     }
 
     #[Test]
+    public function help_command_shows_builtin_commands(): void
+    {
+        $console = new Console($this->app);
+        ob_start();
+        $code = $console->run(['atom', 'help']);
+        $output = ob_get_clean();
+        $this->assertSame(0, $code);
+        $this->assertStringContainsString('list', $output);
+        $this->assertStringContainsString('cache', $output);
+    }
+
+    #[Test]
+    public function add_command_with_description(): void
+    {
+        $console = new Console($this->app);
+        $console->add('greet', fn() => 0, 'Say hello');
+        ob_start();
+        $console->run(['atom', 'help']);
+        $output = ob_get_clean();
+        $this->assertStringContainsString('Say hello', $output);
+    }
+
+    #[Test]
+    public function no_color_strips_ansi_codes(): void
+    {
+        $_ENV['NO_COLOR'] = '1';
+        $console = new Console($this->app);
+        ob_start();
+        $console->run(['atom', 'list']);
+        $output = ob_get_clean();
+        unset($_ENV['NO_COLOR']);
+        $this->assertStringNotContainsString("\033", $output);
+    }
+
+    #[Test]
+    public function no_color_flag_via_argv(): void
+    {
+        $console = new Console($this->app);
+        ob_start();
+        $console->run(['atom', 'list', '--no-color']);
+        $output = ob_get_clean();
+        $this->assertStringNotContainsString("\033", $output);
+    }
+
+    #[Test]
     public function list_shows_custom_commands(): void
     {
         $console = new Console($this->app);
