@@ -2,6 +2,8 @@
 declare(strict_types=1);
 namespace Atom\Support;
 
+use Atom\Constants;
+
 final class Logger
 {
     public const DEBUG     = 0;
@@ -53,7 +55,7 @@ final class Logger
         }
 
         $dir = dirname($this->file);
-        if (!is_dir($dir) && !@mkdir($dir, \Atom\Constants::DIR_PERMISSIONS, true) && !is_dir($dir)) {
+        if (!is_dir($dir) && !@mkdir($dir, Constants::DIR_PERMISSIONS, true) && !is_dir($dir)) {
             throw new \RuntimeException("Logger: cannot create directory '{$dir}'");
         }
 

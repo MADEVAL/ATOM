@@ -23,6 +23,9 @@
 <a href="routing.html#routing-attributes">Attribute routes</a>
 <a href="routing.html#routing-perf">Performance</a>
 
+<h2>WebSocket</h2>
+<a href="websocket.html">WebSocket server</a>
+
 <h2>HTTP</h2>
 <a href="http.html#http-request">Request</a>
 <a href="http.html#http-files">File uploads</a>
@@ -55,6 +58,12 @@
 <h2>Container</h2>
 <a href="container.html#di-bindings">Bindings</a>
 <a href="container.html#di-autowire">Autowiring</a>
+
+<h2>Cache</h2>
+<a href="cache.html">Cache API</a>
+
+<h2>ORM</h2>
+<a href="orm.html">Eloquent-like ORM</a>
 
 <h2>Reference</h2>
 <a href="reference.html#ref-database">Database</a>
@@ -98,7 +107,8 @@
 
 <h3>Method spoofing</h3>
 <pre><code><span class="cm">// POST with _method=PUT  →  $req->method === 'PUT'</span>
-<span class="cm">// Works only from POST; whitespace trimmed; array values fall back to POST</span></code></pre>
+<span class="cm">// Works only from POST; only GET POST PUT PATCH DELETE HEAD allowed</span>
+<span class="cm">// Whitespace trimmed; array values fall back to POST</span></code></pre>
 
 <h3>Bearer token</h3>
 <pre><code><span class="cm">// Authorization: Bearer abc123  →  $req->bearer === 'abc123'</span>
@@ -131,6 +141,23 @@ Response::redirect(<span class="str">'/new'</span>, StatusCode::PERMANENT_REDIRE
     ->withCache(<span class="num">3600</span>)
     ->send(<span class="str">isHttps</span>: <span class="kw">true</span>);</code></pre>
 <p><code>\r\n</code> stripped from header keys and values. Cookies default: <code>httponly: true, samesite: Lax</code> (invalid values fall back to Lax). Cookie <code>name</code>/<code>value</code> cannot be overridden via options array. <code>javascript:</code>, <code>data:</code>, <code>vbscript:</code> redirects blocked.</p>
+
+<h3>Response introspection</h3>
+<pre><code><span class="var">$response</span>->getContent();      <span class="cm">// string — response body</span>
+<span class="var">$response</span>->getStatusCode();  <span class="cm">// int — HTTP status (200, 404, etc.)</span>
+<span class="var">$response</span>->getHeader(<span class="str">'Content-Type'</span>); <span class="cm">// string — header value or ''</span>
+
+<span class="cm">// Immutable status change</span>
+<span class="var">$ok</span> = <span class="var">$response</span>->withStatus(StatusCode::OK);  <span class="cm">// returns new instance</span></code></pre>
+
+<h3>Security headers</h3>
+<p><code>send()</code> automatically adds these headers (unless already sent):</p>
+<table>
+<tr><th>Header</th><th>Value</th></tr>
+<tr><td><code>X-Content-Type-Options</code></td><td><code>nosniff</code></td></tr>
+<tr><td><code>X-Frame-Options</code></td><td><code>SAMEORIGIN</code></td></tr>
+<tr><td><code>Referrer-Policy</code></td><td><code>strict-origin-when-cross-origin</code></td></tr>
+</table>
 
 <h2 id="http-controllers">Controllers</h2>
 <pre><code><span class="kw">use</span> Atom\Http\{Request, Response, StatusCode};

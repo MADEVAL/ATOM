@@ -3,6 +3,8 @@ declare(strict_types=1);
 namespace Atom\Routing;
 
 use Atom\Http\{Request, Response, StatusCode};
+use Atom\Cache\Cache;
+use Atom\Constants;
 use Atom\Container\Container;
 use Atom\Middleware\Pipeline;
 use Atom\Support\Regex;
@@ -19,12 +21,18 @@ final class Router
     private array $groupMiddleware = [];
     private string $groupPrefix = '';
     private string $groupNamePrefix = '';
+    private ?Cache $cache = null;
+    private string $cacheStrategy = 'file';
 
     public function __construct(
         private readonly Container $container,
         string $cacheDir = __DIR__ . '/../../storage/cache',
+        ?Cache $cache = null,
+        string $cacheStrategy = 'file',
     ) {
         $this->cacheFile = $cacheDir . '/routes.php';
+        $this->cache = $cache;
+        $this->cacheStrategy = $cacheStrategy;
     }
 
     public function addPattern(string $name, string $regex): self
@@ -126,12 +134,12 @@ final class Router
         $key = '__health_' . sha1($path);
         $this->container->singleton($key, fn() => $checks);
         $this->container->bind($key . '_ctrl', fn() => new class($this->container, $key) {
-            public function __construct(private \Atom\Container\Container $c, private string $k) {}
-            public function check(): \Atom\Http\Response {
+            public function __construct(private Container $c, private string $k) {}
+            public function check(): Response {
                 $fn = $this->c->make($this->k);
                 $result = ($fn)();
                 $allOk = !array_any($result, fn(mixed $v) => $v !== true);
-                return \Atom\Http\Response::json($result, $allOk ? \Atom\Http\StatusCode::OK : \Atom\Http\StatusCode::SERVICE_UNAVAILABLE);
+                return Response::json($result, $allOk ? StatusCode::OK : StatusCode::SERVICE_UNAVAILABLE);
             }
         });
         return $this->get($path, $key . '_ctrl@check');
@@ -216,18 +224,7 @@ final class Router
     {
         $methods = [];
         foreach ($this->routes as $route) {
-            $regex = '#^';
-            $offset = 0;
-            $path = $route->path;
-            while (preg_match('#\{([a-zA-Z_][a-zA-Z0-9_]*)(?::([^}]+))?\}#', $path, $m, PREG_OFFSET_CAPTURE, $offset)) {
-                $regex .= Regex::quote(substr($path, $offset, $m[0][1] - $offset));
-                $name = $m[1][0];
-                $custom = $m[2][0] ?? '';
-                $pattern = $custom !== '' ? $custom : ($this->patterns[$name] ?? '[^/]+');
-                $regex .= '(' . $pattern . ')';
-                $offset = $m[0][1] + strlen($m[0][0]);
-            }
-            $regex .= Regex::quote(substr($path, $offset)) . '$#';
+            $regex = '#' . $this->patternToRegex($route->path) . '#';
             if (Regex::match($regex, $uri) !== null) {
                 foreach ($route->methods as $method) {
                     $methods[$method] = true;
@@ -235,6 +232,21 @@ final class Router
             }
         }
         return array_keys($methods);
+    }
+
+    private function patternToRegex(string $path): string
+    {
+        $result = '';
+        $offset = 0;
+        while (preg_match('#\{([a-zA-Z_][a-zA-Z0-9_]*)(?::([^}]+))?\}#', $path, $m, PREG_OFFSET_CAPTURE, $offset)) {
+            $result .= Regex::quote(substr($path, $offset, $m[0][1] - $offset));
+            $custom = $m[2][0] ?? '';
+            $pattern = $custom !== '' ? $custom : ($this->patterns[$m[1][0]] ?? '[^/]+');
+            $result .= '(' . $pattern . ')';
+            $offset = $m[0][1] + strlen($m[0][0]);
+        }
+        $result .= Regex::quote(substr($path, $offset));
+        return $result;
     }
 
     public function url(string $name, array $params = []): string
@@ -253,6 +265,15 @@ final class Router
     private function getCompiled(): array
     {
         if ($this->compiled !== null) return $this->compiled;
+
+        if ($this->cacheStrategy === 'cache' && $this->cache !== null) {
+            return $this->compiled = $this->cache->remember(
+                'routes_compiled',
+                fn() => $this->compileRoutes(),
+                0,
+            );
+        }
+
         if (is_file($this->cacheFile)) {
             try {
                 $cached = require $this->cacheFile;
@@ -264,21 +285,12 @@ final class Router
                 return $this->compiled = $cached;
             }
         }
-        $this->compiled = (new RouteCompiler())->compile($this->routes, $this->patterns);
-        $this->compiled['altRegex'] = Regex::replace(
-            '~\(\?<METHOD>[^)]+\)~',
-            '(?<METHOD>\w+)',
-            $this->compiled['regex'],
-        );
-        foreach ($this->compiled['map'] as &$entry) {
-            $entry['methods'] = $entry['route']->methods;
-        }
-        unset($entry);
+        $this->compiled = $this->compileRoutes();
         $export = $this->compiled;
         foreach ($export['map'] as &$entry) unset($entry['route']);
         unset($entry);
         $dir = dirname($this->cacheFile);
-        if (!is_dir($dir) && !@mkdir($dir, \Atom\Constants::DIR_PERMISSIONS, true) && !is_dir($dir)) {
+        if (!is_dir($dir) && !@mkdir($dir, Constants::DIR_PERMISSIONS, true) && !is_dir($dir)) {
             return $this->compiled;
         }
         file_put_contents(
@@ -286,6 +298,21 @@ final class Router
             "<?php\nreturn " . var_export($export, true) . ";\n",
         );
         return $this->compiled;
+    }
+
+    private function compileRoutes(): array
+    {
+        $compiled = (new RouteCompiler())->compile($this->routes, $this->patterns);
+        $compiled['altRegex'] = Regex::replace(
+            '~\(\?<METHOD>[^)]+\)~',
+            '(?<METHOD>\w+)',
+            $compiled['regex'],
+        );
+        foreach ($compiled['map'] as &$entry) {
+            $entry['methods'] = $entry['route']->methods;
+        }
+        unset($entry);
+        return $compiled;
     }
 
     /** @return ?string Extracts fully-qualified class name from a PHP file */

@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Atom - Cache</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav id="sidebar">
+<h2>Atom</h2>
+<a href="index.html#quickstart">Quick start</a>
+<a href="index.html#architecture">Architecture</a>
+<a href="index.html#config">Config</a>
+<a href="index.html#scope">Scope</a>
+
+<h2>Routing</h2>
+<a href="routing.html#routing-routes">Route patterns</a>
+<a href="routing.html#routing-groups">Groups &amp; middleware</a>
+<a href="routing.html#routing-named">URL generation</a>
+<a href="routing.html#routing-health">Health check</a>
+<a href="routing.html#routing-attributes">Attribute routes</a>
+<a href="routing.html#routing-perf">Performance</a>
+
+<h2>WebSocket</h2>
+<a href="websocket.html">WebSocket server</a>
+
+<h2>HTTP</h2>
+<a href="http.html#http-request">Request</a>
+<a href="http.html#http-files">File uploads</a>
+<a href="http.html#http-response">Response</a>
+<a href="http.html#http-controllers">Controllers</a>
+<a href="http.html#http-session">Session</a>
+
+<h2>Testing</h2>
+<a href="testing.html#test-client">HTTP Test Client</a>
+
+<h2>Templates</h2>
+<a href="templates.html#tpl-syntax">Syntax &amp; filters</a>
+<a href="templates.html#tpl-control">Control flow</a>
+<a href="templates.html#tpl-raw">Raw blocks</a>
+<a href="templates.html#tpl-inherit">Inheritance</a>
+<a href="templates.html#tpl-custom">Custom filters &amp; globals</a>
+
+<h2>Validation</h2>
+<a href="validation.html#val-dto">DTO definition</a>
+<a href="validation.html#val-nested">Nested arrays</a>
+<a href="validation.html#val-request">Request validation</a>
+<a href="validation.html#val-ref">Attribute reference</a>
+
+<h2>Middleware</h2>
+<a href="middleware.html#mw-pipeline">Pipeline</a>
+<a href="middleware.html#mw-cors">CORS</a>
+<a href="middleware.html#mw-csrf">CSRF</a>
+<a href="middleware.html#mw-ratelimit">Rate Limiter</a>
+
+<h2>Container</h2>
+<a href="container.html#di-bindings">Bindings</a>
+<a href="container.html#di-autowire">Autowiring</a>
+
+<h2>Cache</h2>
+<a href="#cache-intro">Introduction</a>
+<a href="#cache-usage">Usage</a>
+<a href="#cache-drivers">Drivers</a>
+<a href="#cache-methods">Method reference</a>
+
+<h2>ORM</h2>
+<a href="orm.html">Eloquent-like ORM</a>
+
+<h2>Reference</h2>
+<a href="reference.html#ref-database">Database</a>
+<a href="reference.html#ref-cache">Cache</a>
+<a href="reference.html#ref-logger">Logger</a>
+<a href="reference.html#ref-paginator">Paginator</a>
+<a href="reference.html#ref-encrypt">Encryption</a>
+<a href="reference.html#ref-orm">ORM</a>
+<a href="reference.html#ref-cli">CLI Console</a>
+<a href="reference.html#ref-env">.env &amp; Config</a>
+<a href="reference.html#ref-regex">Regex utility</a>
+<a href="reference.html#ref-status">Status codes</a>
+<a href="index.html#ref-structure">Project structure</a>
+</nav>
+
+<div id="main">
+
+<h1>Cache <span>&#x267B;</span></h1>
+<p class="meta">PSR‑inspired cache abstraction · Array &amp; File drivers · Remember helpers · Atomic file writes</p>
+
+<div class="flex">
+<span class="tag">ArrayDriver</span><span class="tag">FileDriver</span><span class="tag">get/set/has/delete/flush</span>
+<span class="tag">remember</span><span class="tag">rememberForever</span><span class="tag">increment/decrement</span>
+<span class="tag">TTL</span><span class="tag">sha1 keys</span><span class="tag">Atomic writes</span>
+</div>
+
+<h2 id="cache-intro">Introduction</h2>
+<p>Atom provides a simple cache abstraction via the <code>Driver</code> interface. Two drivers ship with the framework: <strong>ArrayDriver</strong> for in‑memory, per‑request caching and <strong>FileDriver</strong> for persistent, disk‑backed caching. The <code>Cache</code> facade wraps the driver and adds convenience methods like <code>remember</code>, <code>rememberForever</code>, <code>increment</code>, and <code>decrement</code>.</p>
+
+<div class="grid">
+<div class="card"><h4>Driver interface</h4><p>get, set(key,value,ttl), has, delete, flush</p></div>
+<div class="card"><h4>ArrayDriver</h4><p>In‑memory hash map, TTL via timestamp check. Zero I/O.</p></div>
+<div class="card"><h4>FileDriver</h4><p>sha1‑keyed files, TTL in first line, atomic tmp+rename, probabilistic GC</p></div>
+<div class="card"><h4>Cache facade</h4><p>get/set/has/delete/flush + remember, rememberForever, increment, decrement</p></div>
+</div>
+
+<h2 id="cache-usage">Usage</h2>
+
+<h3>Obtaining the cache instance</h3>
+<pre><code><span class="cm">// Lazy, config‑driven — uses APP_CACHE_DRIVER env var</span>
+<span class="var">$cache</span> = <span class="var">$app</span>->cache();</code></pre>
+<p>The cache instance is lazily created on first access. The driver is selected based on <code>APP_CACHE_DRIVER</code> in the environment: <code>'file'</code> (default, uses <code>cacheDir</code>) or <code>'array'</code>. When no <code>cacheDir</code> is configured, the file driver falls back to <code>sys_get_temp_dir()/atom/cache</code>.</p>
+
+<h3>Basic operations</h3>
+<pre><code><span class="var">$cache</span>->set(<span class="str">'user:42'</span>, [<span class="str">'name'</span> => <span class="str">'Alice'</span>], <span class="str">ttl</span>: <span class="num">3600</span>);
+
+<span class="kw">if</span> (<span class="var">$cache</span>->has(<span class="str">'user:42'</span>)) {
+    <span class="var">$user</span> = <span class="var">$cache</span>->get(<span class="str">'user:42'</span>);
+}
+
+<span class="var">$value</span> = <span class="var">$cache</span>->get(<span class="str">'missing'</span>, <span class="str">'default value'</span>);
+
+<span class="var">$cache</span>->delete(<span class="str">'user:42'</span>);
+<span class="var">$cache</span>->flush();  <span class="cm">// clear everything</span></code></pre>
+
+<h3>Remember pattern</h3>
+<pre><code><span class="cm">// Fetch from cache or compute + store</span>
+<span class="var">$stats</span> = <span class="var">$cache</span>->remember(<span class="str">'dashboard_stats'</span>, <span class="kw">function</span>() <span class="kw">use</span> (<span class="var">$db</span>) {
+    <span class="kw">return</span> <span class="var">$db</span>->all(<span class="str">'SELECT ...'</span>);
+}, <span class="str">ttl</span>: <span class="num">600</span>);
+
+<span class="cm">// Remember forever (no TTL expiry)</span>
+<span class="var">$config</span> = <span class="var">$cache</span>->rememberForever(<span class="str">'app_config'</span>, <span class="kw">fn</span>() => loadConfig());</code></pre>
+
+<h3>Counters</h3>
+<pre><code><span class="var">$cache</span>->increment(<span class="str">'page_views'</span>);              <span class="cm">// +1</span>
+<span class="var">$cache</span>->increment(<span class="str">'batch_size'</span>, <span class="num">100</span>);        <span class="cm">// +100</span>
+<span class="var">$cache</span>->decrement(<span class="str">'stock'</span>);                   <span class="cm">// -1</span>
+<span class="var">$cache</span>->decrement(<span class="str">'quota'</span>, <span class="num">5</span>);               <span class="cm">// -5</span></code></pre>
+
+<h2 id="cache-drivers">Drivers</h2>
+
+<h3>ArrayDriver</h3>
+<p>In‑memory cache stored in a PHP array. TTL is enforced via timestamp comparison on every <code>get()</code> and <code>has()</code> call — expired entries are automatically deleted. Best for ephemeral, per‑request data or unit testing.</p>
+<pre><code><span class="kw">use</span> Atom\Cache\{Cache, ArrayDriver};
+
+<span class="var">$cache</span> = <span class="kw">new</span> Cache(<span class="kw">new</span> ArrayDriver());
+<span class="var">$cache</span>->set(<span class="str">'temp'</span>, <span class="str">'data'</span>, <span class="str">ttl</span>: <span class="num">60</span>);</code></pre>
+
+<h3>FileDriver</h3>
+<p>Persistent, disk‑backed driver. Each cache entry is stored as a PHP file at <code>{dir}/sha1(key).php</code>. The first line holds the expiry timestamp (0 = no expiry), followed by a newline and the serialized value.</p>
+<pre><code><span class="kw">use</span> Atom\Cache\{Cache, FileDriver};
+
+<span class="var">$cache</span> = <span class="kw">new</span> Cache(<span class="kw">new</span> FileDriver(
+    <span class="str">dir</span>: __DIR__ . <span class="str">'/storage/cache'</span>,
+    <span class="str">cleanupChance</span>: <span class="num">100</span>,  <span class="cm">// 1 in 100 chance of GC on set()</span>
+));
+
+<span class="var">$cache</span>->set(<span class="str">'key'</span>, <span class="str">'value'</span>, <span class="str">ttl</span>: <span class="num">3600</span>);</code></pre>
+<p><strong>Atomic writes:</strong> data is written to a random temp file first (<code>.tmp</code> suffix with 8 random hex bytes), then <code>rename()</code>d into place with <code>LOCK_EX</code>. This prevents partial reads during concurrent writes.</p>
+<p><strong>Garbage collection:</strong> expired files are cleaned up probabilistically — on each <code>set()</code> there is a 1/<code>cleanupChance</code> probability that all files in the cache directory are scanned for expired entries. Additionally, expired keys return <code>null</code> and are deleted on read.</p>
+
+<h2 id="cache-methods">Method reference</h2>
+
+<h3>Cache facade</h3>
+<table>
+<tr><th>Method</th><th>Returns</th><th>Description</th></tr>
+<tr><td><code>$cache->get($key, $default = null)</code></td><td>mixed</td><td>Retrieve value, or default if missing/expired</td></tr>
+<tr><td><code>$cache->set($key, $value, $ttl = 0)</code></td><td>void</td><td>Store value with TTL in seconds (0 = no expiry)</td></tr>
+<tr><td><code>$cache->has($key)</code></td><td>bool</td><td>Check if key exists and is not expired</td></tr>
+<tr><td><code>$cache->delete($key)</code></td><td>void</td><td>Remove a key from the cache</td></tr>
+<tr><td><code>$cache->flush()</code></td><td>void</td><td>Remove all items from the cache</td></tr>
+<tr><td><code>$cache->remember($key, $factory, $ttl = 0)</code></td><td>mixed</td><td>Get from cache or compute &amp; store</td></tr>
+<tr><td><code>$cache->rememberForever($key, $factory)</code></td><td>mixed</td><td>Like remember, but no TTL expiry</td></tr>
+<tr><td><code>$cache->increment($key, $amount = 1)</code></td><td>int</td><td>Increment a numeric value, returns new value</td></tr>
+<tr><td><code>$cache->decrement($key, $amount = 1)</code></td><td>int</td><td>Decrement a numeric value, returns new value</td></tr>
+<tr><td><code>$cache->driver()</code></td><td>Driver</td><td>Get the underlying driver instance</td></tr>
+</table>
+
+<h3>Driver interface</h3>
+<table>
+<tr><th>Method</th><th>Description</th></tr>
+<tr><td><code>get(string $key): mixed</code></td><td>Retrieve value or null</td></tr>
+<tr><td><code>set(string $key, mixed $value, int $ttl): void</code></td><td>Store value with TTL in seconds</td></tr>
+<tr><td><code>has(string $key): bool</code></td><td>Check existence, respecting TTL</td></tr>
+<tr><td><code>delete(string $key): void</code></td><td>Remove a single key</td></tr>
+<tr><td><code>flush(): void</code></td><td>Remove all keys</td></tr>
+</table>
+
+<h3>Configuration</h3>
+<table>
+<tr><th>Env variable</th><th>Default</th><th>Description</th></tr>
+<tr><td><code>APP_CACHE_DRIVER</code></td><td><code>file</code></td><td>Driver: <code>'file'</code> or <code>'array'</code></td></tr>
+</table>
+<p>The driver is selected in <code>Application::cache()</code> based on <code>APP_CACHE_DRIVER</code>. For <code>'file'</code>, the directory is taken from <code>Config::$cacheDir</code>. No additional setup is required — calling <code>$app->cache()</code> initializes everything on first use.</p>
+
+<footer>Atom — PHP 8.5 micro‑framework · zero runtime dependencies</footer>
+
+</div>
+</body>
+</html>

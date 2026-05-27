@@ -23,6 +23,9 @@
 <a href="routing.html#routing-attributes">Attribute routes</a>
 <a href="routing.html#routing-perf">Performance</a>
 
+<h2>WebSocket</h2>
+<a href="websocket.html">WebSocket server</a>
+
 <h2>HTTP</h2>
 <a href="http.html#http-request">Request</a>
 <a href="http.html#http-files">File uploads</a>
@@ -56,11 +59,19 @@
 <a href="container.html#di-bindings">Bindings</a>
 <a href="container.html#di-autowire">Autowiring</a>
 
+<h2>Cache</h2>
+<a href="cache.html">Cache API</a>
+
+<h2>ORM</h2>
+<a href="orm.html">Eloquent-like ORM</a>
+
 <h2>Reference</h2>
 <a href="reference.html#ref-database">Database</a>
+<a href="reference.html#ref-cache">Cache</a>
 <a href="reference.html#ref-logger">Logger</a>
 <a href="reference.html#ref-paginator">Paginator</a>
 <a href="reference.html#ref-encrypt">Encryption</a>
+<a href="reference.html#ref-orm">ORM</a>
 <a href="reference.html#ref-cli">CLI Console</a>
 <a href="reference.html#ref-env">.env &amp; Config</a>
 <a href="reference.html#ref-regex">Regex utility</a>
@@ -91,6 +102,7 @@
 <h2 id="ref-logger">Logger</h2>
 <pre><code><span class="kw">use</span> Atom\Support\Logger;
 
+<span class="var">$log</span> = <span class="var">$app</span>->log();  <span class="cm">// obtain via Application (respects config)</span>
 <span class="var">$log</span> = <span class="kw">new</span> Logger(<span class="str">'/var/log/app.log'</span>);
 <span class="var">$log</span>->debug(<span class="str">'query'</span>, [<span class="str">'sql'</span> => <span class="var">$sql</span>, <span class="str">'ms'</span> => <span class="num">12.5</span>]);
 <span class="var">$log</span>->info(<span class="str">'login'</span>, [<span class="str">'user'</span> => <span class="num">42</span>]);
@@ -110,10 +122,46 @@
 <span class="cm">// Auto‑rotation by size</span>
 <span class="var">$log</span> = <span class="kw">new</span> Logger(<span class="str">'/var/log/app.log'</span>, <span class="str">maxSize</span>: <span class="num">1_048_576</span>);</code></pre>
 
+<h2 id="ref-cache">Cache</h2>
+<pre><code><span class="kw">use</span> Atom\Cache\{Cache, ArrayDriver, FileDriver};
+
+<span class="cm">// Obtain via Application (lazy, config-driven)</span>
+<span class="var">$cache</span> = <span class="var">$app</span>->cache();
+
+<span class="cm">// Basic operations</span>
+<span class="var">$cache</span>->set(<span class="str">'key'</span>, <span class="str">'value'</span>, <span class="str">ttl</span>: <span class="num">3600</span>);
+<span class="var">$value</span> = <span class="var">$cache</span>->get(<span class="str">'key'</span>, <span class="str">'default'</span>);
+<span class="var">$exists</span> = <span class="var">$cache</span>->has(<span class="str">'key'</span>);
+<span class="var">$cache</span>->delete(<span class="str">'key'</span>);
+<span class="var">$cache</span>->flush();
+
+<span class="cm">// Remember — fetch from closure if missing</span>
+<span class="var">$data</span> = <span class="var">$cache</span>->remember(<span class="str">'stats'</span>, <span class="kw">fn</span>() => heavyQuery(), <span class="str">ttl</span>: <span class="num">600</span>);
+
+<span class="cm">// Remember forever (no TTL)</span>
+<span class="var">$data</span> = <span class="var">$cache</span>->rememberForever(<span class="str">'config'</span>, <span class="kw">fn</span>() => loadConfig());
+
+<span class="cm">// Increment / decrement counters</span>
+<span class="var">$views</span> = <span class="var">$cache</span>->increment(<span class="str">'page_views'</span>);
+<span class="var">$stock</span> = <span class="var">$cache</span>->decrement(<span class="str">'stock_count'</span>, <span class="num">2</span>);
+
+<span class="cm">// Driver access</span>
+<span class="var">$driver</span> = <span class="var">$cache</span>->driver(); <span class="cm">// → Driver instance</span></code></pre>
+<p>The <strong>Driver</strong> interface defines the contract: <code>get()</code>, <code>set(key, value, ttl)</code>, <code>has()</code>, <code>delete()</code>, <code>flush()</code>. Two drivers ship with Atom:</p>
+<ul>
+<li><strong>ArrayDriver</strong> — in‑memory, per‑request. TTL honoured via timestamp check.</li>
+<li><strong>FileDriver</strong> — persisted to disk (<code>cacheDir/sha1(key).php</code>). TTL stored in first line, atomic writes via temp‑file + rename. Probabilistic garbage collection via <code>cleanupChance</code>.</li>
+</ul>
+<p>Set <code>APP_CACHE_DRIVER=array</code> for array driver, omit (or <code>=file</code>) for file driver.</p>
+
 <h2 id="ref-paginator">Paginator</h2>
 <pre><code><span class="kw">use</span> Atom\Support\Paginator;
 
+<span class="cm">// From Request (reads ?page= & &per_page=)</span>
 <span class="var">$p</span> = Paginator::from(<span class="var">$req</span>, <span class="str">defaultPerPage</span>: <span class="num">20</span>);
+
+<span class="cm">// Or manual construction</span>
+<span class="var">$p</span> = Paginator::make(<span class="str">page</span>: <span class="var">$page</span>, <span class="str">perPage</span>: <span class="var">$perPage</span>);
 
 <span class="cm">// SQL helper</span>
 <span class="var">$sql</span> = <span class="str">"SELECT * FROM posts "</span> . <span class="var">$p</span>->sqlLimit();
@@ -125,6 +173,66 @@
 
 <span class="cm">// Query params: ?page=2&per_page=10</span>
 <span class="cm">// page clamped ≥ 1, per_page clamped 1..100</span></code></pre>
+
+<h2 id="ref-orm">ORM</h2>
+<pre><code><span class="kw">use</span> Atom\Orm\{Model, Table, PrimaryKey, Column};
+<span class="kw">use</span> Atom\Database\Database;
+
+<span class="cm">// Set global connection</span>
+Model::setConnection(<span class="var">$db</span>);
+
+<span class="cm">// Define a model</span>
+<span class="kw">#[</span><span class="fn">Table</span>(<span class="str">'users'</span>)<span class="kw">]</span>
+<span class="kw">class</span> User <span class="kw">extends</span> Model {
+    <span class="kw">#[</span><span class="fn">PrimaryKey</span><span class="kw">]</span> <span class="kw">public</span> <span class="kw">int</span> <span class="var">$id</span> = <span class="num">0</span>;
+    <span class="kw">#[</span><span class="fn">Column</span>(<span class="str">'user_name'</span>)<span class="kw">]</span> <span class="kw">public</span> <span class="kw">string</span> <span class="var">$name</span> = <span class="str">''</span>;
+    <span class="kw">public</span> <span class="kw">string</span> <span class="var">$email</span> = <span class="str">''</span>;
+}
+
+<span class="cm">// CRUD</span>
+<span class="var">$user</span> = User::create([<span class="str">'name'</span> => <span class="str">'Alice'</span>, <span class="str">'email'</span> => <span class="str">'a@ex.com'</span>]);
+<span class="var">$user</span> = User::find(<span class="num">1</span>);
+<span class="var">$user</span> = User::findOrFail(<span class="num">42</span>);
+<span class="var">$user</span>->name = <span class="str">'Bob'</span>;
+<span class="var">$user</span>->save();
+<span class="var">$user</span>->delete();
+User::destroy(<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>);
+
+<span class="cm">// Query builder</span>
+<span class="var">$users</span> = User::query()->where(<span class="str">'active'</span>, <span class="num">1</span>)->whereIn(<span class="str">'role'</span>, [<span class="str">'admin'</span>,<span class="str">'user'</span>])->orderBy(<span class="str">'created_at'</span>, <span class="str">'DESC'</span>)->limit(<span class="num">10</span>)->get();
+<span class="var">$total</span> = User::query()->where(<span class="str">'active'</span>, <span class="num">1</span>)->count();
+<span class="var">$exists</span> = User::query()->where(<span class="str">'email'</span>, <span class="str">'a@ex.com'</span>)->exists();
+
+<span class="cm">// Magic whereX methods</span>
+<span class="var">$admin</span> = User::query()->whereRole(<span class="str">'admin'</span>)->get();
+<span class="var">$active</span> = User::query()->whereStatus(<span class="str">'active'</span>)->get();
+
+<span class="cm">// Relations</span>
+<span class="kw">class</span> Post <span class="kw">extends</span> Model {
+    <span class="kw">public function</span> <span class="fn">author</span>() { <span class="kw">return</span> <span class="var">$this</span>->belongsTo(User::<span class="kw">class</span>); }
+    <span class="kw">public function</span> <span class="fn">comments</span>() { <span class="kw">return</span> <span class="var">$this</span>->hasMany(Comment::<span class="kw">class</span>); }
+    <span class="kw">public function</span> <span class="fn">meta</span>() { <span class="kw">return</span> <span class="var">$this</span>->hasOne(PostMeta::<span class="kw">class</span>); }
+}
+
+<span class="cm">// Eager loading</span>
+<span class="var">$posts</span> = Post::query()->with(<span class="str">'author'</span>, <span class="str">'comments'</span>)->get();
+<span class="kw">foreach</span> (<span class="var">$posts</span> <span class="kw">as</span> <span class="var">$post</span>) {
+    <span class="var">$post</span>->author->name;     <span class="cm">// user model</span>
+    <span class="kw">foreach</span> (<span class="var">$post</span>->comments <span class="kw">as</span> <span class="var">$c</span>) <span class="kw">echo</span> <span class="var">$c</span>->body;
+}
+
+<span class="cm">// Paginate via query builder</span>
+<span class="var">$pager</span> = Post::query()->where(<span class="str">'status'</span>, <span class="str">'published'</span>)->paginate(<span class="num">20</span>);
+
+<span class="cm">// First or create</span>
+<span class="var">$user</span> = User::firstOrCreate([<span class="str">'email'</span> => <span class="str">'a@ex.com'</span>], [<span class="str">'name'</span> => <span class="str">'Alice'</span>]);
+
+<span class="cm">// Fill from array</span>
+<span class="var">$user</span> = <span class="kw">new</span> User();
+<span class="var">$user</span>->fill([<span class="str">'name'</span> => <span class="str">'Bob'</span>, <span class="str">'email'</span> => <span class="str">'b@ex.com'</span>]);
+<span class="var">$user</span>->save();</code></pre>
+<p><strong>Timestamps:</strong> Models with <code>created_at</code> / <code>updated_at</code> public properties automatically receive <code>Y-m-d H:i:s</code> values on insert/update. Set <code>protected bool $timestamps = false</code> to disable.</p>
+<p><strong>Type casting:</strong> Public property types (<code>int</code>, <code>float</code>, <code>bool</code>, <code>string</code>) are auto‑cast on fill and hydration. <code>#[Table]</code> sets the DB table name (auto‑derived from class name otherwise). <code>#[PrimaryKey]</code> marks the PK column. <code>#[Column('name')]</code> maps a property name to a different column name.</p>
 
 <h2 id="ref-encrypt">Encryption</h2>
 <pre><code><span class="kw">use</span> Atom\Support\Encrypt;
@@ -139,7 +247,8 @@
 <pre><code>php bin/atom list      <span class="cm"># show commands with descriptions</span>
 php bin/atom help      <span class="cm"># alias for list</span>
 php bin/atom routes    <span class="cm"># list registered routes</span>
-php bin/atom cache     <span class="cm"># clear compiled cache</span></code></pre>
+php bin/atom cache     <span class="cm"># clear compiled cache</span>
+php bin/atom ws:serve  <span class="cm"># start WebSocket server (--host, --port)</span></code></pre>
 <pre><code><span class="kw">use</span> Atom\Console\Console;
 
 <span class="var">$console</span> = <span class="kw">new</span> Console(<span class="var">$app</span>);
@@ -166,6 +275,9 @@ APP_TIMEZONE=Europe/Moscow
 APP_LOG_FILE=/var/log/app.log
 APP_LOG_LEVEL=WARN
 APP_LOG_MAX_SIZE=1048576
+APP_ROUTE_CACHE=file
+APP_VIEW_CACHE=file
+APP_CACHE_DRIVER=file
 DB_DSN=mysql:host=localhost;dbname=app
 
 <span class="cm">// .env.production overrides .env (loaded when APP_ENV=production)</span>

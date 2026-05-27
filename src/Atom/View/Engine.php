@@ -2,6 +2,9 @@
 declare(strict_types=1);
 namespace Atom\View;
 
+use Atom\Cache\Cache;
+use Atom\Constants;
+
 final class Engine
 {
     private string $cacheDir;
@@ -9,13 +12,19 @@ final class Engine
     private array $filters;
     /** @var array<string, mixed> */
     private array $globals = [];
+    private ?Cache $cache = null;
+    private string $cacheStrategy = 'file';
 
     public function __construct(
         private readonly string $viewsDir,
         string $cacheDir = __DIR__ . '/../../storage/views',
+        ?Cache $cache = null,
+        string $cacheStrategy = 'file',
     ) {
         $this->cacheDir = $cacheDir;
         $this->filters  = $this->defaultFilters();
+        $this->cache = $cache;
+        $this->cacheStrategy = $cacheStrategy;
     }
 
     public function addFilter(string $name, callable $fn): self { $this->filters[$name] = $fn; return $this; }
@@ -50,15 +59,26 @@ final class Engine
         $cls  = 'AtomTemplate_' . $hash;
         $file = $this->cacheDir . '/' . $hash . '.php';
 
-        if (!is_file($file) || filemtime($file) < filemtime($real)) {
+        $needsCompile = true;
+        if ($this->cacheStrategy === 'cache' && $this->cache !== null) {
+            $cachedMtime = $this->cache->get("tpl_mtime:{$hash}");
+            $needsCompile = $cachedMtime === null || $cachedMtime < filemtime($real) || !is_file($file);
+        } else {
+            $needsCompile = !is_file($file) || filemtime($file) < filemtime($real);
+        }
+
+        if ($needsCompile) {
             $compiler = new Compiler($this);
             $code = $compiler->compile(file_get_contents($real), $cls, $template);
             $fileDir = dirname($file);
-            if (!is_dir($fileDir) && !@mkdir($fileDir, \Atom\Constants::DIR_PERMISSIONS, true) && !is_dir($fileDir)) {
+            if (!is_dir($fileDir) && !@mkdir($fileDir, Constants::DIR_PERMISSIONS, true) && !is_dir($fileDir)) {
                 throw new \RuntimeException("View Engine: cannot create cache directory '{$fileDir}'");
             }
             if (file_put_contents($file, $code) === false) {
                 throw new \RuntimeException("View Engine: failed to write compiled template '{$file}'");
+            }
+            if ($this->cacheStrategy === 'cache' && $this->cache !== null) {
+                $this->cache->set("tpl_mtime:{$hash}", filemtime($real));
             }
         }
         if (!class_exists($cls, false)) {

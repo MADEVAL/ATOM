@@ -16,6 +16,9 @@ final readonly class Config
         public int $logLevel = 0,
         public int $logMaxSize = 0,
         public string $appName = 'Atom',
+        /** 'file' = var_export PHP (fast require), 'cache' = framework Cache abstraction */
+        public string $routeCache = 'file',
+        public string $viewCache = 'file',
         public array $env = [],
     ) {}
 
@@ -41,6 +44,8 @@ final readonly class Config
             logLevel: $level,
             logMaxSize: (int) ($env['APP_LOG_MAX_SIZE'] ?? 0),
             appName: $env['APP_NAME'] ?? 'Atom',
+            routeCache: $env['APP_ROUTE_CACHE'] ?? 'file',
+            viewCache: $env['APP_VIEW_CACHE'] ?? 'file',
             env: $env,
         );
     }

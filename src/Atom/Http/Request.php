@@ -2,7 +2,9 @@
 declare(strict_types=1);
 namespace Atom\Http;
 
+use Atom\Constants;
 use Atom\Support\Regex;
+use Atom\Validation\{Validator, ValidationException};
 
 final class Request
 {
@@ -94,10 +96,10 @@ final class Request
      */
     public function validate(string $dtoClass): object
     {
-        $dto = \Atom\Validation\Validator::arrayToDto($dtoClass, $this->body);
-        $errors = \Atom\Validation\Validator::validate($dto);
+        $dto = Validator::arrayToDto($dtoClass, $this->body);
+        $errors = Validator::validate($dto);
         if ($errors !== []) {
-            throw new \Atom\Validation\ValidationException($errors);
+            throw new ValidationException($errors);
         }
         return $dto;
     }
@@ -127,7 +129,7 @@ final class Request
         if (!isset($server['HTTP_CONTENT_TYPE']) || !str_starts_with($server['HTTP_CONTENT_TYPE'], 'application/json')) {
             return [];
         }
-        $maxLength = ini_parse_quantity(ini_get('post_max_size')) ?: \Atom\Constants::JSON_BODY_MAX_FALLBACK;
+        $maxLength = ini_parse_quantity(ini_get('post_max_size')) ?: Constants::JSON_BODY_MAX_FALLBACK;
         $contentLength = (int) ($server['HTTP_CONTENT_LENGTH'] ?? $server['CONTENT_LENGTH'] ?? 0);
         if ($maxLength > 0 && $contentLength > $maxLength) {
             return [];

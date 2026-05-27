@@ -23,6 +23,9 @@
 <a href="routing.html#routing-attributes">Attribute routes</a>
 <a href="routing.html#routing-perf">Performance</a>
 
+<h2>WebSocket</h2>
+<a href="websocket.html">WebSocket server</a>
+
 <h2>HTTP</h2>
 <a href="http.html#http-request">Request</a>
 <a href="http.html#http-files">File uploads</a>
@@ -56,6 +59,12 @@
 <a href="container.html#di-bindings">Bindings</a>
 <a href="container.html#di-autowire">Autowiring</a>
 
+<h2>Cache</h2>
+<a href="cache.html">Cache API</a>
+
+<h2>ORM</h2>
+<a href="orm.html">Eloquent-like ORM</a>
+
 <h2>Reference</h2>
 <a href="reference.html#ref-database">Database</a>
 <a href="reference.html#ref-logger">Logger</a>
@@ -86,6 +95,10 @@
 <tr><td><code>{all}</code></td><td><code>.+</code></td><td><code>path/to/file</code></td></tr>
 <tr><td colspan="3"><code>{name:custom-pcre}</code> - inline regex; <code>addPattern()</code> for named patterns</td></tr>
 </table>
+<p>Register named patterns globally:</p>
+<pre><code><span class="var">$app</span>->router->addPattern(<span class="str">'hash'</span>, <span class="str">'[a-f0-9]{32}'</span>);
+<span class="var">$app</span>->router->addPattern(<span class="str">'uuid'</span>, <span class="str">'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'</span>);
+<span class="var">$app</span>->router->get(<span class="str">'/files/{hash}'</span>, <span class="str">'FileController@show'</span>);</code></pre>
 <p>Duplicate route names throw <code>InvalidArgumentException</code>. Named routes use O(1) hash map lookup.</p>
 
 <h2 id="routing-groups">Groups &amp; middleware</h2>
@@ -134,6 +147,15 @@
 <span class="var">$id</span> = (<span class="kw">int</span>) <span class="var">$m</span>[<span class="str">'MARK'</span>]; <span class="cm">// → route index</span>
 <span class="var">$params</span> = array_filter(<span class="var">$m</span>, <span class="str">'is_string'</span>, ARRAY_FILTER_USE_KEY);</code></pre>
 <p>Cache invalidation: <code>$app->router->clearCache()</code>. Corrupted cache files are auto-detected and regenerated.</p>
+
+<h3>Cache strategy</h3>
+<p>Control where compiled routes are stored via <code>APP_ROUTE_CACHE</code> (<code>Config::routeCache</code>):</p>
+<table>
+<tr><th>Value</th><th>Behaviour</th></tr>
+<tr><td><code>'file'</code> (default)</td><td>Compiled to <code>cacheDir/routes.php</code> with <code>var_export</code>. Fast <code>require</code> on next boot.</td></tr>
+<tr><td><code>'cache'</code></td><td>Stored in framework <code>Cache</code> abstraction. Useful for distributed/shared caches.</td></tr>
+</table>
+<p>Same principle applies to <code>APP_VIEW_CACHE</code> for compiled templates.</p>
 
 <footer>Atom — PHP 8.5 micro‑framework · zero runtime dependencies</footer>
 

@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace Atom\Middleware;
 
+use Atom\Constants;
 use Atom\Http\{Request, Response, StatusCode};
 
 final readonly class Cors implements MiddlewareInterface
@@ -33,7 +34,7 @@ final readonly class Cors implements MiddlewareInterface
                 ->withHeader('Access-Control-Allow-Origin', $origin)
                 ->withHeader('Access-Control-Allow-Methods', $this->allowMethods)
                 ->withHeader('Access-Control-Allow-Headers', $this->allowHeaders)
-                ->withHeader('Access-Control-Max-Age', (string) \Atom\Constants::CORS_MAX_AGE);
+                ->withHeader('Access-Control-Max-Age', (string) Constants::CORS_MAX_AGE);
             if ($this->allowCredentials) {
                 $res = $res->withHeader('Access-Control-Allow-Credentials', 'true');
             }

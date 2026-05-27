@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace Atom\Support;
 
+use Atom\Constants;
 use Atom\Http\Request;
 
 final class Paginator
@@ -24,13 +25,13 @@ final class Paginator
     public static function from(Request $req, int $defaultPerPage = 20): self
     {
         $page = max(1, (int) ($req->input('page', '1')));
-        $perPage = min(\Atom\Constants::PAGINATOR_MAX_PER_PAGE, max(1, (int) ($req->input('per_page', (string) $defaultPerPage))));
+        $perPage = min(Constants::PAGINATOR_MAX_PER_PAGE, max(1, (int) ($req->input('per_page', (string) $defaultPerPage))));
         return new self($page, $perPage);
     }
 
     public static function make(int $page, int $perPage): self
     {
-        return new self(max(1, $page), min(\Atom\Constants::PAGINATOR_MAX_PER_PAGE, max(1, $perPage)));
+        return new self(max(1, $page), min(Constants::PAGINATOR_MAX_PER_PAGE, max(1, $perPage)));
     }
 
     /** @param list<array<string,mixed>> $items */

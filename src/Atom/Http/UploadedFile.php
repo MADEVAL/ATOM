@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace Atom\Http;
 
+use Atom\Constants;
 use Atom\Support\Regex;
 
 final class UploadedFile
@@ -39,7 +40,7 @@ final class UploadedFile
         $normalized = str_replace('\\', '/', $dest);
         if (str_contains($normalized, '../') || str_ends_with($normalized, '/..')) return false;
         $dir = dirname($dest);
-        if (!is_dir($dir) && !@mkdir($dir, \Atom\Constants::DIR_PERMISSIONS, true) && !is_dir($dir)) {
+        if (!is_dir($dir) && !@mkdir($dir, Constants::DIR_PERMISSIONS, true) && !is_dir($dir)) {
             return false;
         }
         return move_uploaded_file($this->tmp, $dest);

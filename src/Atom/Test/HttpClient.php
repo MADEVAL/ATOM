@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace Atom\Test;
 
 use Atom\Application;
-use Atom\Http\{Request, Response};
+use Atom\Http\{Request, Response, StatusCode};
 
 final class HttpClient
 {
@@ -105,7 +105,7 @@ final class HttpClient
             return $this->app->router->dispatch($req);
         } catch (\Throwable $e) {
             if ($this->app->config->debug) throw $e;
-            return new Response('', \Atom\Http\StatusCode::SERVER_ERROR);
+            return new Response('', StatusCode::SERVER_ERROR);
         }
     }
 }

@@ -2,6 +2,8 @@
 declare(strict_types=1);
 namespace Atom\Cache;
 
+use Atom\Constants;
+
 final readonly class FileDriver implements Driver
 {
     private string $dir;
@@ -102,7 +104,7 @@ final readonly class FileDriver implements Driver
 
     private function ensureDir(): void
     {
-        if (!is_dir($this->dir) && !@mkdir($this->dir, \Atom\Constants::DIR_PERMISSIONS, true) && !is_dir($this->dir)) {
+        if (!is_dir($this->dir) && !@mkdir($this->dir, Constants::DIR_PERMISSIONS, true) && !is_dir($this->dir)) {
             throw new \RuntimeException("Cache: cannot create directory '{$this->dir}'");
         }
     }

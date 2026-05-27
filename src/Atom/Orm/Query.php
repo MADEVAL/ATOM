@@ -3,7 +3,8 @@ declare(strict_types=1);
 namespace Atom\Orm;
 
 use Atom\Database\Database;
-use Atom\Support\Regex;
+use Atom\Http\Request;
+use Atom\Support\{Regex, Paginator};
 
 final class Query
 {
@@ -159,14 +160,14 @@ final class Query
      * @param \Atom\Http\Request|null $request If null, reads page from $_GET
      * @return \Atom\Support\Paginator
      */
-    public function paginate(int $perPage = 20, ?\Atom\Http\Request $request = null): \Atom\Support\Paginator
+    public function paginate(int $perPage = 20, ?Request $request = null): Paginator
     {
         $total = $this->count();
         if ($request !== null) {
-            $paginator = \Atom\Support\Paginator::from($request, $perPage);
+            $paginator = Paginator::from($request, $perPage);
         } else {
             $page = max(1, (int) ($_GET['page'] ?? 1));
-            $paginator = \Atom\Support\Paginator::make($page, $perPage);
+            $paginator = Paginator::make($page, $perPage);
         }
 
         $items = $this->limit($paginator->perPage)->offset($paginator->offset)->get();

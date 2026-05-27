@@ -2,6 +2,50 @@
 
 All notable changes to Atom will be documented in this file.
 
+## [0.0.4] - 2026-05-28
+
+### Added
+- **ORM** — full Eloquent-like ORM: `#[Table]`, `#[PrimaryKey]`, `#[Column]` attributes; `Model` with `find`, `findOrFail`, `create`, `firstOrCreate`, `destroy`, `fill`, `save`, `delete`, `toArray`, timestamps; `Query` fluent builder (`where`, `whereIn`, `orWhere`, `whereBetween`, `whereNull`, `whereNotNull`, `orderBy`, `orderByDesc`, `limit`, `offset`, `get`, `first`, `firstOrFail`, `count`, `exists`, `paginate`, magic `whereX()`); Relations (`hasMany`, `belongsTo`, `hasOne`) with lazy + eager loading; ~500 LOC
+- **Cache** — multi-driver caching: `ArrayDriver` (in-memory), `FileDriver` (TTL, atomic writes, probabilistic GC). `Cache` facade: `set/get/has/delete/flush/remember/rememberForever/increment/decrement`. ~170 LOC
+- **`$app->cache()`** — lazy-init Cache, driver from `APP_CACHE_DRIVER` env var
+- **`$app->log()`** — returns Logger from Container
+- **`Response::getHeader()`** — accessor for testing
+- **Security headers** in `Response::send()`: `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`
+- **Config: `routeCache` + `viewCache`** — cache strategy per subsystem (`'file'` = var_export/require, `'cache'` = Cache abstraction)
+- **Documentation** — `docs/cache.html`, `docs/orm.html` added; all 12 doc pages + sidebars synced with code
+- **PHPStan** config (`phpstan.neon` level max)
+- **CHANGELOG.md**, **CONTRIBUTING.md**
+
+### Changed
+- **Router** — constructor accepts `?Cache $cache` + `string $cacheStrategy`; when `APP_ROUTE_CACHE=cache`, uses `Cache::remember()` instead of `var_export`
+- **View Engine** — same cache strategy support via `APP_VIEW_CACHE`
+- **Logger** — registered in Application container (was orphan)
+- **All `\Atom\Foo::` inline FQN** → `use Atom\Foo` imports (18 locations across 13 files)
+- **Router::getAllowedMethods()** — delegates path→regex compilation instead of duplicating
+- **ORM Model** — reflection metadata cached per-class (1 `ReflectionClass` instead of 11 per operation)
+- **Paginator::make($page, $perPage)** — new static factory for non-Request pagination
+- **Query::paginate()** — accepts `?Request`, no longer reads `$_GET` directly
+- **phpunit.xml** — `requireCoverageMetadata="true"`
+
+### Removed
+- **WdServer circular dependency on Application** — Server no longer imports `Atom\Application`
+- **MatchedRoute** — dead class removed
+- **SKILL.md invalid claims** — "no ORM", "no event loop" removed
+
+### Fixed
+- **RateLimit Retry-After** — was always 1; now calculates from oldest timestamp
+- **Router::health()** — `null`/`0` no longer treated as success
+- **Request::parseJsonBody()** — `post_max_size=-1` no longer blocks JSON parsing
+- **Router::getAllowedMethods()** — now returns ALL methods for same-URI routes, not just first
+- **Session::csrfToken()** — removed weak `uniqid()` fallback, uses only `random_bytes()`
+- **Request::method** — spoofing validated against ALLOWED_METHODS whitelist
+- **Validator.php** — 18 attribute classes extracted to individual files
+- **`Validator::arrayToDto()`** — resolves constructor params from data before fallback
+
+### Tests
+- Running: **714 tests, 1084 assertions, 0 failures**
+- New: ORM (27), Cache (23), RateLimit (2), Router (4), Request (1)
+
 ## [0.0.3] - 2026-05-27
 
 ### Added

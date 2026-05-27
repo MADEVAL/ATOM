@@ -20,7 +20,7 @@
 
 ## Why Atom
 
-**Zero dependencies.** Just PHP 8.5. No ORM, no HTTP factory, no annotations - pure PHP with PCRE at its core.
+**Zero dependencies.** Just PHP 8.5. No HTTP factory, no annotations - pure PHP with PCRE at its core.
 
 **Minimal codebase.** Read the entire framework in 20 minutes. Every line tested — 99%+ coverage, zero warnings.
 
@@ -45,8 +45,8 @@
 | **MVP / Prototype** | Excellent | Full stack in one file, rapid iteration |
 | **Hobby project** | Excellent | Easy to learn, zero config needed |
 | **High-traffic API** | Good | O(1) routing, JIT-compiled PCRE, route cache |
-| **Real-time / WebSocket** | Not suitable | No built-in event loop or persistent connections |
-| **Enterprise CMS** | Not suitable | No ORM, no migrations, no admin generator |
+| **Real-time / WebSocket** | Good | Built-in WebSocket server, rooms, broadcast |
+| **Enterprise CMS** | Not suitable | No migrations, no admin generator |
 | **E-commerce** | Possible | Would need custom cart/payment logic, DB only |
 | **SPA backend** | Good | JSON API + CORS + JWT via Bearer token |
 | **Server-rendered pages** | Good | Template inheritance, blocks, filters, auto-escape |
@@ -85,17 +85,20 @@ $app->run();
 | **Database** | Minimal PDO wrapper: `all()`, `one()`, `single()`, `run()`, prepared statements. |
 | **Middleware** | Closure | object | string. Built-in: CORS, CSRF. |
 | **Session** | `get/set/flash/regenerate`, CSRF token generation & rotation. |
-| **CLI** | `bin/atom list/help/routes/cache`, custom commands with descriptions, `NO_COLOR` support. |
+| **CLI** | \`bin/atom list/help/routes/cache/ws:serve\`, custom commands with descriptions, \`NO_COLOR\` support. |
 | **Request** | Property hooks, JSON body, Bearer token, `_method` spoofing, file uploads. |
 | **Response** | `html/json/text/redirect/noContent`, cookies, cache headers, header injection shield. |
 | **Container** | DI: `bind`, `singleton`, `instance`, `has`, recursive autowire. |
-| **Config** | `fromEnv('.env')` with `APP_ENV` profiles (`.env.production`), `APP_DEBUG`, `APP_CACHE_DIR`, `APP_VIEWS_DIR`, `APP_TIMEZONE`, `APP_LOG_LEVEL`, `APP_LOG_MAX_SIZE`, `APP_NAME`. |
+| **Config** | \`fromEnv('.env')\` with \`APP_ENV\` profiles (\`.env.production\`), \`APP_DEBUG\`, \`APP_CACHE_DIR\`, \`APP_VIEWS_DIR\`, \`APP_TIMEZONE\`, \`APP_LOG_LEVEL\`, \`APP_LOG_MAX_SIZE\`, \`APP_NAME\`, \`APP_ROUTE_CACHE\`, \`APP_VIEW_CACHE\`, \`APP_CACHE_DRIVER\`, \`WS_HOST\`, \`WS_PORT\`. |
 | **Logger** | File-based, 7 levels, min-level filter, context, atomic writes, rotation, clear. |
 | **HTTP Test Client** | `HttpClient` — fluent API: `$client->get('/users')->assertOk()->assertJson(['id' => 1])`. |
 | **Rate Limiter** | `#[RateLimit(max: 60, window: 60)]` middleware — per-IP request limiting. |
 | **Health Check** | `$router->health('/health', fn() => ['db' => true])` — Kubernetes-ready. |
 | **Paginator** | `Paginator::from($req)->paginate($items, $total)` — page/perPage/total/pages. |
-| **Encryption** | `Encrypt::encrypt()` / `Encrypt::decrypt()` — AES-256-GCM with key derivation. |
+| **Encryption** | \`Encrypt::encrypt()\` / \`Encrypt::decrypt()\` — AES-256-GCM with key derivation. |
+| **Cache** | \`$app->cache()\`, PSR-16-like: \`set/get/has/delete/flush\`, TTL, \`remember\`, atomic counters, ArrayDriver, FileDriver. |
+| **ORM** | Model, Query builder, Relations (\`hasMany\`, \`belongsTo\`, \`hasOne\`), Pagination. |
+| **WebSocket** | \`$app->ws()\`, room management, broadcast, RFC 6455 event loop, CLI \`ws:serve\`. |
 
 ## Example
 
@@ -158,10 +161,26 @@ $app->run();
 ```
 src/Atom/
 ├── Config.php              # debug, cacheDir, viewsDir, timezone, logFile, logLevel, logMaxSize, appName, fromEnv(), get()
+├── Constants.php           # framework constants
 ├── Application.php         # entry point, boot, run
 ├── Console/Console.php     # CLI: list, help, routes, cache, custom commands, NO_COLOR
+├── Cache/
+│   ├── Cache.php             # PSR-16-like: set, get, has, delete, flush, remember
+│   ├── Driver.php            # driver interface
+│   ├── ArrayDriver.php       # in-memory TTL driver
+│   └── FileDriver.php        # file-based TTL driver
 ├── Container/Container.php # DI: bind, singleton, instance, has, autowire
 ├── Database/Database.php   # PDO wrapper: all, one, single, run
+├── Orm/
+│   ├── Model.php              # base model class
+│   ├── Query.php              # query builder
+│   ├── Relation.php           # base relation
+│   ├── HasMany.php            # hasMany relation
+│   ├── BelongsTo.php          # belongsTo relation
+│   ├── HasOne.php             # hasOne relation
+│   ├── Column.php             # column attribute
+│   ├── PrimaryKey.php         # primary key attribute
+│   └── Table.php              # table name attribute
 ├── Http/
 │   ├── Request.php         # hooks, JSON body, Bearer, _method, file(), validate()
 │   ├── Response.php        # html, json, text, redirect, cookies, cache, send()
@@ -179,6 +198,9 @@ src/Atom/
 │   ├── CompiledRoute.php   # internal representation
 │   ├── RouteCompiler.php   # single PCRE regex
 │   └── Router.php          # dispatch, groups, url(), cache, routes(), health()
+├── WebSocket/
+│   ├── Server.php             # RFC 6455 event loop, rooms, broadcast
+│   └── Connection.php         # connection wrapper, send, sendJson, ping, close
 ├── Support/
 │   ├── Logger.php          # file logger: 7 levels, rotate, clear, maxSize
 │   ├── Regex.php           # PCRE wrapper

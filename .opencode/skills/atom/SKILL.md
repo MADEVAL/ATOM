@@ -11,7 +11,8 @@ PHP 8.5 micro-framework. Single-regex router, PCRE template engine, DI, validati
 | REST API, microservice, MVP, prototype, hobby project | Excellent — zero deps, single-file deploy |
 | Admin panel, static-site backend, SPA backend, server-rendered pages | Good — templates + CSRF + validation |
 | High-traffic API | Good — O(1) routing, JIT-compiled PCRE |
-| Enterprise CMS, WebSocket/real-time | Not suitable — no ORM, no migrations, no event loop |
+| Enterprise CMS | Not suitable — no migrations, no admin generator |
+| WebSocket/real-time | Good — built-in event loop, rooms, broadcast |
 
 ## Project structure
 
@@ -84,16 +85,20 @@ $config = new Config(
     logLevel: 2,            // WARN
     logMaxSize: 1048576,    // 1MB autorotation
     appName: 'MyApp',
+    routeCache: 'file',     // 'file' = var_export PHP, 'cache' = framework Cache
+    viewCache: 'file',      // 'file' = compiled PHP classes, 'cache' = framework Cache
 );
 $app = new Application($config);
 ```
+
+Env vars: `APP_ROUTE_CACHE` (default `file`), `APP_VIEW_CACHE` (default `file`).
 
 ## Performance
 
 - Router: **one** `preg_match` per request via `(?|...(*:N))` branch-reset + MARK
 - Named routes: O(1) lookup, O(1) URL generation
 - 405 Method Not Allowed: O(1) via altRegex
-- Routes cache: PHP `var_export` include (no unserialize)
+- Routes cache: PHP `var_export` include (no unserialize). `cacheStrategy` option: `file` (default) or `cache` (framework Cache).
 - Templates: compile to PHP classes, disk cache, OPCache-friendly
 - Property hooks: zero-overhead computed properties
 
@@ -143,7 +148,7 @@ $server->broadcastJson($data)          // All connections JSON
 php atom ws:serve --port=8080 --host=0.0.0.0
 ```
 
-Key features: RFC 6455 frame encoding/decoding, non-blocking stream_select event loop, room/channel management, client→server frame masking handled, auto-pong, close handshake.
+Key features: RFC 6455 frame encoding/decoding, non-blocking stream_select event loop, room/channel management, client→server frame masking handled, auto-pong, close handshake, graceful `stop()`.
 
 ## Cache
 
@@ -173,3 +178,86 @@ $cache = new Cache(new FileDriver('/tmp/cache')); // file-based
 ```
 
 Key features: PSR-16-like API, TTL expiry, atomic file writes (temp+rename), probabilistic expired-entry cleanup, null-safe.
+
+## ORM
+
+```php
+use Atom\Orm\{Model, Query, Column, PrimaryKey, Table, HasMany, BelongsTo, HasOne};
+
+#[Table('users')]
+class User extends Model {
+    #[PrimaryKey] #[Column] public ?int $id = null;
+    #[Column] public string $name;
+    #[Column] public string $email;
+    
+    #[HasMany(Comment::class, 'user_id')]
+    public function comments(): Query { return $this->hasMany(Comment::class, 'user_id'); }
+}
+
+// Query builder
+User::query()->where('name', 'LIKE', '%john%')->orderBy('id', 'DESC')->limit(10)->get();
+User::query()->find(1);                    // single by primary key
+User::query()->whereIn('id', [1,2,3])->get();
+User::query()->whereBetween('age', 18, 65)->count();
+
+// CRUD
+$user = new User(['name' => 'John', 'email' => 'john@example.com']);
+$user->save();          // INSERT
+$user->name = 'Jane';
+$user->save();          // UPDATE
+$user->delete();        // DELETE
+
+// Relations (lazy loading with caching)
+$comments = $user->comments()->get();       // hasMany
+$user = $comment->belongsTo(User::class);   // belongsTo
+$profile = $user->profile()->get();         // hasOne
+
+// Pagination
+$page = User::query()->paginate($request, perPage: 15);
+// → ['data' => [...], 'page' => 1, 'perPage' => 15, 'total' => 42, 'pages' => 3]
+```
+
+Key features: Model attributes autodiscovery via #[Column], lazy-loading relations with per-model caching, query builder with fluent API, pagination from Request.
+
+## Logger
+
+```php
+$app->log()->debug('message', ['key' => 'value']);
+$app->log()->info('user created', ['id' => 1]);
+$app->log()->error('failed', ['exception' => $e]);
+```
+
+Logger is automatically registered in the container. Access via `$app->log()` or type-hint `Logger` in constructors.
+
+## Router
+
+```php
+// cacheStrategy: 'file' (default, var_export include) | 'cache' (framework Cache abstraction)
+$app->router->setCacheStrategy('cache');
+
+// Cache routes
+$app->router->cacheRoutes('/tmp/routes.php');
+```
+
+## RateLimit
+
+```php
+#[RateLimit(max: 100, window: 60)]
+public function handle(Request $req): Response { ... }
+```
+
+Responses automatically include `X-RateLimit-Limit` and `X-RateLimit-Remaining` headers on 429 and on-handled responses.
+
+## Response
+
+```php
+$response->getContent();              // string — response body
+$response->getStatusCode();           // int — HTTP status code
+$response->getHeader('Content-Type'); // string — header value
+$response->withStatus(StatusCode::NOT_FOUND); // clone with new status
+
+// Security headers (automatic on html/json responses):
+// X-Content-Type-Options: nosniff
+// X-Frame-Options: SAMEORIGIN
+```
+

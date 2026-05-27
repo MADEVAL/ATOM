@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace Atom\Middleware;
 
+use Atom\Constants;
 use Atom\Http\{Request, Response, StatusCode};
 
 final class RateLimit implements MiddlewareInterface
@@ -33,7 +34,7 @@ final class RateLimit implements MiddlewareInterface
                 ->withHeader('Retry-After', (string) max(1, $retryAfter));
         }
 
-        if ($count === 1 && count(self::$store) > \Atom\Constants::RATELIMIT_CLEANUP_THRESHOLD) {
+        if ($count === 1 && count(self::$store) > Constants::RATELIMIT_CLEANUP_THRESHOLD) {
             self::$store = array_filter(self::$store, fn(array $t) => $t !== []);
         }
 

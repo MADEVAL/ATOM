@@ -29,10 +29,17 @@ final class Application
             date_default_timezone_set($config->timezone);
         }
         $this->container = new Container();
-        $this->router    = new Router($this->container, $config->cacheDir ?: sys_get_temp_dir() . '/atom');
+        $this->router    = new Router(
+            $this->container,
+            $config->cacheDir ?: sys_get_temp_dir() . '/atom',
+            $config->routeCache === 'cache' ? $this->cache() : null,
+            $config->routeCache,
+        );
         $this->view      = new ViewEngine(
             $config->viewsDir ?: __DIR__ . '/../../views',
             $config->cacheDir ?: sys_get_temp_dir() . '/atom/views',
+            $config->viewCache === 'cache' ? $this->cache() : null,
+            $config->viewCache,
         );
 
         $this->container->instance(self::class, $this);

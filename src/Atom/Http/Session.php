@@ -2,6 +2,8 @@
 declare(strict_types=1);
 namespace Atom\Http;
 
+use Atom\Constants;
+
 final class Session
 {
     private array $flashed = [];
@@ -59,7 +61,7 @@ final class Session
     {
         $key = $form !== '' ? "_csrf_{$form}" : '_csrf';
         if (!isset($_SESSION[$key])) {
-            $_SESSION[$key] = bin2hex(random_bytes(\Atom\Constants::CSRF_RANDOM_BYTES));
+            $_SESSION[$key] = bin2hex(random_bytes(Constants::CSRF_RANDOM_BYTES));
         }
         return $_SESSION[$key];
     }
