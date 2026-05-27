@@ -67,6 +67,7 @@ final class Response
     {
         $clone = clone $this;
         if (is_array($ttl_or_options)) {
+            unset($ttl_or_options['name'], $ttl_or_options['value']);
             $clone->cookies[] = ['name' => $name, 'value' => $value, ...$ttl_or_options];
         } else {
             $clone->cookies[] = ['name' => $name, 'value' => $value, 'ttl' => $ttl_or_options, 'path' => $path];

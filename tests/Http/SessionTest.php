@@ -136,9 +136,19 @@ final class SessionTest extends TestCase
     #[Test]
     public function per_form_csrf_token_stable_for_same_form(): void
     {
-        $t1 = $this->session->csrfToken('payment');
-        $t2 = $this->session->csrfToken('payment');
+        $session = new Session();
+        $t1 = $session->csrfToken('login');
+        $t2 = $session->csrfToken('login');
         $this->assertSame($t1, $t2);
+    }
+
+    #[Test]
+    public function csrf_token_is_64_chars_hex(): void
+    {
+        $session = new Session();
+        $token = $session->csrfToken();
+        $this->assertSame(64, strlen($token));
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $token);
     }
 
     #[Test]

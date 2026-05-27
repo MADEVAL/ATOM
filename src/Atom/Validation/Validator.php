@@ -79,7 +79,7 @@ final class Validator
     {
         $errors = [];
         $ref = new ReflectionClass($dto);
-        foreach ($ref->getProperties() as $prop) {
+        foreach ($ref->getProperties(\ReflectionProperty::IS_PUBLIC) as $prop) {
             $value = $prop->getValue($dto);
             $name  = $prop->getName();
 
@@ -127,7 +127,8 @@ final class Validator
             foreach ($prop->getAttributes(Min::class) as $attr) {
                 /** @var Min $r */
                 $r = $attr->newInstance();
-                if (is_numeric($value) ? (float) $value < $r->value : strlen((string) $value) < $r->value) {
+                $num = is_int($value) || is_float($value) ? $value : (is_string($value) && ctype_digit(ltrim($value, '+-')) ? (float) $value : null);
+                if ($num === null ? strlen((string) $value) < $r->value : $num < $r->value) {
                     $errors[$name][] = $r->message;
                 }
             }
@@ -135,7 +136,8 @@ final class Validator
             foreach ($prop->getAttributes(Max::class) as $attr) {
                 /** @var Max $r */
                 $r = $attr->newInstance();
-                if (is_numeric($value) ? (float) $value > $r->value : strlen((string) $value) > $r->value) {
+                $num = is_int($value) || is_float($value) ? $value : (is_string($value) && ctype_digit(ltrim($value, '+-')) ? (float) $value : null);
+                if ($num === null ? strlen((string) $value) > $r->value : $num > $r->value) {
                     $errors[$name][] = $r->message;
                 }
             }

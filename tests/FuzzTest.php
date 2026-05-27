@@ -48,7 +48,7 @@ final class FuzzTest extends TestCase
             body: ['_method' => ' EXPLOIT '],
             server: ['REQUEST_METHOD' => 'POST'],
         );
-        $this->assertSame(' EXPLOIT ', $req->method);
+        $this->assertSame('EXPLOIT', $req->method);
     }
 
     #[Test]

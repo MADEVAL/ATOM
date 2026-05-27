@@ -369,6 +369,37 @@ final class ValidatorTest extends TestCase
     }
 
     #[Test]
+    public function validator_skips_non_public_properties(): void
+    {
+        $dto = new class {
+            #[Required] public string $name = 'ok';
+            #[Required] private string $secret = 'hidden';
+        };
+        $errors = Validator::validate($dto);
+        $this->assertSame([], $errors);
+    }
+
+    #[Test]
+    public function min_max_reject_hex_strings_as_non_numeric(): void
+    {
+        $dto = new class {
+            #[Min(100)] public string $v = '0x1A';
+        };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('v', $errors);
+    }
+
+    #[Test]
+    public function min_max_accept_decimal_numeric_strings(): void
+    {
+        $dto = new class {
+            #[Min(10)] public string $v = '25';
+        };
+        $errors = Validator::validate($dto);
+        $this->assertSame([], $errors);
+    }
+
+    #[Test]
     public function validator_class_is_covered(): void
     {
         $this->assertTrue(class_exists(Validator::class));

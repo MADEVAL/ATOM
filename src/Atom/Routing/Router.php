@@ -89,6 +89,9 @@ final class Router
     /** @param string[] $methods */
     public function match(array $methods, string $p, string $h, string $n = '', array $mw = []): self
     {
+        if ($methods === []) {
+            throw new \InvalidArgumentException('match() requires at least one HTTP method');
+        }
         $fullName = $this->groupNamePrefix . $n;
         if ($n !== '' && isset($this->namedRoutes[$fullName])) {
             throw new \InvalidArgumentException("Duplicate route name: {$fullName}");
@@ -135,6 +138,12 @@ final class Router
                         path: $r->path, methods: $r->methods, name: $r->name,
                         middleware: $r->middleware, controller: $class, action: $m->getName(),
                     );
+                    if ($r->name !== '') {
+                        if (isset($this->namedRoutes[$r->name])) {
+                            throw new \InvalidArgumentException("Duplicate route name from attribute: {$r->name}");
+                        }
+                        $this->namedRoutes[$r->name] = end($this->routes);
+                    }
                 }
             }
         }
@@ -217,7 +226,12 @@ final class Router
     {
         if ($this->compiled !== null) return $this->compiled;
         if (is_file($this->cacheFile)) {
-            $cached = require $this->cacheFile;
+            try {
+                $cached = require $this->cacheFile;
+            } catch (\ParseError) {
+                unlink($this->cacheFile);
+                $cached = null;
+            }
             if (is_array($cached) && isset($cached['regex'], $cached['map'], $cached['altRegex'])) {
                 return $this->compiled = $cached;
             }

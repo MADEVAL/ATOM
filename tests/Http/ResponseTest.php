@@ -303,4 +303,14 @@ final class ResponseTest extends TestCase
         $output = ob_get_clean();
         $this->assertSame('ok', $output);
     }
+
+    #[Test]
+    public function with_cookie_options_cannot_override_name_and_value(): void
+    {
+        $res = (new Response('ok'))->withCookie('session', 'abc', ['name' => 'hijack', 'value' => 'x']);
+        $prop = new \ReflectionProperty(Response::class, 'cookies');
+        $cookies = $prop->getValue($res);
+        $this->assertSame('session', $cookies[0]['name']);
+        $this->assertSame('abc', $cookies[0]['value']);
+    }
 }

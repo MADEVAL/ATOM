@@ -592,6 +592,47 @@ final class RouterTest extends TestCase
     }
 
     #[Test]
+    public function attribute_loaded_routes_url_generation(): void
+    {
+        $attrDir = $this->tmpCacheDir . '/attr';
+        mkdir($attrDir, 0777, true);
+        file_put_contents($attrDir . '/AttrCtrl.php', '<?php
+        namespace App;
+        use Atom\Routing\Route;
+        class AttrCtrl {
+            #[Route("/attr-path", ["GET"], "attr.name")]
+            public function handle(): string { return "ok"; }
+        }
+        ');
+        require_once $attrDir . '/AttrCtrl.php';
+        $this->router->loadFromAttributes($attrDir);
+        $url = $this->router->url('attr.name');
+        $this->assertSame('/attr-path', $url);
+    }
+
+    #[Test]
+    public function corrupted_cache_file_recovers(): void
+    {
+        $cacheFile = $this->tmpCacheDir . '/routes.php';
+        file_put_contents($cacheFile, '<?php return BAD_SYNTAX!!!;');
+        $this->router->get('/ok', 'Ctrl@test');
+        $this->container->bind('Ctrl', fn() => new class {
+            public function test(): string { return 'ok'; }
+        });
+        $req = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/ok']);
+        $res = $this->router->dispatch($req);
+        $this->assertSame(200, $res->getStatusCode());
+    }
+
+    #[Test]
+    public function match_with_empty_methods_throws(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('at least one HTTP method');
+        $this->router->match([], '/path', 'Ctrl@act');
+    }
+
+    #[Test]
     public function unnamed_routes_allow_duplicates(): void
     {
         $this->router->get('/x', 'XController@test');

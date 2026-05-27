@@ -464,6 +464,16 @@ final class RequestTest extends TestCase
         );
         $this->assertSame('POST', $req->method);
     }
+
+    #[Test]
+    public function method_spoofing_trims_whitespace(): void
+    {
+        $req = new Request(
+            body: ['_method' => ' PUT '],
+            server: ['REQUEST_METHOD' => 'POST'],
+        );
+        $this->assertSame('PUT', $req->method);
+    }
 }
 
 final class ValidatableUser
