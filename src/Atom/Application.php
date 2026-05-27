@@ -4,7 +4,9 @@ namespace Atom;
 
 use Atom\Container\Container;
 use Atom\Http\{Request, Response, Session, StatusCode};
+use Atom\Middleware\{MiddlewareInterface, Pipeline};
 use Atom\Routing\Router;
+use Atom\Validation\ValidationException;
 use Atom\View\Engine as ViewEngine;
 
 final class Application
@@ -12,6 +14,8 @@ final class Application
     public readonly Container $container;
     public readonly Router $router;
     public readonly ViewEngine $view;
+
+    private array $middleware = [];
 
     public function __construct(
         public readonly Config $config = new Config,
@@ -34,6 +38,12 @@ final class Application
         $this->container->singleton(Session::class, fn() => new Session());
     }
 
+    public function use(\Closure|MiddlewareInterface|string $middleware): self
+    {
+        $this->middleware[] = $middleware;
+        return $this;
+    }
+
     public function run(?Request $request = null): void
     {
         $req = $request ?? Request::capture();
@@ -42,8 +52,11 @@ final class Application
         }
 
         try {
-            $response = $this->router->dispatch($req);
-        } catch (\Atom\Validation\ValidationException $e) {
+            $handler = fn(): Response => $this->router->dispatch($req);
+            $response = $this->middleware !== []
+                ? Pipeline::run($this->middleware, $req, $handler, $this->container)
+                : $handler();
+        } catch (ValidationException $e) {
             $response = Response::json($e->errors, StatusCode::UNPROCESSABLE_ENTITY);
         } catch (\Throwable $e) {
             if ($this->config->debug) {

@@ -14,7 +14,7 @@ final class Request
     public array $headers;
 
     public string $method  { get => ($this->server['REQUEST_METHOD'] ?? 'GET') === 'POST'
-        ? strtoupper(trim((string)(is_string($this->body['_method'] ?? null) ? $this->body['_method'] : 'POST')))
+        ? strtoupper(trim(is_string($this->body['_method'] ?? null) ? $this->body['_method'] : 'POST'))
         : strtoupper($this->server['REQUEST_METHOD'] ?? 'GET'); }
     public string $path    { get => ($this->server['PATH_INFO'] ?? '') !== '' ? $this->server['PATH_INFO'] : (parse_url($this->uri, PHP_URL_PATH) ?: '/'); }
     public string $uri     { get => $this->server['REQUEST_URI'] ?? '/'; }
