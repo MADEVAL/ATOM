@@ -33,16 +33,53 @@ final class UploadedFile
         return $m !== null ? strtolower($m[1]) : '';
     }}
 
-    public function move(string $dest): bool
+    public function move(string $root, string $relativePath = ''): bool
     {
         if (!$this->ok) return false;
-        if (str_contains($dest, "\0")) return false;
-        $normalized = str_replace('\\', '/', $dest);
-        if (str_contains($normalized, '../') || str_ends_with($normalized, '/..')) return false;
+        $dest = $this->destinationWithinRoot(
+            $root,
+            $relativePath !== '' ? $relativePath : basename(str_replace('\\', '/', $this->name)),
+        );
+        if ($dest === null) return false;
+        return move_uploaded_file($this->tmp, $dest);
+    }
+
+    private function destinationWithinRoot(string $root, string $relativePath): ?string
+    {
+        if ($root === '' || $relativePath === '' || str_contains($root . $relativePath, "\0")) {
+            return null;
+        }
+        $relativePath = str_replace('\\', '/', $relativePath);
+        if (str_starts_with($relativePath, '/') || preg_match('#^[A-Za-z]:/#', $relativePath)) {
+            return null;
+        }
+        $segments = explode('/', $relativePath);
+        foreach ($segments as $segment) {
+            if ($segment === '' || $segment === '.' || $segment === '..') {
+                return null;
+            }
+        }
+        if (!is_dir($root) && !@mkdir($root, Constants::DIR_PERMISSIONS, true) && !is_dir($root)) {
+            return null;
+        }
+        $rootReal = realpath($root);
+        if ($rootReal === false) {
+            return null;
+        }
+        $dest = $rootReal . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $segments);
         $dir = dirname($dest);
         if (!is_dir($dir) && !@mkdir($dir, Constants::DIR_PERMISSIONS, true) && !is_dir($dir)) {
-            return false;
+            return null;
         }
-        return move_uploaded_file($this->tmp, $dest);
+        $dirReal = realpath($dir);
+        if ($dirReal === false) {
+            return null;
+        }
+        $rootNorm = rtrim(str_replace('\\', '/', $rootReal), '/');
+        $dirNorm = rtrim(str_replace('\\', '/', $dirReal), '/');
+        if ($dirNorm !== $rootNorm && !str_starts_with($dirNorm, $rootNorm . '/')) {
+            return null;
+        }
+        return $dest;
     }
 }

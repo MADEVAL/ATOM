@@ -90,7 +90,7 @@ final class UploadedFileTest extends TestCase
     public function move_returns_false_for_invalid_file(): void
     {
         $file = UploadedFile::empty();
-        $this->assertFalse($file->move('/tmp/dest'));
+        $this->assertFalse($file->move('/tmp', 'dest'));
     }
 
     #[Test]
@@ -102,7 +102,7 @@ final class UploadedFileTest extends TestCase
             'name' => 'test.txt', 'type' => 'text/plain', 'size' => 4,
             'tmp_name' => $tempFile, 'error' => UPLOAD_ERR_OK,
         ]);
-        $this->assertFalse($file->move($this->tmpDir . '/bad' . "\0" . 'path'));
+        $this->assertFalse($file->move($this->tmpDir, 'bad' . "\0" . 'path'));
     }
 
     #[Test]
@@ -114,7 +114,7 @@ final class UploadedFileTest extends TestCase
             'name' => 'test.txt', 'type' => 'text/plain', 'size' => 4,
             'tmp_name' => $tempFile, 'error' => UPLOAD_ERR_OK,
         ]);
-        $this->assertFalse($file->move($this->tmpDir . '/../etc/passwd'));
+        $this->assertFalse($file->move($this->tmpDir, '../etc/passwd'));
     }
 
     #[Test]
@@ -126,7 +126,7 @@ final class UploadedFileTest extends TestCase
             'name' => 'test.txt', 'type' => 'text/plain', 'size' => 4,
             'tmp_name' => $tempFile, 'error' => UPLOAD_ERR_OK,
         ]);
-        $this->assertFalse($file->move($this->tmpDir . '/a/..'));
+        $this->assertFalse($file->move($this->tmpDir, 'a/..'));
     }
 
     #[Test]
@@ -141,9 +141,34 @@ final class UploadedFileTest extends TestCase
             'tmp_name' => $tempFile, 'error' => UPLOAD_ERR_OK,
         ]);
         try {
-            $this->assertFalse($file->move($blockFile . '/sub/dest.txt'));
+            $this->assertFalse($file->move($this->tmpDir, 'block.txt/sub/dest.txt'));
         } finally {
             unlink($blockFile);
         }
+    }
+
+    #[Test]
+    public function move_returns_false_for_absolute_relative_path(): void
+    {
+        $tempFile = $this->tmpDir . '/source.txt';
+        file_put_contents($tempFile, 'data');
+        $file = UploadedFile::fromFileArray([
+            'name' => 'test.txt', 'type' => 'text/plain', 'size' => 4,
+            'tmp_name' => $tempFile, 'error' => UPLOAD_ERR_OK,
+        ]);
+        $this->assertFalse($file->move($this->tmpDir, '/etc/passwd'));
+    }
+
+    #[Test]
+    public function move_uses_original_basename_when_relative_path_is_omitted(): void
+    {
+        $tempFile = $this->tmpDir . '/source.txt';
+        file_put_contents($tempFile, 'data');
+        $file = UploadedFile::fromFileArray([
+            'name' => '../safe.txt', 'type' => 'text/plain', 'size' => 4,
+            'tmp_name' => $tempFile, 'error' => UPLOAD_ERR_OK,
+        ]);
+        $this->assertFalse($file->move($this->tmpDir));
+        $this->assertDirectoryExists($this->tmpDir);
     }
 }

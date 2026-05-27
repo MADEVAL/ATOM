@@ -148,7 +148,7 @@ $server->broadcastJson($data)          // All connections JSON
 php atom ws:serve --port=8080 --host=0.0.0.0
 ```
 
-Key features: RFC 6455 frame encoding/decoding, strict handshake checks, client frame masking enforcement, max payload guard, non-blocking stream_select event loop, room/channel management, auto-pong, close handshake, graceful `stop()`.
+Key features: RFC 6455 frame encoding/decoding, strict handshake checks, RSV/opcode/control-frame validation, fragmentation state, close-code validation, client frame masking enforcement, max payload guard, non-blocking stream_select event loop, room/channel management, auto-pong, close handshake, graceful `stop()`.
 
 ## Cache
 

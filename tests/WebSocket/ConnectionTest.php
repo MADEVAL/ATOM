@@ -255,6 +255,124 @@ final class ConnectionTest extends TestCase
     }
 
     #[Test]
+    public function frame_with_rsv_bits_is_protocol_error(): void
+    {
+        $conn = $this->newPipeConn();
+        $result = $this->decodeFrame($conn, $this->frame('bad', 0x1, rsv: 0x40));
+        $this->assertNull($result);
+        $this->assertFalse($conn->isOpen());
+    }
+
+    #[Test]
+    public function frame_with_reserved_opcode_is_protocol_error(): void
+    {
+        $conn = $this->newPipeConn();
+        $result = $this->decodeFrame($conn, $this->frame('bad', 0x3));
+        $this->assertNull($result);
+        $this->assertFalse($conn->isOpen());
+    }
+
+    #[Test]
+    public function fragmented_text_frame_reassembles_on_final_continuation(): void
+    {
+        $conn = $this->newPipeConn();
+
+        $first = $this->decodeFrame($conn, $this->frame('hel', 0x1, fin: false));
+        $second = $this->decodeFrame($conn, $this->frame('lo', 0x0));
+
+        $this->assertNull($first);
+        $this->assertNotNull($second);
+        $this->assertSame(0x1, $second['opcode']);
+        $this->assertSame('hello', $second['payload']);
+    }
+
+    #[Test]
+    public function continuation_without_active_fragment_is_protocol_error(): void
+    {
+        $conn = $this->newPipeConn();
+        $result = $this->decodeFrame($conn, $this->frame('orphan', 0x0));
+        $this->assertNull($result);
+        $this->assertFalse($conn->isOpen());
+    }
+
+    #[Test]
+    public function new_data_frame_during_fragmentation_is_protocol_error(): void
+    {
+        $conn = $this->newPipeConn();
+        $this->assertNull($this->decodeFrame($conn, $this->frame('part', 0x1, fin: false)));
+
+        $result = $this->decodeFrame($conn, $this->frame('other', 0x1));
+
+        $this->assertNull($result);
+        $this->assertFalse($conn->isOpen());
+    }
+
+    #[Test]
+    public function fragmented_control_frame_is_protocol_error(): void
+    {
+        $conn = $this->newPipeConn();
+        $result = $this->decodeFrame($conn, $this->frame('ping', 0x9, fin: false));
+        $this->assertNull($result);
+        $this->assertFalse($conn->isOpen());
+    }
+
+    #[Test]
+    public function oversized_control_frame_is_protocol_error(): void
+    {
+        $conn = $this->newPipeConn();
+        $result = $this->decodeFrame($conn, $this->frame(str_repeat('x', 126), 0x9));
+        $this->assertNull($result);
+        $this->assertFalse($conn->isOpen());
+    }
+
+    #[Test]
+    public function close_frame_with_one_byte_payload_is_protocol_error(): void
+    {
+        $conn = $this->newPipeConn();
+        $result = $this->decodeFrame($conn, $this->frame("\x03", 0x8));
+        $this->assertNull($result);
+        $this->assertFalse($conn->isOpen());
+    }
+
+    #[Test]
+    public function close_frame_with_invalid_code_is_protocol_error(): void
+    {
+        $conn = $this->newPipeConn();
+        $result = $this->decodeFrame($conn, $this->frame(pack('n', 1005), 0x8));
+        $this->assertNull($result);
+        $this->assertFalse($conn->isOpen());
+    }
+
+    #[Test]
+    public function non_minimal_extended_payload_length_is_protocol_error(): void
+    {
+        $conn = $this->newPipeConn();
+        $payload = str_repeat('x', 125);
+        $frame = chr(0x81) . chr(126) . pack('n', 125) . $payload;
+        $result = $this->decodeFrame($conn, $frame);
+        $this->assertNull($result);
+        $this->assertFalse($conn->isOpen());
+    }
+
+    #[Test]
+    public function invalid_64_bit_payload_length_is_protocol_error(): void
+    {
+        $conn = $this->newPipeConn();
+        $frame = chr(0x81) . chr(127) . "\x80\x00\x00\x00\x00\x01\x00\x00";
+        $result = $this->decodeFrame($conn, $frame);
+        $this->assertNull($result);
+        $this->assertFalse($conn->isOpen());
+    }
+
+    #[Test]
+    public function local_close_rejects_invalid_code(): void
+    {
+        $conn = $this->newPipeConn();
+        $this->expectException(\InvalidArgumentException::class);
+        $conn->close(1005);
+    }
+
+    #[Test]
     public function decode_medium_sized_payload(): void
     {
         $conn = $this->newPipeConn();
@@ -357,5 +475,28 @@ final class ConnectionTest extends TestCase
         $method = $ref->getMethod('encodeFrame');
         $conn = new Connection(fopen('php://memory', 'r+'));
         return $method->invoke($conn, $payload, $opcode);
+    }
+
+    private function frame(string $payload, int $opcode, bool $fin = true, int $rsv = 0, bool $masked = false): string
+    {
+        $first = ($fin ? 0x80 : 0) | $rsv | $opcode;
+        $len = strlen($payload);
+        $secondMask = $masked ? 0x80 : 0;
+        if ($len <= 125) {
+            $frame = chr($first) . chr($secondMask | $len);
+        } elseif ($len <= 65535) {
+            $frame = chr($first) . chr($secondMask | 126) . pack('n', $len);
+        } else {
+            $frame = chr($first) . chr($secondMask | 127) . pack('J', $len);
+        }
+        if (!$masked) {
+            return $frame . $payload;
+        }
+        $mask = "\x12\x34\x56\x78";
+        $maskedPayload = '';
+        for ($i = 0; $i < $len; $i++) {
+            $maskedPayload .= chr(ord($payload[$i]) ^ ord($mask[$i % 4]));
+        }
+        return $frame . $mask . $maskedPayload;
     }
 }

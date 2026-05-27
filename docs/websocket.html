@@ -224,7 +224,7 @@ php atom ws:serve --host=127.0.0.1 --port=3000</code></pre>
 <li><strong>Opcode support:</strong> text (0x1), binary (0x2), close (0x8), ping (0x9), pong (0xA)</li>
 <li><strong>Payload lengths:</strong> 7-bit (≤125), 16-bit (≤65535), 64-bit</li>
 <li><strong>Masking:</strong> Server-side connections require masked Client→Server frames and reject protocol violations</li>
-<li><strong>Safety:</strong> Handshake validates method, upgrade headers, version 13, key length, and oversized payloads</li>
+<li><strong>Safety:</strong> Handshake validates method, upgrade headers, version 13, key length, RSV bits, fragmentation state, control-frame rules, close-code ranges, and oversized payloads</li>
 <li><strong>Auto-pong:</strong> Ping frames automatically answered with pong</li>
 <li><strong>Close handshake:</strong> Close frame echoed back, connection marked closed</li>
 </ul>

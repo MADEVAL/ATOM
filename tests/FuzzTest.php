@@ -817,7 +817,7 @@ final class FuzzTest extends TestCase
             'tmp_name' => $src, 'error' => UPLOAD_ERR_OK,
         ]);
         try {
-            $result = $f->move($dest);
+            $result = $f->move($tmpDir, 'out.txt');
             $this->assertFalse($result);
         } finally {
             foreach ((array) glob($tmpDir . '/*') as $g) @unlink($g);

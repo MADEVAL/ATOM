@@ -186,7 +186,7 @@ src/Atom/
 │   ├── Response.php        # html, json, text, redirect, cookies, cache, send()
 │   ├── Session.php         # get/set, flash, regenerate, csrfToken, validateCsrf
 │   ├── StatusCode.php      # enum 200..503
-│   └── UploadedFile.php    # typed $_FILES: ok, size, ext, move()
+│   └── UploadedFile.php    # typed $_FILES: ok, size, ext, root-bound move()
 ├── Middleware/
 │   ├── MiddlewareInterface.php
 │   ├── Cors.php            # preflight + CORS headers, origin reflection

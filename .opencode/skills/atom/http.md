@@ -28,7 +28,7 @@ Constructor accepts explicit arrays — empty `server: []` stays empty (no globa
 ```php
 $file = $req->file('avatar');
 if ($file->ok) {
-    $file->move('/uploads/' . $file->name);
+    $file->move('/uploads', $file->name);
 }
 $file->size;   // bytes
 $file->type;   // MIME
@@ -37,7 +37,7 @@ $file->error;  // UPLOAD_ERR_*
 $file->tmp;    // temp path
 ```
 
-Nested upload arrays (`<input name="photos[]" multiple>`) return `UploadedFile::empty()`.
+`move($root, $relativePath = '')` always resolves the destination inside the allowed upload root. If `$relativePath` is omitted, the original upload basename is used. Nested upload arrays (`<input name="photos[]" multiple>`) return `UploadedFile::empty()`.
 
 ### JSON body auto-parse
 

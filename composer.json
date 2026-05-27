@@ -4,7 +4,7 @@
     "type": "library",
     "keywords": ["framework", "micro-framework", "php", "router", "pcre", "template"],
     "license": "GPL-3.0-or-later",
-    "homepage": "https://github.com/php-atom/framework",
+    "homepage": "https://github.com/MADEVAL/ATOM",
     "authors": [
         {
             "name": "Atom Contributors"

@@ -118,12 +118,12 @@
 <h3 id="http-files">File uploads</h3>
 <pre><code><span class="var">$file</span> = <span class="var">$req</span>->file(<span class="str">'avatar'</span>);
 <span class="kw">if</span> (<span class="var">$file</span>->ok) {
-    <span class="var">$file</span>->move(<span class="str">'/uploads/'</span> . <span class="var">$file</span>->name);
+    <span class="var">$file</span>->move(<span class="str">'/uploads'</span>, <span class="var">$file</span>->name);
 }
 <span class="var">$file</span>->size;   <span class="cm">// bytes</span>
 <span class="var">$file</span>->type;   <span class="cm">// MIME type</span>
 <span class="var">$file</span>->ext;    <span class="cm">// extension via PCRE</span></code></pre>
-<p>Nested upload arrays return <code>UploadedFile::empty()</code>. Null‑bytes and path‑traversal blocked in <code>move()</code>.</p>
+<p><code>move($root, $relativePath = '')</code> always resolves the destination inside the allowed upload root. Nested upload arrays return <code>UploadedFile::empty()</code>. Null-byte paths, absolute relative paths, and path traversal are blocked.</p>
 
 <h2 id="http-response">Response</h2>
 <pre><code><span class="cm">// Factories</span>

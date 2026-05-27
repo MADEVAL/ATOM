@@ -10,7 +10,9 @@ All notable changes to Atom will be documented in this file.
 - **ORM eager loading** - relation eager loading now respects `#[Column]` property mapping for `belongsTo`, `hasOne`, and `hasMany`.
 - **Request JSON parsing** - accepts both `CONTENT_TYPE` and `HTTP_CONTENT_TYPE` SAPI keys.
 - **CORS** - reflected wildcard origins now include `Vary: Origin` on normal and preflight responses.
-- **WebSocket** - handshake validates method, upgrade headers, version 13, and key length; server-side connections reject unmasked client frames and oversized payloads.
+- **WebSocket** - handshake validates method, upgrade headers, version 13, and key length; frame parsing validates RSV bits, opcodes, fragmentation state, control-frame rules, close-code ranges, masking, and oversized payloads.
+- **UploadedFile** - `move()` is now root-bound: `move($root, $relativePath = '')` resolves every destination inside the allowed upload root.
+- **Attribute routing** - PHP class discovery now uses `token_get_all()` instead of regex parsing.
 
 ### Changed
 - **Query builder** - validates SQL identifiers, whitelists operators, rejects invalid sort directions, and defines deterministic empty `whereIn` / `whereNotIn` semantics.

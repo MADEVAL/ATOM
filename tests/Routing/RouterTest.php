@@ -643,6 +643,34 @@ final class RouterTest extends TestCase
     }
 
     #[Test]
+    public function load_from_attributes_uses_php_tokenizer_for_edge_case_classes(): void
+    {
+        $attrDir = $this->tmpCacheDir . '/token_attr';
+        mkdir($attrDir, 0777, true);
+        file_put_contents($attrDir . '/TokenCtrl.php', '<?php
+        namespace Tokenized\App;
+        use Atom\Routing\Route;
+        $factory = fn() => new class {};
+        // class FakeController in a comment must not be detected.
+        final class TokenCtrl {
+            #[Route("/tokenized", ["GET"], "tokenized.name")]
+            public function handle(): string { return "tokenized"; }
+        }
+        ');
+        require_once $attrDir . '/TokenCtrl.php';
+        $this->container->bind('Tokenized\App\TokenCtrl', fn() => new class {
+            public function handle(): string { return 'tokenized'; }
+        });
+
+        $this->router->loadFromAttributes($attrDir);
+
+        $url = $this->router->url('tokenized.name');
+        $res = $this->router->dispatch(new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => $url]));
+        $this->assertSame('/tokenized', $url);
+        $this->assertSame('tokenized', $res->getContent());
+    }
+
+    #[Test]
     public function corrupted_cache_file_recovers(): void
     {
         $cacheFile = $this->tmpCacheDir . '/routes.php';

@@ -353,10 +353,69 @@ final class Router
     {
         $code = file_get_contents($file);
         if ($code === false) return null;
-        $nsMatch = Regex::match('#^\s*namespace\s+([^;]+);#m', $code);
-        $ns = $nsMatch !== null ? $nsMatch[1] : '';
-        $clsMatch = Regex::match('#class\s+([A-Za-z_][A-Za-z0-9_]*)#', $code);
-        $cls = $clsMatch !== null ? $clsMatch[1] : null;
-        return $cls !== null ? ($ns !== '' ? $ns . '\\' . $cls : $cls) : null;
+        $tokens = token_get_all($code);
+        $namespace = '';
+        $previousMeaningful = null;
+
+        for ($i = 0, $count = count($tokens); $i < $count; $i++) {
+            $token = $tokens[$i];
+            if (!is_array($token)) {
+                if (!in_array($token, [';', '{', '}', '(', ')', ','], true)) {
+                    $previousMeaningful = $token;
+                }
+                continue;
+            }
+
+            [$id] = $token;
+            if (in_array($id, [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) {
+                continue;
+            }
+            if ($id === T_NAMESPACE) {
+                $namespace = $this->readNamespace($tokens, $i + 1);
+                $previousMeaningful = $id;
+                continue;
+            }
+            if ($id === T_CLASS && $previousMeaningful !== T_NEW) {
+                $class = $this->readClassName($tokens, $i + 1);
+                return $class !== null ? ($namespace !== '' ? $namespace . '\\' . $class : $class) : null;
+            }
+            $previousMeaningful = $id;
+        }
+
+        return null;
+    }
+
+    /** @param array<int,mixed> $tokens */
+    private function readNamespace(array $tokens, int $offset): string
+    {
+        $namespace = '';
+        for ($i = $offset, $count = count($tokens); $i < $count; $i++) {
+            $token = $tokens[$i];
+            if ($token === ';' || $token === '{') {
+                break;
+            }
+            if (is_array($token) && in_array($token[0], [T_STRING, T_NAME_QUALIFIED, T_NS_SEPARATOR], true)) {
+                $namespace .= $token[1];
+            }
+        }
+        return trim($namespace, '\\');
+    }
+
+    /** @param array<int,mixed> $tokens */
+    private function readClassName(array $tokens, int $offset): ?string
+    {
+        for ($i = $offset, $count = count($tokens); $i < $count; $i++) {
+            $token = $tokens[$i];
+            if (is_array($token)) {
+                if (in_array($token[0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) {
+                    continue;
+                }
+                return $token[0] === T_STRING ? $token[1] : null;
+            }
+            if ($token === '{') {
+                return null;
+            }
+        }
+        return null;
     }
 }
