@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Atom\Tests\Validation;
 
-use Atom\Validation\{Required, Regex, Email, Min, Max, Integer, Between, In, Url, Nullable, Confirmed, Ip, Uuid, Boolean as VBoolean, Each, Validator, ValidationException};
+use Atom\Validation\{Required, Regex, Email, Min, Max, Integer, Between, In, Url, Nullable, Confirmed, Ip, Uuid, Boolean as VBoolean, Each, Domain, Mac, FloatVal, Validator, ValidationException};
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -23,6 +23,9 @@ use PHPUnit\Framework\Attributes\Test;
 #[CoversClass(Uuid::class)]
 #[CoversClass(VBoolean::class)]
 #[CoversClass(Each::class)]
+#[CoversClass(Domain::class)]
+#[CoversClass(Mac::class)]
+#[CoversClass(FloatVal::class)]
 #[CoversClass(ValidationException::class)]
 final class ValidatorTest extends TestCase
 {
@@ -423,6 +426,30 @@ final class ValidatorTest extends TestCase
     }
 
     #[Test]
+    public function ip_v4_only_rejects_v6(): void
+    {
+        $dto = new class { #[Ip(onlyV4: true)] public string $ip = '::1'; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('ip', $errors);
+    }
+
+    #[Test]
+    public function ip_v6_only_rejects_v4(): void
+    {
+        $dto = new class { #[Ip(onlyV6: true)] public string $ip = '192.168.1.1'; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('ip', $errors);
+    }
+
+    #[Test]
+    public function ip_no_private_rejects_local(): void
+    {
+        $dto = new class { #[Ip(noPrivate: true)] public string $ip = '192.168.1.1'; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('ip', $errors);
+    }
+
+    #[Test]
     public function uuid_valid_passes(): void
     {
         $dto = new class { #[Uuid] public string $id = '550e8400-e29b-41d4-a716-446655440000'; };
@@ -440,7 +467,17 @@ final class ValidatorTest extends TestCase
     #[Test]
     public function boolean_true_passes(): void
     {
-        foreach (['1', 'true', 1, true] as $v) {
+        foreach (['1', 'true', 1, true, 'on', 'yes'] as $v) {
+            $dto = new class { #[VBoolean] public mixed $flag = null; };
+            $dto->flag = $v;
+            $this->assertSame([], Validator::validate($dto));
+        }
+    }
+
+    #[Test]
+    public function boolean_false_values_pass(): void
+    {
+        foreach (['0', 'false', 0, false, 'off', 'no', ''] as $v) {
             $dto = new class { #[VBoolean] public mixed $flag = null; };
             $dto->flag = $v;
             $this->assertSame([], Validator::validate($dto));
@@ -450,9 +487,92 @@ final class ValidatorTest extends TestCase
     #[Test]
     public function boolean_invalid_fails(): void
     {
-        $dto = new class { #[VBoolean] public string $flag = 'yes'; };
+        $dto = new class { #[VBoolean] public string $flag = 'maybe'; };
         $errors = Validator::validate($dto);
         $this->assertArrayHasKey('flag', $errors);
+    }
+
+    #[Test]
+    public function email_with_unicode_passes(): void
+    {
+        $dto = new class { #[Email] public string $email = 'üsër@example.com'; };
+        $this->assertSame([], Validator::validate($dto));
+    }
+
+    #[Test]
+    public function integer_with_min_max_range(): void
+    {
+        $dto = new class { #[Integer(min: 10, max: 100)] public int $v = 5; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('v', $errors);
+    }
+
+    #[Test]
+    public function integer_within_range_passes(): void
+    {
+        $dto = new class { #[Integer(min: 10, max: 100)] public int $v = 50; };
+        $this->assertSame([], Validator::validate($dto));
+    }
+
+    #[Test]
+    public function domain_valid_passes(): void
+    {
+        $dto = new class { #[Domain] public string $d = 'example.com'; };
+        $this->assertSame([], Validator::validate($dto));
+    }
+
+    #[Test]
+    public function domain_invalid_fails(): void
+    {
+        $dto = new class { #[Domain] public string $d = 'example..com'; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('d', $errors);
+    }
+
+    #[Test]
+    public function domain_hostname_rejects_non_hostname(): void
+    {
+        $dto = new class { #[Domain(hostname: true)] public string $d = '-bad-.com'; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('d', $errors);
+    }
+
+    #[Test]
+    public function mac_valid_passes(): void
+    {
+        $dto = new class { #[Mac] public string $m = '00:1B:44:11:3A:B7'; };
+        $this->assertSame([], Validator::validate($dto));
+    }
+
+    #[Test]
+    public function mac_invalid_fails(): void
+    {
+        $dto = new class { #[Mac] public string $m = 'not-mac'; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('m', $errors);
+    }
+
+    #[Test]
+    public function float_valid_passes(): void
+    {
+        $dto = new class { #[FloatVal] public string $f = '3.14'; };
+        $this->assertSame([], Validator::validate($dto));
+    }
+
+    #[Test]
+    public function float_invalid_fails(): void
+    {
+        $dto = new class { #[FloatVal] public string $f = 'abc'; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('f', $errors);
+    }
+
+    #[Test]
+    public function float_with_min_max_range(): void
+    {
+        $dto = new class { #[FloatVal(min: 1.0, max: 10.0)] public float $v = 0.5; };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('v', $errors);
     }
 
     #[Test]
