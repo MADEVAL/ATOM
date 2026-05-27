@@ -47,6 +47,10 @@ final readonly class Config
 
     public function get(string $key, string $default = ''): string
     {
-        return $this->env[$key] ?? getenv($key, true) ?: $default;
+        if (array_key_exists($key, $this->env)) {
+            return $this->env[$key];
+        }
+        $v = getenv($key, true);
+        return $v !== false ? $v : $default;
     }
 }

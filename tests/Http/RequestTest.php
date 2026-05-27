@@ -454,6 +454,16 @@ final class RequestTest extends TestCase
         $this->assertSame('test', $dto->name);
         $this->assertSame('a@b.com', $dto->email);
     }
+
+    #[Test]
+    public function method_spoofing_with_array_falls_back_to_post(): void
+    {
+        $req = new Request(
+            body: ['_method' => ['PUT', 'DELETE']],
+            server: ['REQUEST_METHOD' => 'POST'],
+        );
+        $this->assertSame('POST', $req->method);
+    }
 }
 
 final class ValidatableUser

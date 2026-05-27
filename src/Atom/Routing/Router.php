@@ -74,7 +74,7 @@ final class Router
             action:     $action,
         );
         if ($name !== '') {
-            $this->namedRoutes[$fullName] = true;
+            $this->namedRoutes[$fullName] = end($this->routes);
         }
         $this->compiled = null;
         return $this;
@@ -100,7 +100,7 @@ final class Router
             controller: $controller, action: $action,
         );
         if ($n !== '') {
-            $this->namedRoutes[$fullName] = true;
+            $this->namedRoutes[$fullName] = end($this->routes);
         }
         $this->compiled = null;
         return $this;
@@ -203,7 +203,7 @@ final class Router
 
     public function url(string $name, array $params = []): string
     {
-        $route = array_find($this->routes, fn($r) => $r->name === $name)
+        $route = $this->namedRoutes[$name]
             ?? throw new \InvalidArgumentException("Route '{$name}' not found");
 
         return Regex::replace(

@@ -279,6 +279,15 @@ final class CompilerTest extends TestCase
     }
 
     #[Test]
+    public function unclosed_tag_throws(): void
+    {
+        file_put_contents($this->tmpViewsDir . '/test.twig', '{% if true');
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Unclosed tag');
+        $this->engine->render('test.twig', []);
+    }
+
+    #[Test]
     public function endfor_without_matching_for_throws(): void
     {
         file_put_contents($this->tmpViewsDir . '/test.twig', 'hello {% endfor %}');

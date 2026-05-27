@@ -104,6 +104,23 @@ final class ConfigEnvTest extends TestCase
     }
 
     #[Test]
+    public function get_preserves_zero_string_value(): void
+    {
+        file_put_contents($this->tmpEnv, "LIMIT=0\n");
+        $config = Config::fromEnv($this->tmpEnv, false);
+        $this->assertSame('0', $config->get('LIMIT'));
+    }
+
+    #[Test]
+    public function getenv_falsy_value_preserved(): void
+    {
+        putenv('ATOM_ZERO=0');
+        $config = new Config();
+        $this->assertSame('0', $config->get('ATOM_ZERO'));
+        putenv('ATOM_ZERO');
+    }
+
+    #[Test]
     public function missing_file_returns_defaults(): void
     {
         $config = Config::fromEnv('/nonexistent.env', false);

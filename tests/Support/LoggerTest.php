@@ -110,6 +110,16 @@ final class LoggerTest extends TestCase
     }
 
     #[Test]
+    public function context_with_resource_does_not_crash(): void
+    {
+        $logger = new Logger($this->tmpFile);
+        $logger->error('test', ['handle' => fopen('php://memory', 'r')]);
+        $content = file_get_contents($this->tmpFile);
+        $this->assertStringContainsString('ERROR: test', $content);
+        $this->assertStringContainsString('Context serialization failed', $content);
+    }
+
+    #[Test]
     public function throws_when_directory_cannot_be_created(): void
     {
         $blockFile = sys_get_temp_dir() . '/atom_log_block_' . uniqid();

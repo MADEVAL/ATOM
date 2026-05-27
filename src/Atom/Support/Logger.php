@@ -34,11 +34,20 @@ final class Logger
             $level = self::ERROR;
         }
 
+        $ctxStr = '';
+        if ($ctx !== []) {
+            try {
+                $ctxStr = json_encode($ctx, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+            } catch (\JsonException) {
+                $ctxStr = json_encode(['error' => 'Context serialization failed']);
+            }
+        }
+
         $line = sprintf("[%s] %s: %s %s\n",
             date('Y-m-d H:i:s'),
             self::$levels[$level],
             $msg,
-            $ctx !== [] ? json_encode($ctx, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) : '',
+            $ctxStr,
         );
         $dir = dirname($this->file);
         if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {

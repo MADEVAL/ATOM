@@ -90,6 +90,10 @@ final class Response
                 header("{$k}: {$v}");
             }
             foreach ($this->cookies as $cookie) {
+                $samesite = $cookie['samesite'] ?? 'Lax';
+                if (!in_array($samesite, ['Lax', 'Strict', 'None'], true)) {
+                    $samesite = 'Lax';
+                }
                 setcookie(
                     $cookie['name'],
                     $cookie['value'] ?? '',
@@ -98,7 +102,7 @@ final class Response
                         'path'     => $cookie['path'] ?? '/',
                         'domain'   => $cookie['domain'] ?? '',
                         'httponly' => $cookie['httponly'] ?? true,
-                        'samesite' => $cookie['samesite'] ?? 'Lax',
+                        'samesite' => $samesite,
                         'secure'   => $cookie['secure'] ?? $secure,
                     ],
                 );

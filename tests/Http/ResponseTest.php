@@ -293,4 +293,14 @@ final class ResponseTest extends TestCase
         $output = ob_get_clean();
         $this->assertSame('content', $output);
     }
+
+    #[Test]
+    public function invalid_samesite_falls_back_to_lax(): void
+    {
+        $res = (new Response('ok'))->withCookie('k', 'v', ['samesite' => 'Invalid']);
+        ob_start();
+        $res->send();
+        $output = ob_get_clean();
+        $this->assertSame('ok', $output);
+    }
 }

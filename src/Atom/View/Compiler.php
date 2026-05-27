@@ -93,6 +93,7 @@ final class Compiler
                         $pos = $end + 2;
                         continue;
                     }
+                    throw new \RuntimeException('Unclosed tag: ' . substr($src, $pos, 20) . '...');
                 }
             }
 

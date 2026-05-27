@@ -582,6 +582,16 @@ final class RouterTest extends TestCase
     }
 
     #[Test]
+    public function url_lookup_is_constant_time(): void
+    {
+        for ($i = 0; $i < 200; $i++) {
+            $this->router->get("/r{$i}", 'Ctrl@test', "name.{$i}");
+        }
+        $url = $this->router->url('name.150', ['id' => 'x']);
+        $this->assertSame('/r150', $url);
+    }
+
+    #[Test]
     public function unnamed_routes_allow_duplicates(): void
     {
         $this->router->get('/x', 'XController@test');
