@@ -8,7 +8,7 @@ final readonly class Encrypt
 
     public static function encrypt(string $plain, string $key): string
     {
-        $iv = random_bytes(12);
+        $iv = random_bytes(\Atom\Constants::ENCRYPT_IV_BYTES);
         $tag = '';
         $cipher = openssl_encrypt($plain, self::METHOD, self::deriveKey($key), OPENSSL_RAW_DATA, $iv, $tag);
         if ($cipher === false) {
@@ -20,12 +20,12 @@ final readonly class Encrypt
     public static function decrypt(string $payload, string $key): string
     {
         $data = base64_decode($payload, true);
-        if ($data === false || strlen($data) < 28) {
+        if ($data === false || strlen($data) < \Atom\Constants::ENCRYPT_MIN_PAYLOAD) {
             throw new \RuntimeException('Invalid encrypted payload');
         }
-        $iv   = substr($data, 0, 12);
-        $tag  = substr($data, 12, 16);
-        $text = substr($data, 28);
+        $iv   = substr($data, 0, \Atom\Constants::ENCRYPT_IV_BYTES);
+        $tag  = substr($data, \Atom\Constants::ENCRYPT_IV_BYTES, \Atom\Constants::ENCRYPT_GCM_TAG_BYTES);
+        $text = substr($data, \Atom\Constants::ENCRYPT_MIN_PAYLOAD);
         $plain = openssl_decrypt($text, self::METHOD, self::deriveKey($key), OPENSSL_RAW_DATA, $iv, $tag);
         if ($plain === false) {
             throw new \RuntimeException('Decryption failed');

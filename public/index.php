@@ -16,8 +16,6 @@ $app->router->group('/api', [], function ($r) {
     $r->post('/posts',           PostController::class . '@create');
 });
 
-$app->router->get('/', function () use ($app) {
-    return $app->view->render('home.twig', ['title' => 'Atom ⚛']);
-});
+$app->router->get('/', 'HomeController@index');
 
 $app->run();

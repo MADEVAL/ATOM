@@ -16,6 +16,9 @@ final class Application
     public function __construct(
         public readonly Config $config = new Config,
     ) {
+        if ($config->timezone !== 'UTC') {
+            date_default_timezone_set($config->timezone);
+        }
         $this->container = new Container();
         $this->router    = new Router($this->container, $config->cacheDir ?: sys_get_temp_dir() . '/atom');
         $this->view      = new ViewEngine(
@@ -40,6 +43,8 @@ final class Application
 
         try {
             $response = $this->router->dispatch($req);
+        } catch (\Atom\Validation\ValidationException $e) {
+            $response = Response::json($e->errors, StatusCode::UNPROCESSABLE_ENTITY);
         } catch (\Throwable $e) {
             if ($this->config->debug) {
                 throw $e;

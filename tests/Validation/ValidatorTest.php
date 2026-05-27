@@ -611,6 +611,16 @@ final class ValidatorTest extends TestCase
         $errors = Validator::validate($dto);
         $this->assertSame([], $errors);
     }
+
+    #[Test]
+    public function between_rejects_hex_strings(): void
+    {
+        $dto = new class {
+            #[Between(10, 100)] public string $v = '0x1A';
+        };
+        $errors = Validator::validate($dto);
+        $this->assertArrayHasKey('v', $errors);
+    }
 }
 
 final class SomeItem

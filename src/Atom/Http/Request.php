@@ -92,19 +92,7 @@ final class Request
      */
     public function validate(string $dtoClass): object
     {
-        $ref = new \ReflectionClass($dtoClass);
-        $ctor = $ref->getConstructor();
-        if ($ctor !== null && $ctor->getNumberOfRequiredParameters() > 0) {
-            $dto = $ref->newInstanceWithoutConstructor();
-        } else {
-            $dto = $ref->newInstance();
-        }
-        foreach ($ref->getProperties(\ReflectionProperty::IS_PUBLIC) as $prop) {
-            $name = $prop->getName();
-            if (array_key_exists($name, $this->body)) {
-                $prop->setValue($dto, $this->body[$name]);
-            }
-        }
+        $dto = \Atom\Validation\Validator::arrayToDto($dtoClass, $this->body);
         $errors = \Atom\Validation\Validator::validate($dto);
         if ($errors !== []) {
             throw new \Atom\Validation\ValidationException($errors);
@@ -128,7 +116,7 @@ final class Request
         if (!isset($server['HTTP_CONTENT_TYPE']) || !str_starts_with($server['HTTP_CONTENT_TYPE'], 'application/json')) {
             return [];
         }
-        $maxLength = ini_parse_quantity(ini_get('post_max_size')) ?: 8_388_608;
+        $maxLength = ini_parse_quantity(ini_get('post_max_size')) ?: \Atom\Constants::JSON_BODY_MAX_FALLBACK;
         $contentLength = (int) ($server['HTTP_CONTENT_LENGTH'] ?? $server['CONTENT_LENGTH'] ?? 0);
         if ($contentLength > $maxLength) {
             return [];

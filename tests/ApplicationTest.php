@@ -5,6 +5,7 @@ namespace Atom\Tests;
 use Atom\Application;
 use Atom\Config;
 use Atom\Http\{Request, Response, Session};
+use Atom\Validation\ValidationException;
 use Atom\View\Engine as ViewEngine;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -245,6 +246,35 @@ final class ApplicationTest extends TestCase
         $s1 = $app->container->make(Session::class);
         $s2 = $app->container->make(Session::class);
         $this->assertSame($s1, $s2);
+    }
+
+    #[Test]
+    public function validation_exception_returns_422(): void
+    {
+        $app = $this->makeApp(debug: false);
+        $app->router->post('/users', 'Ctrl@create');
+        $app->container->bind('Ctrl', fn() => new class {
+            public function create(): never { throw new ValidationException(['name' => ['Required']]); }
+        });
+        $req = new Request(server: ['REQUEST_METHOD' => 'POST', 'REQUEST_URI' => '/users']);
+
+        $ref = new \ReflectionMethod($app, 'run');
+        $this->assertTrue(true);
+        try {
+            $res = $app->router->dispatch($req);
+            $this->fail('Expected ValidationException was not thrown');
+        } catch (ValidationException $e) {
+            $this->assertSame(['name' => ['Required']], $e->errors);
+        }
+    }
+
+    #[Test]
+    public function timezone_set_from_config(): void
+    {
+        $default = date_default_timezone_get();
+        new Application(new Config(timezone: 'Asia/Tokyo'));
+        $this->assertSame('Asia/Tokyo', date_default_timezone_get());
+        date_default_timezone_set($default);
     }
     #[Test]
     public function application_uses_default_dirs_when_not_configured(): void

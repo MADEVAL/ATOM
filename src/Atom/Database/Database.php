@@ -72,6 +72,9 @@ final class Database
     private function execute(string $sql, array $params): PDOStatement
     {
         $stmt = $this->pdo->prepare($sql);
+        if ($stmt === false) {
+            throw new \RuntimeException('SQL prepare failed: ' . implode(' ', $this->pdo->errorInfo()));
+        }
         $stmt->execute($params);
         return $stmt;
     }

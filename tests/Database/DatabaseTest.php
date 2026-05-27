@@ -128,7 +128,14 @@ final class DatabaseTest extends TestCase
     #[Test]
     public function run_returns_zero_when_no_rows_affected(): void
     {
-        $affected = $this->db->run('UPDATE users SET name = ? WHERE name = ?', ['X', 'Nobody']);
+        $affected = $this->db->run('UPDATE users SET name = ? WHERE id = ?', ['Alice', 999]);
         $this->assertSame(0, $affected);
+    }
+
+    #[Test]
+    public function bad_sql_throws_on_prepare(): void
+    {
+        $this->expectException(\PDOException::class);
+        $this->db->all('SELECT FROM WHERE');
     }
 }

@@ -211,12 +211,6 @@ final class Router
         return Pipeline::run($meta['middleware'], $request, $handler, $this->container);
     }
 
-    private function getPatternForParam(string $name, string $customPattern = ''): string
-    {
-        if ($customPattern !== '') return $customPattern;
-        return $this->patterns[$name] ?? RouteCompiler::DEFAULT_PATTERNS[$name] ?? '[^/]+';
-    }
-
     private function getAllowedMethods(string $uri): array
     {
         $compiled = $this->getCompiled();
@@ -271,7 +265,7 @@ final class Router
         foreach ($export['map'] as &$entry) unset($entry['route']);
         unset($entry);
         $dir = dirname($this->cacheFile);
-        if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
+        if (!is_dir($dir) && !@mkdir($dir, \Atom\Constants::DIR_PERMISSIONS, true) && !is_dir($dir)) {
             return $this->compiled;
         }
         file_put_contents(

@@ -207,8 +207,8 @@ final class Validator
 
             foreach ($prop->getAttributes(Between::class) as $attr) {
                 $r = $attr->newInstance();
-                $num = is_numeric($value) ? (float) $value : strlen((string) $value);
-                if ($num < $r->min || $num > $r->max) {
+                $num = is_int($value) || is_float($value) ? $value : (is_string($value) && ctype_digit(ltrim($value, '+-')) ? (float) $value : null);
+                if ($num === null ? strlen((string) $value) < $r->min || strlen((string) $value) > $r->max : $num < $r->min || $num > $r->max) {
                     $errors[$name][] = $r->message;
                 }
             }
@@ -316,7 +316,7 @@ final class Validator
         return $errors;
     }
 
-    private static function arrayToDto(string $class, array $data): object
+    public static function arrayToDto(string $class, array $data): object
     {
         $ref = new \ReflectionClass($class);
         $ctor = $ref->getConstructor();
@@ -335,11 +335,3 @@ final class Validator
     }
 }
 
-final class ValidationException extends \RuntimeException
-{
-    /** @param array<string,list<string>> $errors */
-    public function __construct(public readonly array $errors, string $message = 'Validation failed')
-    {
-        parent::__construct($message);
-    }
-}

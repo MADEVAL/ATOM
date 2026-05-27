@@ -33,7 +33,7 @@ final readonly class Cors implements MiddlewareInterface
                 ->withHeader('Access-Control-Allow-Origin', $origin)
                 ->withHeader('Access-Control-Allow-Methods', $this->allowMethods)
                 ->withHeader('Access-Control-Allow-Headers', $this->allowHeaders)
-                ->withHeader('Access-Control-Max-Age', '86400');
+                ->withHeader('Access-Control-Max-Age', (string) \Atom\Constants::CORS_MAX_AGE);
             if ($this->allowCredentials) {
                 $res = $res->withHeader('Access-Control-Allow-Credentials', 'true');
             }

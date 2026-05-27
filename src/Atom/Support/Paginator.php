@@ -23,7 +23,7 @@ final class Paginator
     public static function from(Request $req, int $defaultPerPage = 20): self
     {
         $page = max(1, (int) ($req->input('page', '1')));
-        $perPage = min(100, max(1, (int) ($req->input('per_page', (string) $defaultPerPage))));
+        $perPage = min(\Atom\Constants::PAGINATOR_MAX_PER_PAGE, max(1, (int) ($req->input('per_page', (string) $defaultPerPage))));
         return new self($page, $perPage);
     }
 

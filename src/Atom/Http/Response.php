@@ -63,7 +63,7 @@ final class Response
     }
 
     /** @param array{ttl?:int, path?:string, secure?:bool, httponly?:bool, samesite?:string, domain?:string} $options */
-    public function withCookie(string $name, string $value, int|array $ttl_or_options = 3600, string $path = '/'): self
+    public function withCookie(string $name, string $value, int|array $ttl_or_options = \Atom\Constants::COOKIE_TTL_DEFAULT, string $path = '/'): self
     {
         $clone = clone $this;
         if (is_array($ttl_or_options)) {
@@ -99,7 +99,7 @@ final class Response
                     $cookie['name'],
                     $cookie['value'] ?? '',
                     [
-                        'expires'  => time() + ($cookie['ttl'] ?? 3600),
+                        'expires'  => time() + ($cookie['ttl'] ?? \Atom\Constants::COOKIE_TTL_DEFAULT),
                         'path'     => $cookie['path'] ?? '/',
                         'domain'   => $cookie['domain'] ?? '',
                         'httponly' => $cookie['httponly'] ?? true,

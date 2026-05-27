@@ -27,13 +27,19 @@ final class RateLimit implements MiddlewareInterface
 
         $count = count(self::$store[$key]);
         if ($count > $this->max) {
-            return new Response('Too Many Requests', StatusCode::TOO_MANY_REQUESTS);
+            $retryAfter = $windowStart + $this->window - $now + 1;
+            return (new Response('Too Many Requests', StatusCode::TOO_MANY_REQUESTS))
+                ->withHeader('Retry-After', (string) max(1, $retryAfter));
         }
 
-        if ($count === 1 && count(self::$store) > 10000) {
-            self::$store = array_filter(self::$store, fn(array $t) => $t !== [], ARRAY_FILTER_USE_BOTH);
+        if ($count === 1 && count(self::$store) > \Atom\Constants::RATELIMIT_CLEANUP_THRESHOLD) {
+            self::$store = array_filter(self::$store, fn(array $t) => $t !== []);
         }
 
-        return $next($req);
+        $remaining = $this->max - $count;
+        $res = $next($req);
+        return $res
+            ->withHeader('X-RateLimit-Limit', (string) $this->max)
+            ->withHeader('X-RateLimit-Remaining', (string) $remaining);
     }
 }

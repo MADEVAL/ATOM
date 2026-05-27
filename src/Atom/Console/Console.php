@@ -69,7 +69,7 @@ final class Console
         $this->out('cyan', "  help        Show available commands\n");
         $this->out('cyan', "  routes      List registered routes\n");
         $this->out('cyan', "  cache       Clear compiled cache\n");
-        foreach ($this->commands as $name => $handler) {
+        foreach ($this->commands as $name => $_) {
             $desc = $this->descriptions[$name] ?? '';
             $line = "  {$name}";
             if ($desc !== '') {
