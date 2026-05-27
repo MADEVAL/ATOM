@@ -4,6 +4,15 @@ All notable changes to Atom will be documented in this file.
 
 ## [0.0.3] - 2026-05-27
 
+### Added
+- **WebSocket server** — first-class RFC 6455 support: frame encode/decode, non-blocking event loop, rooms, broadcasting, ping/pong, close handshake (~250 LOC across `Connection` + `Server`)
+- **`$app->ws($path, $handler)`** — fluent WebSocket route registration API
+- **`php atom ws:serve`** — CLI command to start WebSocket server
+- **`Response::getHeader()`** — accessor for testing response headers
+- **PHPStan** configuration (`phpstan.neon`) at level `max`
+- **CHANGELOG.md** and **CONTRIBUTING.md**
+- **Docs split** into 10 pages + `style.css`; added `websocket.html`
+
 ### Security
 - **Session::csrfToken()** — removed weak `uniqid()` fallback; now uses `random_bytes()` exclusively for cryptographically secure CSRF tokens
 - **Request::method** — method spoofing now validates against a whitelist of allowed HTTP methods (GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD); arbitrary values are rejected

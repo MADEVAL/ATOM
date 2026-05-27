@@ -4,6 +4,7 @@ namespace Atom\Console;
 
 use Atom\Application;
 use Atom\Support\Regex;
+use Atom\WebSocket\Server as WsServer;
 
 final class Console
 {
@@ -58,6 +59,7 @@ final class Console
             'list', 'help' => $this->listCommands(),
             'routes'       => $this->listRoutes(),
             'cache'        => $this->clearCache(),
+            'ws:serve'     => $this->wsServe($options),
             default        => $this->executeCommand($cmd, $positional, $options),
         };
     }
@@ -70,6 +72,7 @@ final class Console
         $this->out('cyan', "  help        Show available commands\n");
         $this->out('cyan', "  routes      List registered routes\n");
         $this->out('cyan', "  cache       Clear compiled cache\n");
+        $this->out('cyan', "  ws:serve    Start WebSocket server\n");
         foreach ($this->commands as $name => $_) {
             $desc = $this->descriptions[$name] ?? '';
             $line = "  {$name}";
@@ -117,6 +120,31 @@ final class Console
             }
         }
         $this->out('green', "Cleared {$count} cached file(s).\n");
+        return 0;
+    }
+
+    /** @param array<string,string|true> $options */
+    private function wsServe(array $options): int
+    {
+        $server = $this->app->wsServer();
+        if ($server === null) {
+            $this->out('red', "No WebSocket routes registered. Use \$app->ws() first.\n");
+            return 1;
+        }
+        $host = $options['host'] ?? '0.0.0.0';
+        $port = (int) ($options['port'] ?? 8080);
+        if (is_string($options['host'] ?? null)) {
+            $host = $options['host'];
+        }
+        if (is_string($options['port'] ?? null)) {
+            $port = (int) $options['port'];
+        }
+        $server = new WsServer($this->app, $host, $port);
+        foreach ($this->app->wsServer()->routes() as $path => $handler) {
+            $server->add($path, $handler);
+        }
+        $this->out('green', "WebSocket server starting on ws://{$host}:{$port}\n");
+        $server->run();
         return 0;
     }
 

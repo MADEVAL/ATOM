@@ -8,6 +8,7 @@ use Atom\Middleware\{MiddlewareInterface, Pipeline};
 use Atom\Routing\Router;
 use Atom\Validation\ValidationException;
 use Atom\View\Engine as ViewEngine;
+use Atom\WebSocket\Server as WsServer;
 
 final class Application
 {
@@ -16,6 +17,7 @@ final class Application
     public readonly ViewEngine $view;
 
     private array $middleware = [];
+    private ?WsServer $wsServer = null;
 
     public function __construct(
         public readonly Config $config = new Config,
@@ -42,6 +44,30 @@ final class Application
     {
         $this->middleware[] = $middleware;
         return $this;
+    }
+
+    /**
+     * Lazily initializes the WebSocket server and registers a route handler.
+     *
+     * @param string $path Route pattern, e.g. '/chat/{room}'
+     * @param callable $handler fn(Connection $conn, mixed $data, string $event, array $params)
+     */
+    public function ws(string $path, callable $handler): self
+    {
+        if ($this->wsServer === null) {
+            $wsHost = $this->config->env['WS_HOST'] ?? '0.0.0.0';
+            $wsPort = (int) ($this->config->env['WS_PORT'] ?? 8080);
+            $this->wsServer = new WsServer($this, $wsHost, $wsPort);
+            $this->container->instance(WsServer::class, $this->wsServer);
+        }
+        $this->wsServer->add($path, $handler);
+        return $this;
+    }
+
+    /** Returns the WebSocket server instance if initialized */
+    public function wsServer(): ?WsServer
+    {
+        return $this->wsServer;
     }
 
     public function run(?Request $request = null): void

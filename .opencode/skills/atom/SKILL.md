@@ -107,3 +107,40 @@ Regex::split('#,#', 'a,b,c')             // ['a','b','c']
 Regex::quote('foo.bar')                  // 'foo\.bar'
 Regex::assert('#valid#')                 // throws on bad regex
 ```
+
+## WebSocket Server
+
+```php
+// Register handler on Application
+$app->ws('/chat/{room}', function(Connection $conn, $data, $event, $params) {
+    if ($event === 'open') {
+        $app->wsServer()->join($params['room'], $conn);
+    }
+    if ($event === 'message') {
+        $app->wsServer()->sendJsonToRoom($params['room'], $data);
+    }
+});
+
+// Connection API
+$conn->id()          // string - unique 32-char hex ID
+$conn->isOpen()      // bool
+$conn->send('text')  // bool - text frame
+$conn->sendJson([])  // bool - JSON frame
+$conn->ping()        // bool - keepalive
+$conn->close(1000)   // void - close frame
+$conn->data          // array - mutable metadata
+
+// Server API (via $app->wsServer())
+$server->join('room', $conn)           // Join a room
+$server->leave('room', $conn)          // Leave a room
+$server->room('room')                  // Connection[]
+$server->sendToRoom('room', 'text')    // Broadcast to room
+$server->sendJsonToRoom('room', $data) // JSON broadcast to room
+$server->broadcast('text')             // All connections
+$server->broadcastJson($data)          // All connections JSON
+
+// CLI
+php atom ws:serve --port=8080 --host=0.0.0.0
+```
+
+Key features: RFC 6455 frame encoding/decoding, non-blocking stream_select event loop, room/channel management, client→server frame masking handled, auto-pong, close handshake.
