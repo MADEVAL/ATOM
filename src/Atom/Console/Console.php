@@ -91,10 +91,15 @@ final class Console
             $this->out('yellow', "No cache dir configured.\n");
             return 1;
         }
-        $files = glob($dir . '/*.php');
+        $files = array_merge(
+            glob($dir . '/*.php') ?: [],
+            glob($dir . '/**/*.php') ?: [],
+            glob($dir . '/*') ?: [],
+        );
+        $files = array_unique($files);
         $count = 0;
-        if ($files !== false) {
-            foreach ($files as $f) {
+        foreach ($files as $f) {
+            if (is_file($f)) {
                 unlink($f);
                 $count++;
             }

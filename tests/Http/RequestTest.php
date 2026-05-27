@@ -378,6 +378,46 @@ final class RequestTest extends TestCase
         $file = $req->file('missing');
         $this->assertFalse($file->ok);
     }
+
+    #[Test]
+    public function json_body_content_length_exceeded_returns_empty(): void
+    {
+        $req = new Request(
+            body: [],
+            server: [
+                'HTTP_CONTENT_TYPE' => 'application/json',
+                'HTTP_CONTENT_LENGTH' => '999999999',
+            ],
+        );
+        $this->assertSame([], $req->body);
+    }
+
+    #[Test]
+    public function json_body_invalid_json_returns_empty(): void
+    {
+        $req = new Request(
+            body: [],
+            server: ['HTTP_CONTENT_TYPE' => 'application/json'],
+        );
+        $this->assertSame([], $req->body);
+    }
+
+    #[Test]
+    public function body_array_is_preserved_when_not_empty(): void
+    {
+        $req = new Request(
+            body: ['a' => 1, 'b' => 2],
+            server: ['HTTP_CONTENT_TYPE' => 'application/json'],
+        );
+        $this->assertSame(['a' => 1, 'b' => 2], $req->body);
+    }
+
+    #[Test]
+    public function bearer_from_headers_array(): void
+    {
+        $req = new Request(headers: ['authorization' => 'Bearer xyz']);
+        $this->assertSame('xyz', $req->bearer);
+    }
 }
 
 final class ValidatableUser

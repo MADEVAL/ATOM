@@ -114,4 +114,59 @@ final class TemplateTest extends TestCase
         $result = $tpl->render([]);
         $this->assertSame('Test', $result);
     }
+
+    #[Test]
+    public function render_with_parent_template_inheritance(): void
+    {
+        file_put_contents($this->tmpViewsDir . '/layout.twig', 'LAYOUT:{% block content %}default{% endblock %}');
+        file_put_contents($this->tmpViewsDir . '/page.twig', '{% extends "layout.twig" %}{% block content %}override{% endblock %}');
+        $result = $this->engine->render('page.twig');
+        $this->assertStringContainsString('LAYOUT:override', $result);
+    }
+
+    #[Test]
+    public function render_block_with_parse_error_throws(): void
+    {
+        $tpl = new class($this->engine) extends Template {
+            protected array $blocks = ['bad' => '<?php echo INVALID_SYNTAX'];
+            protected function body(): string { return '<?= $this->renderBlock(\'bad\') ?>'; }
+        };
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Template block');
+        $tpl->render([]);
+    }
+
+    #[Test]
+    public function render_with_syntax_error_throws(): void
+    {
+        $tpl = new class($this->engine) extends Template {
+            protected function body(): string { return '<?php InvalidSyntaxHere'; }
+        };
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Template compilation error');
+        $tpl->render([]);
+    }
+
+    #[Test]
+    public function render_block_with_runtime_throwable_propagates(): void
+    {
+        $tpl = new class($this->engine) extends Template {
+            protected array $blocks = ['boom' => '<?php throw new \InvalidArgumentException("boom!");'];
+            protected function body(): string { return '<?= $this->renderBlock(\'boom\') ?>'; }
+        };
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('boom!');
+        $tpl->render([]);
+    }
+
+    #[Test]
+    public function render_with_runtime_throwable_propagates(): void
+    {
+        $tpl = new class($this->engine) extends Template {
+            protected function body(): string { return '<?php throw new \LogicException("fail!");'; }
+        };
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('fail!');
+        $tpl->render([]);
+    }
 }

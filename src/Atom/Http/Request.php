@@ -23,7 +23,10 @@ final class Request
     public string $ip      { get => (string)($this->server['REMOTE_ADDR'] ?? '127.0.0.1'); }
     public bool   $isAjax  { get => ($this->server['HTTP_X_REQUESTED_WITH'] ?? '') === 'XMLHttpRequest'; }
     public string $accept  { get => (string)($this->server['HTTP_ACCEPT'] ?? '*/*'); }
-    public string $bearer  { get => Regex::match('/^Bearer\s+(.+)$/i', $this->header('Authorization'))[1] ?? ''; }
+    public string $bearer  { get {
+        $m = Regex::match('/^Bearer\s+(.+)$/i', $this->header('Authorization'));
+        return $m !== null ? $m[1] : '';
+    }}
 
     public function __construct(
         array $query   = [],
@@ -34,7 +37,7 @@ final class Request
         ?array $headers = null,
     ) {
         $this->query   = $query;
-        $this->body    = $body ?: $this->parseJsonBody($server);
+        $this->body    = $body !== [] ? $body : $this->parseJsonBody($server);
         $this->cookies = $cookies;
         $this->files   = $files;
         $this->server  = $server ?: $_SERVER;
@@ -109,7 +112,7 @@ final class Request
         if (!isset($server['HTTP_CONTENT_TYPE']) || !str_starts_with($server['HTTP_CONTENT_TYPE'], 'application/json')) {
             return [];
         }
-        $maxLength = (int) (ini_get('post_max_size') ?: 8_388_608); // default 8MB
+        $maxLength = ini_parse_quantity(ini_get('post_max_size')) ?: 8_388_608;
         $contentLength = (int) ($server['HTTP_CONTENT_LENGTH'] ?? $server['CONTENT_LENGTH'] ?? 0);
         if ($contentLength > $maxLength) {
             return [];

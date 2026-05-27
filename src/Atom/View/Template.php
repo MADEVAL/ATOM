@@ -30,11 +30,11 @@ abstract class Template
         ob_start();
         try {
             eval('?>' . $this->body());
-        } catch (\ParseError $e) {
-            ob_get_clean();
-            throw new \RuntimeException("Template compilation error: {$e->getMessage()}", 0, $e);
         } catch (\Throwable $e) {
             ob_end_clean();
+            if ($e instanceof \ParseError) {
+                throw new \RuntimeException("Template compilation error: {$e->getMessage()}", 0, $e);
+            }
             throw $e;
         }
         return ob_get_clean();
@@ -46,11 +46,11 @@ abstract class Template
         ob_start();
         try {
             eval('?>' . $this->blocks[$name]);
-        } catch (\ParseError $e) {
-            ob_get_clean();
-            throw new \RuntimeException("Template block '{$name}' compilation error: {$e->getMessage()}", 0, $e);
         } catch (\Throwable $e) {
             ob_end_clean();
+            if ($e instanceof \ParseError) {
+                throw new \RuntimeException("Template block '{$name}' compilation error: {$e->getMessage()}", 0, $e);
+            }
             throw $e;
         }
         return ob_get_clean();

@@ -268,4 +268,22 @@ final class CompilerTest extends TestCase
         $result = $this->engine->render('test.twig', []);
         $this->assertStringContainsString('before {{ verbatim }} after', $result);
     }
+
+    #[Test]
+    public function unknown_tag_throws(): void
+    {
+        file_put_contents($this->tmpViewsDir . '/test.twig', '{% unknown_directive %}');
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Unknown tag: unknown_directive');
+        $this->engine->render('test.twig', []);
+    }
+
+    #[Test]
+    public function endfor_without_matching_for_throws(): void
+    {
+        file_put_contents($this->tmpViewsDir . '/test.twig', 'hello {% endfor %}');
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Unexpected {% endfor %} without matching {% for %}');
+        $this->engine->render('test.twig', []);
+    }
 }

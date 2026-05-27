@@ -204,6 +204,23 @@ final class ContainerTest extends TestCase
         $obj = $this->container->make('my.simple');
         $this->assertInstanceOf(SimpleService::class, $obj);
     }
+
+    #[Test]
+    public function autowire_resolves_interface_dependency(): void
+    {
+        $this->container->bind(SimpleInterface::class, SimpleImpl::class);
+        $obj = $this->container->make(ServiceWithInterfaceDep::class);
+        $this->assertInstanceOf(ServiceWithInterfaceDep::class, $obj);
+        $this->assertInstanceOf(SimpleImpl::class, $obj->dep);
+    }
+
+    #[Test]
+    public function detect_circular_dependency(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Circular dependency detected');
+        $this->container->make(CircularA::class);
+    }
 }
 
 // Test fixtures
@@ -218,6 +235,11 @@ class SimpleService
 class ServiceWithDependency
 {
     public function __construct(public readonly SimpleService $dep) {}
+}
+
+class ServiceWithInterfaceDep
+{
+    public function __construct(public readonly SimpleInterface $dep) {}
 }
 
 class DeepService
@@ -242,4 +264,14 @@ class NoConstructorService
 class UnresolvableService
 {
     public function __construct(public readonly int $required) {}
+}
+
+class CircularA
+{
+    public function __construct(public readonly CircularB $b) {}
+}
+
+class CircularB
+{
+    public function __construct(public readonly CircularA $a) {}
 }

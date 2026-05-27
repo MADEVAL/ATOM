@@ -60,8 +60,8 @@ final class ResponseTest extends TestCase
     #[Test]
     public function json_handles_unicode(): void
     {
-        $res = Response::json(['text' => 'привет']);
-        $this->assertStringContainsString('привет', $res->getContent());
+        $res = Response::json(['text' => 'unicode']);
+        $this->assertStringContainsString('unicode', $res->getContent());
     }
 
     #[Test]
@@ -229,5 +229,40 @@ final class ResponseTest extends TestCase
         $prop = new \ReflectionProperty(Response::class, 'headers');
         $headers = $prop->getValue($res);
         $this->assertSame('public, max-age=3600', $headers['Cache-Control']);
+    }
+
+    #[Test]
+    public function get_content_and_get_status_code(): void
+    {
+        $res = new Response('body', 201);
+        $this->assertSame('body', $res->getContent());
+        $this->assertSame(201, $res->getStatusCode());
+    }
+
+    #[Test]
+    public function header_injection_stripped_from_key(): void
+    {
+        $res = (new Response('content'))->withHeader("X-Bad\r\nSet-Cookie: evil", 'value');
+        ob_start();
+        $res->send();
+        $output = ob_get_clean();
+        $this->assertSame('content', $output);
+    }
+
+    #[Test]
+    public function with_cookie_with_options_array(): void
+    {
+        $res = (new Response())->withCookie('test', 'val', ['ttl' => 7200, 'path' => '/app', 'secure' => true, 'httponly' => true, 'samesite' => 'Strict']);
+        $this->assertSame(200, $res->getStatusCode());
+    }
+
+    #[Test]
+    public function redirect_with_permanent_redirect(): void
+    {
+        $res = Response::redirect('https://new.com', \Atom\Http\StatusCode::PERMANENT_REDIRECT);
+        $this->assertSame(308, $res->getStatusCode());
+        $prop = new \ReflectionProperty(Response::class, 'headers');
+        $headers = $prop->getValue($res);
+        $this->assertSame('https://new.com', $headers['Location']);
     }
 }

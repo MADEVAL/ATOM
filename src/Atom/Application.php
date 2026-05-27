@@ -38,12 +38,10 @@ final class Application
 
         try {
             $response = $this->router->dispatch($req);
-        } catch (\Exception $e) {
-            $response = $this->config->debug
-                ? new Response(get_class($e) . ': ' . $e->getMessage(), StatusCode::SERVER_ERROR)
-                : new Response('', StatusCode::SERVER_ERROR);
-        } catch (\Error $e) {
-            if ($this->config->debug) throw $e;
+        } catch (\Throwable $e) {
+            if ($this->config->debug) {
+                throw $e;
+            }
             $response = new Response('', StatusCode::SERVER_ERROR);
         }
         $response->send();

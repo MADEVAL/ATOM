@@ -215,4 +215,26 @@ final class RouteCompilerTest extends TestCase
             action: $action,
         );
     }
+
+    #[Test]
+    public function default_patterns_constants_exist(): void
+    {
+        $this->assertSame('[0-9]+', RouteCompiler::DEFAULT_PATTERNS['id']);
+        $this->assertSame('[a-z0-9\-]+', RouteCompiler::DEFAULT_PATTERNS['slug']);
+        $this->assertSame('[^/]+', RouteCompiler::DEFAULT_PATTERNS['any']);
+        $this->assertSame('.+', RouteCompiler::DEFAULT_PATTERNS['all']);
+    }
+
+    #[Test]
+    public function compile_with_invalid_custom_pattern_throws(): void
+    {
+        $compiler = new RouteCompiler();
+        $route = new CompiledRoute(
+            path: '/bad/{p:[}', methods: ['GET'], name: '',
+            middleware: [], controller: 'C', action: 'a',
+        );
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Bad compiled route regex');
+        $compiler->compile([$route]);
+    }
 }

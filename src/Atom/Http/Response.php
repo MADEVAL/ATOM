@@ -81,7 +81,7 @@ final class Response
             http_response_code($this->status->value);
             foreach ($this->headers as $k => $v) {
                 $k = Regex::replace('#[\r\n]+#', '', $k);
-                $v = Regex::replace('#[\r\n]+#', ' ', $v);
+                $v = Regex::replace('#[\r\n]+#', '', $v);
                 header("{$k}: {$v}");
             }
             foreach ($this->cookies as $cookie) {

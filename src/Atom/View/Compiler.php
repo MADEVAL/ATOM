@@ -84,6 +84,9 @@ final class Compiler
     {
         $parts = Regex::split('#\s*\|\s*#', $expr);
         $head  = array_shift($parts);
+        if ($head === null) {
+            return "''";
+        }
         $code  = $this->compileVariable($head);
 
         $filterNames = [];

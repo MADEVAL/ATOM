@@ -541,4 +541,72 @@ final class RouterTest extends TestCase
         $this->assertSame('/x', $this->router->url('a.x'));
         $this->assertSame('/y', $this->router->url('b.y'));
     }
+
+    #[Test]
+    public function duplicate_route_name_in_add_throws(): void
+    {
+        $this->router->get('/first', 'FirstController@test', 'dup.name');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Duplicate route name');
+        $this->router->get('/second', 'SecondController@test', 'dup.name');
+    }
+
+    #[Test]
+    public function duplicate_route_name_in_match_throws(): void
+    {
+        $this->router->get('/first', 'FirstController@test', 'match.dup');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Duplicate route name');
+        $this->router->match(['POST'], '/second', 'SecondController@test', 'match.dup');
+    }
+
+    #[Test]
+    public function duplicate_name_via_group_prefix(): void
+    {
+        $this->router->namePrefix('api.', function (Router $r) {
+            $r->get('/a', 'AController@test', 'route');
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('Duplicate route name');
+            $r->get('/b', 'BController@test', 'route');
+        });
+    }
+
+    #[Test]
+    public function unnamed_routes_allow_duplicates(): void
+    {
+        $this->router->get('/x', 'XController@test');
+        $this->router->get('/y', 'YController@test');
+        $this->assertSame(2, count((new \ReflectionClass($this->router))->getProperty('routes')->getValue($this->router)));
+    }
+
+    #[Test]
+    public function dispatch_catchall_404(): void
+    {
+        $this->router->get('/only', 'OnlyController@test');
+        $req = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/nonexistentpath']);
+        $res = $this->router->dispatch($req);
+        $this->assertSame(404, $res->getStatusCode());
+    }
+
+    #[Test]
+    public function method_not_allowed_for_wrong_method(): void
+    {
+        $this->router->post('/submit', 'SubmitController@action');
+        $req = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/submit']);
+        $res = $this->router->dispatch($req);
+        $this->assertSame(405, $res->getStatusCode());
+        $this->assertStringContainsString('Allow', $res->getContent());
+    }
+
+    #[Test]
+    public function dispatch_with_non_public_controller_method(): void
+    {
+        $this->router->get('/private', 'PrivateController@secret');
+        $this->container->bind('PrivateController', fn() => new class {
+            private function secret(): string { return 'hidden'; }
+        });
+        $req = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/private']);
+        $res = $this->router->dispatch($req);
+        $this->assertSame(500, $res->getStatusCode());
+    }
 }

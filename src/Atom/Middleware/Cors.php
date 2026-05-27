@@ -7,7 +7,7 @@ use Atom\Http\{Request, Response, StatusCode};
 final readonly class Cors implements MiddlewareInterface
 {
     public function __construct(
-        private string $allowOrigin = '',
+        private string $allowOrigin = '*',
         private string $allowMethods = 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
         private string $allowHeaders = 'Content-Type,Authorization',
         private bool $allowCredentials = false,
@@ -16,9 +16,15 @@ final readonly class Cors implements MiddlewareInterface
 
     public function handle(Request $req, \Closure $next): Response
     {
+        $origin = $this->allowOrigin;
+        $requestOrigin = $req->header('Origin');
+        if ($origin === '*') {
+            $origin = $requestOrigin !== '' ? $requestOrigin : '*';
+        }
+
         if ($req->method === 'OPTIONS') {
             $res = (new Response('', StatusCode::NO_CONTENT))
-                ->withHeader('Access-Control-Allow-Origin', $this->allowOrigin)
+                ->withHeader('Access-Control-Allow-Origin', $origin)
                 ->withHeader('Access-Control-Allow-Methods', $this->allowMethods)
                 ->withHeader('Access-Control-Allow-Headers', $this->allowHeaders)
                 ->withHeader('Access-Control-Max-Age', '86400');
@@ -30,7 +36,7 @@ final readonly class Cors implements MiddlewareInterface
             }
             return $res;
         }
-        $res = $next($req)->withHeader('Access-Control-Allow-Origin', $this->allowOrigin);
+        $res = $next($req)->withHeader('Access-Control-Allow-Origin', $origin);
         if ($this->allowCredentials) {
             $res = $res->withHeader('Access-Control-Allow-Credentials', 'true');
         }

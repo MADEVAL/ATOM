@@ -99,7 +99,11 @@ final class Validator
             foreach ($prop->getAttributes(Regex::class) as $attr) {
                 /** @var Regex $r */
                 $r = $attr->newInstance();
-                if (Pcre::match($r->pattern, (string) $value) === null) {
+                try {
+                    if (Pcre::match($r->pattern, (string) $value) === null) {
+                        $errors[$name][] = $r->message;
+                    }
+                } catch (\RuntimeException) {
                     $errors[$name][] = $r->message;
                 }
             }
@@ -107,7 +111,7 @@ final class Validator
             foreach ($prop->getAttributes(Email::class) as $attr) {
                 /** @var Email $r */
                 $r = $attr->newInstance();
-                if (Pcre::match('/^[^@\s]+@[^@\s]+\.[^@\s]+$/', (string) $value) === null) {
+                if (Pcre::match('/^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$/', (string) $value) === null) {
                     $errors[$name][] = $r->message;
                 }
             }

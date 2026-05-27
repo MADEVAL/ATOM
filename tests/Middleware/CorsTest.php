@@ -78,14 +78,14 @@ final class CorsTest extends TestCase
     }
 
     #[Test]
-    public function default_allow_origin_is_empty(): void
+    public function default_allow_origin_is_wildcard(): void
     {
         $cors = new Cors();
         $req = new Request(server: ['REQUEST_METHOD' => 'OPTIONS', 'REQUEST_URI' => '/']);
         $response = $cors->handle($req, fn() => new Response(''));
         $headers = $this->getHeaders($response);
 
-        $this->assertSame('', $headers['Access-Control-Allow-Origin']);
+        $this->assertSame('*', $headers['Access-Control-Allow-Origin']);
     }
 
     #[Test]
@@ -100,5 +100,84 @@ final class CorsTest extends TestCase
             $this->assertSame('ok', $response->getContent());
             $this->assertSame('https://example.com', $headers['Access-Control-Allow-Origin']);
         }
+    }
+
+    #[Test]
+    public function allow_credentials_adds_header(): void
+    {
+        $cors = new Cors(allowOrigin: '*', allowCredentials: true);
+        $req = new Request(server: ['REQUEST_METHOD' => 'OPTIONS', 'REQUEST_URI' => '/']);
+        $response = $cors->handle($req, fn() => new Response(''));
+        $headers = $this->getHeaders($response);
+        $this->assertSame('true', $headers['Access-Control-Allow-Credentials']);
+    }
+
+    #[Test]
+    public function allow_credentials_on_normal_request(): void
+    {
+        $cors = new Cors(allowOrigin: '*', allowCredentials: true);
+        $req = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/']);
+        $response = $cors->handle($req, fn() => new Response('ok'));
+        $headers = $this->getHeaders($response);
+        $this->assertSame('true', $headers['Access-Control-Allow-Credentials']);
+    }
+
+    #[Test]
+    public function expose_headers_adds_header(): void
+    {
+        $cors = new Cors(allowOrigin: '*', exposeHeaders: 'X-Total-Count,X-Page');
+        $req = new Request(server: ['REQUEST_METHOD' => 'OPTIONS', 'REQUEST_URI' => '/']);
+        $response = $cors->handle($req, fn() => new Response(''));
+        $headers = $this->getHeaders($response);
+        $this->assertSame('X-Total-Count,X-Page', $headers['Access-Control-Expose-Headers']);
+    }
+
+    #[Test]
+    public function origin_reflects_request_origin_when_wildcard(): void
+    {
+        $cors = new Cors();
+        $req = new Request(
+            server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/'],
+            headers: ['origin' => 'https://myapp.com'],
+        );
+        $response = $cors->handle($req, fn() => new Response('ok'));
+        $headers = $this->getHeaders($response);
+        $this->assertSame('https://myapp.com', $headers['Access-Control-Allow-Origin']);
+    }
+
+    #[Test]
+    public function specific_origin_not_overridden_by_request(): void
+    {
+        $cors = new Cors(allowOrigin: 'https://allowed.com');
+        $req = new Request(
+            server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/'],
+            headers: ['origin' => 'https://evil.com'],
+        );
+        $response = $cors->handle($req, fn() => new Response('ok'));
+        $headers = $this->getHeaders($response);
+        $this->assertSame('https://allowed.com', $headers['Access-Control-Allow-Origin']);
+    }
+
+    #[Test]
+    public function constructor_with_all_params(): void
+    {
+        $cors = new Cors(
+            allowOrigin: 'https://app.io',
+            allowMethods: 'GET,POST',
+            allowHeaders: 'X-API-Key',
+            allowCredentials: true,
+            exposeHeaders: 'X-Total',
+        );
+        $req = new Request(
+            server: ['REQUEST_METHOD' => 'OPTIONS', 'REQUEST_URI' => '/'],
+            headers: ['origin' => 'https://app.io'],
+        );
+        $response = $cors->handle($req, fn() => new Response(''));
+        $headers = $this->getHeaders($response);
+        $this->assertSame('https://app.io', $headers['Access-Control-Allow-Origin']);
+        $this->assertSame('GET,POST', $headers['Access-Control-Allow-Methods']);
+        $this->assertSame('X-API-Key', $headers['Access-Control-Allow-Headers']);
+        $this->assertSame('true', $headers['Access-Control-Allow-Credentials']);
+        $this->assertSame('X-Total', $headers['Access-Control-Expose-Headers']);
     }
 }

@@ -348,4 +348,34 @@ final class EngineTest extends TestCase
         $this->assertStringContainsString('x:1', $result);
         $this->assertStringContainsString('y:2', $result);
     }
+
+    #[Test]
+    public function load_throws_for_nonexistent_views_directory(): void
+    {
+        $engine = new Engine('/nonexistent/path/12345', $this->tmpCacheDir);
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('views directory not found');
+        $engine->load('test.twig');
+    }
+
+    #[Test]
+    public function load_throws_when_cache_dir_is_file(): void
+    {
+        $cacheDir = $this->tmpCacheDir . '/blocked';
+        file_put_contents($cacheDir, 'block');
+        $engine = new Engine($this->tmpViewsDir, $cacheDir);
+        file_put_contents($this->tmpViewsDir . '/test.twig', 'hello');
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('cannot create cache directory');
+        $engine->load('test.twig');
+    }
+
+    #[Test]
+    public function load_compiles_and_caches_template(): void
+    {
+        file_put_contents($this->tmpViewsDir . '/fresh.twig', 'fresh content');
+        $this->engine->load('fresh.twig');
+        $files = glob($this->tmpCacheDir . '/*.php');
+        $this->assertNotEmpty($files);
+    }
 }

@@ -156,7 +156,7 @@ final class ApplicationTest extends TestCase
     }
 
     #[Test]
-    public function run_handles_exception_as_500_in_debug(): void
+    public function run_handles_exception_rethrows_in_debug(): void
     {
         $app = $this->makeApp(debug: true);
         $app->router->get('/crash', 'CrashController@boom');
@@ -166,12 +166,9 @@ final class ApplicationTest extends TestCase
 
         $req = new Request(server: ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/crash']);
 
-        ob_start();
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Test crash');
         $app->run($req);
-        $output = ob_get_clean();
-
-        $this->assertStringContainsString('Test crash', $output);
-        $this->assertStringContainsString('Test crash', $output);
     }
 
     #[Test]

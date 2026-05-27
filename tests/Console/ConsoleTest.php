@@ -191,4 +191,62 @@ final class ConsoleTest extends TestCase
         $output = ob_get_clean();
         $this->assertStringContainsString("\033", $output);
     }
+
+    #[Test]
+    public function routes_output_shows_route_name(): void
+    {
+        $this->app->router->get('/test', 'TestCtrl@index', 'test.name');
+        $console = new Console($this->app);
+        ob_start();
+        $console->run(['atom', 'routes']);
+        $output = ob_get_clean();
+        $this->assertStringContainsString('[test.name]', $output);
+    }
+
+    #[Test]
+    public function routes_output_shows_methods_colored(): void
+    {
+        $this->app->router->get('/test', 'TestCtrl@index');
+        $console = new Console($this->app);
+        ob_start();
+        $console->run(['atom', 'routes']);
+        $output = ob_get_clean();
+        $this->assertStringContainsString('GET', $output);
+        $this->assertStringContainsString('TestCtrl@index', $output);
+    }
+
+    #[Test]
+    public function clear_cache_without_files(): void
+    {
+        $console = new Console($this->app);
+        ob_start();
+        $code = $console->run(['atom', 'cache']);
+        $output = ob_get_clean();
+        $this->assertStringContainsString('Cleared 0', $output);
+    }
+
+    #[Test]
+    public function run_with_empty_argv_defaults_to_list(): void
+    {
+        $console = new Console($this->app);
+        ob_start();
+        $code = $console->run(['atom']);
+        $output = ob_get_clean();
+        $this->assertSame(0, $code);
+        $this->assertStringContainsString('Atom CLI', $output);
+    }
+
+    #[Test]
+    public function list_shows_custom_commands(): void
+    {
+        $console = new Console($this->app);
+        $console->add('greet', fn() => 0);
+        $console->add('deploy', fn() => 0);
+        ob_start();
+        $code = $console->run(['atom', 'list']);
+        $output = ob_get_clean();
+        $this->assertSame(0, $code);
+        $this->assertStringContainsString('greet', $output);
+        $this->assertStringContainsString('deploy', $output);
+    }
 }

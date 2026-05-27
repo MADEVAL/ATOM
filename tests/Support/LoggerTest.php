@@ -108,4 +108,20 @@ final class LoggerTest extends TestCase
         $content = file_get_contents($this->tmpFile);
         $this->assertStringContainsString('EMERGENCY: complete outage', $content);
     }
+
+    #[Test]
+    public function throws_when_directory_cannot_be_created(): void
+    {
+        $blockFile = sys_get_temp_dir() . '/atom_log_block_' . uniqid();
+        file_put_contents($blockFile, 'block');
+        $logPath = $blockFile . '/sub/dir/log.txt';
+        $logger = new Logger($logPath);
+        try {
+            $this->expectException(\RuntimeException::class);
+            $this->expectExceptionMessage('Logger: cannot create directory');
+            $logger->info('should fail');
+        } finally {
+            unlink($blockFile);
+        }
+    }
 }

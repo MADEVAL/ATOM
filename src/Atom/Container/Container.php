@@ -64,7 +64,7 @@ final class Container
             if (array_key_exists($name, $params)) { $args[] = $params[$name]; continue; }
 
             $type = $p->getType();
-            if ($type instanceof ReflectionNamedType && !$type->isBuiltin() && class_exists($type->getName())) {
+            if ($type instanceof ReflectionNamedType && !$type->isBuiltin() && (class_exists($type->getName()) || interface_exists($type->getName()))) {
                 $args[] = $this->make($type->getName());
                 continue;
             }

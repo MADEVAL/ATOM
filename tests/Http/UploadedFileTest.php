@@ -10,6 +10,22 @@ use PHPUnit\Framework\Attributes\Test;
 #[CoversClass(UploadedFile::class)]
 final class UploadedFileTest extends TestCase
 {
+    private string $tmpDir;
+
+    protected function setUp(): void
+    {
+        $this->tmpDir = sys_get_temp_dir() . '/atom_upload_' . uniqid();
+        mkdir($this->tmpDir, 0777, true);
+    }
+
+    protected function tearDown(): void
+    {
+        if (is_dir($this->tmpDir)) {
+            foreach ((array) glob($this->tmpDir . '/*') as $f) @unlink($f);
+            rmdir($this->tmpDir);
+        }
+    }
+
     #[Test]
     public function from_valid_file_array(): void
     {
@@ -75,5 +91,59 @@ final class UploadedFileTest extends TestCase
     {
         $file = UploadedFile::empty();
         $this->assertFalse($file->move('/tmp/dest'));
+    }
+
+    #[Test]
+    public function move_returns_false_for_null_byte_in_path(): void
+    {
+        $tempFile = $this->tmpDir . '/source.txt';
+        file_put_contents($tempFile, 'data');
+        $file = UploadedFile::fromFileArray([
+            'name' => 'test.txt', 'type' => 'text/plain', 'size' => 4,
+            'tmp_name' => $tempFile, 'error' => UPLOAD_ERR_OK,
+        ]);
+        $this->assertFalse($file->move($this->tmpDir . '/bad' . "\0" . 'path'));
+    }
+
+    #[Test]
+    public function move_returns_false_for_path_traversal(): void
+    {
+        $tempFile = $this->tmpDir . '/source.txt';
+        file_put_contents($tempFile, 'data');
+        $file = UploadedFile::fromFileArray([
+            'name' => 'test.txt', 'type' => 'text/plain', 'size' => 4,
+            'tmp_name' => $tempFile, 'error' => UPLOAD_ERR_OK,
+        ]);
+        $this->assertFalse($file->move($this->tmpDir . '/../etc/passwd'));
+    }
+
+    #[Test]
+    public function move_returns_false_for_path_ending_in_dotdot(): void
+    {
+        $tempFile = $this->tmpDir . '/source.txt';
+        file_put_contents($tempFile, 'data');
+        $file = UploadedFile::fromFileArray([
+            'name' => 'test.txt', 'type' => 'text/plain', 'size' => 4,
+            'tmp_name' => $tempFile, 'error' => UPLOAD_ERR_OK,
+        ]);
+        $this->assertFalse($file->move($this->tmpDir . '/a/..'));
+    }
+
+    #[Test]
+    public function move_returns_false_when_parent_is_file(): void
+    {
+        $blockFile = $this->tmpDir . '/block.txt';
+        file_put_contents($blockFile, 'block');
+        $tempFile = $this->tmpDir . '/s.txt';
+        file_put_contents($tempFile, 'data');
+        $file = UploadedFile::fromFileArray([
+            'name' => 't.txt', 'type' => 'text/plain', 'size' => 4,
+            'tmp_name' => $tempFile, 'error' => UPLOAD_ERR_OK,
+        ]);
+        try {
+            $this->assertFalse($file->move($blockFile . '/sub/dest.txt'));
+        } finally {
+            unlink($blockFile);
+        }
     }
 }
