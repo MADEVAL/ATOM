@@ -4,104 +4,68 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Atom - PHP 8.5 micro‑framework</title>
-<style>
-:root{--bg:#0d0d0d;--fg:#bbb;--accent:#0cf;--dim:#555;--code:#151520;--border:#2a2a2a;--sidebar-w:230px}
-*,*::before,*::after{box-sizing:border-box;margin:0}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--fg);font:15px/1.65 system-ui,sans-serif}
-#sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:#0a0a0a;border-right:1px solid var(--border);overflow-y:auto;padding:28px 0;z-index:10}
-#sidebar h2{font-size:.85em;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;padding:0 22px;margin:20px 0 6px}
-#sidebar h2:first-child{margin-top:0}
-#sidebar a{display:block;padding:5px 22px;color:#999;text-decoration:none;font-size:.88em;border-left:2px solid transparent;transition:.15s}
-#sidebar a:hover,#sidebar a:focus{color:var(--accent);border-left-color:var(--accent);background:rgba(0,204,255,.04);outline:none}
-#main{margin-left:var(--sidebar-w);max-width:860px;padding:40px 48px 100px}
-h1{font-size:2em;font-weight:700;color:#fff;letter-spacing:-.02em;margin-bottom:6px}
-h1 span{color:var(--accent)}
-h2{font-size:1.2em;color:var(--accent);margin:52px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
-h3{font-size:1em;color:#ddd;margin:28px 0 8px}
-p{margin:8px 0}
-a{color:var(--accent)}
-pre,code{font-family:'JetBrains Mono','Fira Code',Consolas,monospace;font-size:.86em}
-code{background:var(--code);padding:1px 5px;border-radius:3px;color:#e0e0e0}
-pre{background:var(--code);border:1px solid var(--border);border-radius:6px;padding:16px 20px;overflow-x:auto;margin:12px 0 20px;line-height:1.5}
-pre code{background:none;padding:0;font-size:inherit}
-.kw{color:#c792ea}.str{color:#c3e88d}.cm{color:var(--dim)}.fn{color:#82aaff}.var{color:#f78c6c}.num{color:#f78c6c}
-table{width:100%;border-collapse:collapse;margin:12px 0 18px}
-th,td{text-align:left;padding:7px 12px;border-bottom:1px solid var(--border);font-size:.88em}
-th{color:var(--accent);font-weight:600}
-.flex{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}
-.tag{font-size:.75em;background:#1a1a2a;border:1px solid var(--border);border-radius:4px;padding:2px 8px;color:#aaa;white-space:nowrap}
-.badge{display:inline-block;background:var(--accent);color:#000;font-size:.7em;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:12px 0}
-.card{background:var(--code);border:1px solid var(--border);border-radius:6px;padding:14px}
-.card h4{color:var(--accent);font-size:.88em;margin-bottom:3px}
-.card p{font-size:.82em;color:#888;margin:0}
-hr{border:none;border-top:1px solid var(--border);margin:36px 0}
-footer{color:var(--dim);font-size:.82em;margin-top:60px}
-.meta{font-size:.88em;color:var(--dim);margin-bottom:24px}
-@media(max-width:860px){#sidebar{display:none}#main{margin-left:0;padding:24px 20px 60px}}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <nav id="sidebar">
 <h2>Atom</h2>
-<a href="#quickstart">Quick start</a>
-<a href="#architecture">Architecture</a>
-<a href="#config">Config</a>
-<a href="#scope">Scope</a>
+<a href="index.html#quickstart">Quick start</a>
+<a href="index.html#architecture">Architecture</a>
+<a href="index.html#config">Config</a>
+<a href="index.html#scope">Scope</a>
 
 <h2>Routing</h2>
-<a href="#routing-routes">Route patterns</a>
-<a href="#routing-groups">Groups &amp; middleware</a>
-<a href="#routing-named">URL generation</a>
-<a href="#routing-health">Health check</a>
-<a href="#routing-attributes">Attribute routes</a>
-<a href="#routing-perf">Performance</a>
+<a href="routing.html#routing-routes">Route patterns</a>
+<a href="routing.html#routing-groups">Groups &amp; middleware</a>
+<a href="routing.html#routing-named">URL generation</a>
+<a href="routing.html#routing-health">Health check</a>
+<a href="routing.html#routing-attributes">Attribute routes</a>
+<a href="routing.html#routing-perf">Performance</a>
 
 <h2>HTTP</h2>
-<a href="#http-request">Request</a>
-<a href="#http-files">File uploads</a>
-<a href="#http-response">Response</a>
-<a href="#http-controllers">Controllers</a>
-<a href="#http-session">Session</a>
+<a href="http.html#http-request">Request</a>
+<a href="http.html#http-files">File uploads</a>
+<a href="http.html#http-response">Response</a>
+<a href="http.html#http-controllers">Controllers</a>
+<a href="http.html#http-session">Session</a>
 
 <h2>Testing</h2>
-<a href="#test-client">HTTP Test Client</a>
+<a href="testing.html#test-client">HTTP Test Client</a>
 
 <h2>Templates</h2>
-<a href="#tpl-syntax">Syntax &amp; filters</a>
-<a href="#tpl-control">Control flow</a>
-<a href="#tpl-raw">Raw blocks</a>
-<a href="#tpl-inherit">Inheritance</a>
-<a href="#tpl-custom">Custom filters &amp; globals</a>
+<a href="templates.html#tpl-syntax">Syntax &amp; filters</a>
+<a href="templates.html#tpl-control">Control flow</a>
+<a href="templates.html#tpl-raw">Raw blocks</a>
+<a href="templates.html#tpl-inherit">Inheritance</a>
+<a href="templates.html#tpl-custom">Custom filters &amp; globals</a>
 
 <h2>Validation</h2>
-<a href="#val-dto">DTO definition</a>
-<a href="#val-nested">Nested arrays</a>
-<a href="#val-request">Request validation</a>
-<a href="#val-ref">Attribute reference</a>
+<a href="validation.html#val-dto">DTO definition</a>
+<a href="validation.html#val-nested">Nested arrays</a>
+<a href="validation.html#val-request">Request validation</a>
+<a href="validation.html#val-ref">Attribute reference</a>
 
 <h2>Middleware</h2>
-<a href="#mw-pipeline">Pipeline</a>
-<a href="#mw-cors">CORS</a>
-<a href="#mw-csrf">CSRF</a>
-<a href="#mw-ratelimit">Rate Limiter</a>
+<a href="middleware.html#mw-pipeline">Pipeline</a>
+<a href="middleware.html#mw-cors">CORS</a>
+<a href="middleware.html#mw-csrf">CSRF</a>
+<a href="middleware.html#mw-ratelimit">Rate Limiter</a>
 
 <h2>Container</h2>
-<a href="#di-bindings">Bindings</a>
-<a href="#di-autowire">Autowiring</a>
+<a href="container.html#di-bindings">Bindings</a>
+<a href="container.html#di-autowire">Autowiring</a>
 
 <h2>Reference</h2>
-<a href="#ref-database">Database</a>
-<a href="#ref-logger">Logger</a>
-<a href="#ref-paginator">Paginator</a>
-<a href="#ref-encrypt">Encryption</a>
-<a href="#ref-cli">CLI Console</a>
-<a href="#ref-env">.env &amp; Config</a>
-<a href="#ref-regex">Regex utility</a>
-<a href="#ref-status">Status codes</a>
-<a href="#ref-structure">Project structure</a>
+<a href="reference.html#ref-database">Database</a>
+<a href="reference.html#ref-logger">Logger</a>
+<a href="reference.html#ref-paginator">Paginator</a>
+<a href="reference.html#ref-encrypt">Encryption</a>
+<a href="reference.html#ref-cli">CLI Console</a>
+<a href="reference.html#ref-env">.env &amp; Config</a>
+<a href="reference.html#ref-regex">Regex utility</a>
+<a href="reference.html#ref-status">Status codes</a>
+<a href="index.html#ref-structure">Project structure</a>
 </nav>
 
 <div id="main">
@@ -170,512 +134,6 @@ footer{color:var(--dim);font-size:.82em;margin-top:60px}
 <tr><td>Enterprise CMS, WebSocket/real-time</td><td>Not suitable</td></tr>
 </table>
 
-<h2 id="routing-routes">Route patterns</h2>
-<pre><code><span class="var">$app</span>->router->get(<span class="str">'/users/{id}'</span>, <span class="str">'UserController@show'</span>);
-<span class="var">$app</span>->router->post(<span class="str">'/posts/{slug}'</span>, <span class="str">'PostController@create'</span>);
-<span class="var">$app</span>->router->put(<span class="str">'/items/{id:\d+}'</span>, <span class="str">'ItemController@update'</span>);
-<span class="var">$app</span>->router->patch(<span class="str">'/users/{id}'</span>, <span class="str">'UserController@patch'</span>);
-<span class="var">$app</span>->router->delete(<span class="str">'/files/{hash:[a-f0-9]{32}}'</span>, <span class="str">'FileController@remove'</span>);
-<span class="var">$app</span>->router->any(<span class="str">'/webhook'</span>, <span class="str">'WebhookController@handle'</span>);
-<span class="var">$app</span>->router->match([<span class="str">'GET'</span>, <span class="str">'POST'</span>], <span class="str">'/multi'</span>, <span class="str">'MultiController@handle'</span>);</code></pre>
-<table>
-<tr><th>Token</th><th>PCRE</th><th>Matches</th></tr>
-<tr><td><code>{id}</code></td><td><code>[0-9]+</code></td><td><code>42</code></td></tr>
-<tr><td><code>{slug}</code></td><td><code>[a-z0-9\-]+</code></td><td><code>hello-world</code></td></tr>
-<tr><td><code>{any}</code></td><td><code>[^/]+</code></td><td><code>anything</code></td></tr>
-<tr><td><code>{all}</code></td><td><code>.+</code></td><td><code>path/to/file</code></td></tr>
-<tr><td colspan="3"><code>{name:custom-pcre}</code> - inline regex; <code>addPattern()</code> for named patterns</td></tr>
-</table>
-<p>Duplicate route names throw <code>InvalidArgumentException</code>. Named routes use O(1) hash map lookup.</p>
-
-<h2 id="routing-groups">Groups &amp; middleware</h2>
-<pre><code><span class="var">$app</span>->router->group(<span class="str">'/admin'</span>, [<span class="str">'Auth'</span>, <span class="str">'AdminOnly'</span>], <span class="kw">fn</span>(<span class="var">$r</span>) => {
-    <span class="var">$r</span>->get(<span class="str">'/dashboard'</span>, <span class="str">'AdminController@index'</span>);
-    <span class="var">$r</span>->group(<span class="str">'/users'</span>, [<span class="str">'Throttle'</span>], <span class="kw">fn</span>(<span class="var">$r</span>) => {
-        <span class="var">$r</span>->get(<span class="str">'/{id}'</span>, <span class="str">'AdminController@edit'</span>);
-    });
-});</code></pre>
-
-<h3>Route name prefixing</h3>
-<pre><code><span class="var">$app</span>->router->namePrefix(<span class="str">'admin.'</span>, <span class="kw">fn</span>(<span class="var">$r</span>) => {
-    <span class="var">$r</span>->get(<span class="str">'/dashboard'</span>, <span class="str">'AdminController@index'</span>, <span class="str">'dashboard'</span>);
-}); <span class="cm">// Route name: admin.dashboard</span></code></pre>
-
-<h2 id="routing-named">URL generation</h2>
-<pre><code><span class="var">$app</span>->router->get(<span class="str">'/users/{id}'</span>, <span class="str">'UserController@show'</span>, <span class="str">'user.show'</span>);
-<span class="var">$app</span>->router->url(<span class="str">'user.show'</span>, [<span class="str">'id'</span> => <span class="num">42</span>]); <span class="cm">// → /users/42</span></code></pre>
-
-<h2 id="routing-health">Health check</h2>
-<pre><code><span class="var">$app</span>->router->health(<span class="str">'/health'</span>, <span class="kw">fn</span>() => [
-    <span class="str">'database'</span> => <span class="var">$db</span>->raw()->query(<span class="str">'SELECT 1'</span>) !== <span class="kw">false</span>,
-    <span class="str">'cache'</span>    => <span class="kw">true</span>,
-]);
-<span class="cm">// GET /health → 200 {"database":true,"cache":true}</span>
-<span class="cm">// Any false → 503</span></code></pre>
-
-<h2 id="routing-attributes">Attribute routes</h2>
-<pre><code><span class="kw">use</span> Atom\Routing\Route;
-
-<span class="kw">class</span> ApiController {
-    <span class="kw">#[</span><span class="fn">Route</span>(<span class="str">'/api/items'</span>, [<span class="str">'GET'</span>], <span class="str">'items.list'</span>)<span class="kw">]</span>
-    <span class="kw">#[</span><span class="fn">Route</span>(<span class="str">'/api/items/{id}'</span>, [<span class="str">'GET'</span>,<span class="str">'DELETE'</span>], <span class="str">'items.crud'</span>)<span class="kw">]</span>
-    <span class="kw">public function</span> <span class="fn">handle</span>(Request <span class="var">$request</span>): string { ... }
-}
-
-<span class="var">$app</span>->router->loadFromAttributes(__DIR__ . <span class="str">'/Controllers'</span>);</code></pre>
-<p>Attribute routes support <code>url()</code> and duplicate name detection.</p>
-
-<h2 id="routing-perf">Performance</h2>
-<p>All routes compile into <strong>one</strong> PCRE regex using branch-reset <code>(?|...)</code> and <code>(*MARK)</code>. 10&thinsp;000 routes = one JIT‑compiled regex call. 405 Method Not Allowed is O(1) via <code>altRegex</code>. URL generation is O(1) via hash map.</p>
-<pre><code><span class="cm">// Compiled: #^(?|(?&lt;METHOD&gt;GET)\/users\/(?&lt;id&gt;[0-9]+)(*:0)|...)$#xs</span>
-<span class="kw">if</span> (!preg_match(<span class="var">$compiled</span>[<span class="str">'regex'</span>], <span class="var">$method</span> . <span class="var">$uri</span>, <span class="var">$m</span>)) {
-    <span class="kw">return</span> <span class="kw">new</span> Response(<span class="str">'Not Found'</span>, StatusCode::NOT_FOUND);
-}
-<span class="var">$id</span> = (<span class="kw">int</span>) <span class="var">$m</span>[<span class="str">'MARK'</span>]; <span class="cm">// → route index</span>
-<span class="var">$params</span> = array_filter(<span class="var">$m</span>, <span class="str">'is_string'</span>, ARRAY_FILTER_USE_KEY);</code></pre>
-<p>Cache invalidation: <code>$app->router->clearCache()</code>. Corrupted cache files are auto-detected and regenerated.</p>
-
-<h2 id="http-request">Request</h2>
-<table>
-<tr><th>Property</th><th>Type</th><th>Description</th></tr>
-<tr><td><code>$req->method</code></td><td>string</td><td>GET|POST|PUT|PATCH|DELETE <span class="badge">_method</span></td></tr>
-<tr><td><code>$req->path</code></td><td>string</td><td>Path without query</td></tr>
-<tr><td><code>$req->uri</code></td><td>string</td><td>Full URI</td></tr>
-<tr><td><code>$req->scheme</code></td><td>string</td><td>http|https</td></tr>
-<tr><td><code>$req->host</code></td><td>string</td><td>Hostname</td></tr>
-<tr><td><code>$req->ip</code></td><td>string</td><td>Client IP</td></tr>
-<tr><td><code>$req->isAjax</code></td><td>bool</td><td>X-Requested-With</td></tr>
-<tr><td><code>$req->accept</code></td><td>string</td><td>Accept header</td></tr>
-<tr><td><code>$req->bearer</code></td><td>string</td><td>Bearer token <span class="badge">PCRE</span></td></tr>
-</table>
-<table>
-<tr><th>Method</th><th>Description</th></tr>
-<tr><td><code>$req->header('name')</code></td><td>Get header (case‑insensitive)</td></tr>
-<tr><td><code>$req->input('key', $default)</code></td><td>Body → query → default</td></tr>
-<tr><td><code>$req->wantsJson()</code></td><td>Check Accept header</td></tr>
-<tr><td><code>$req->validate(DTO::class)</code></td><td>Map body → DTO, validate, throw</td></tr>
-</table>
-
-<h3>JSON body auto‑parse</h3>
-<pre><code><span class="cm">// Content-Type: application/json  →  auto‑parsed from php://input</span>
-<span class="cm">// POST {"name":"Alice"}  →  $req->input('name') = 'Alice'</span>
-<span class="cm">// Post‑max‑size respected via ini_parse_quantity()</span></code></pre>
-
-<h3>Method spoofing</h3>
-<pre><code><span class="cm">// POST with _method=PUT  →  $req->method === 'PUT'</span>
-<span class="cm">// Works only from POST; whitespace trimmed; array values fall back to POST</span></code></pre>
-
-<h3>Bearer token</h3>
-<pre><code><span class="cm">// Authorization: Bearer abc123  →  $req->bearer === 'abc123'</span>
-<span class="cm">// Multiline tokens rejected (regex .+ doesn't cross newlines)</span></code></pre>
-
-<h3 id="http-files">File uploads</h3>
-<pre><code><span class="var">$file</span> = <span class="var">$req</span>->file(<span class="str">'avatar'</span>);
-<span class="kw">if</span> (<span class="var">$file</span>->ok) {
-    <span class="var">$file</span>->move(<span class="str">'/uploads/'</span> . <span class="var">$file</span>->name);
-}
-<span class="var">$file</span>->size;   <span class="cm">// bytes</span>
-<span class="var">$file</span>->type;   <span class="cm">// MIME type</span>
-<span class="var">$file</span>->ext;    <span class="cm">// extension via PCRE</span></code></pre>
-<p>Nested upload arrays return <code>UploadedFile::empty()</code>. Null‑bytes and path‑traversal blocked in <code>move()</code>.</p>
-
-<h2 id="http-response">Response</h2>
-<pre><code><span class="cm">// Factories</span>
-Response::html(<span class="str">'&lt;h1&gt;Hello&lt;/h1&gt;'</span>);
-Response::json([<span class="str">'key'</span> => <span class="str">'value'</span>], pretty: <span class="kw">true</span>);
-Response::text(<span class="str">'plain text'</span>);
-Response::noContent();                                    <span class="cm">// 204</span>
-Response::redirect(<span class="str">'/login'</span>);                               <span class="cm">// 302</span>
-Response::redirect(<span class="str">'/new'</span>, StatusCode::PERMANENT_REDIRECT);   <span class="cm">// 308</span>
-
-<span class="cm">// Chaining — immutable, returns new instances</span>
-(<span class="kw">new</span> Response(<span class="str">'body'</span>, StatusCode::CREATED))
-    ->withHeader(<span class="str">'X-Custom'</span>, <span class="str">'val'</span>)
-    ->withCookie(<span class="str">'session'</span>, <span class="var">$token</span>, <span class="num">7200</span>)
-    ->withCookie(<span class="str">'pref'</span>, <span class="str">'dark'</span>, [<span class="str">'ttl'</span> => <span class="num">86400</span>, <span class="str">'samesite'</span> => <span class="str">'Strict'</span>])
-    ->withCache(<span class="num">3600</span>)
-    ->send(<span class="str">isHttps</span>: <span class="kw">true</span>);</code></pre>
-<p><code>\r\n</code> stripped from header keys and values. Cookies default: <code>httponly: true, samesite: Lax</code> (invalid values fall back to Lax). Cookie <code>name</code>/<code>value</code> cannot be overridden via options array. <code>javascript:</code>, <code>data:</code>, <code>vbscript:</code> redirects blocked.</p>
-
-<h2 id="http-controllers">Controllers</h2>
-<pre><code><span class="kw">use</span> Atom\Http\{Request, Response, StatusCode};
-
-<span class="kw">class</span> UserController {
-    <span class="kw">public function</span> <span class="fn">show</span>(<span class="kw">string</span> <span class="var">$id</span>, Request <span class="var">$request</span>): Response {
-        <span class="kw">return</span> Response::json(findUser(<span class="var">$id</span>));
-    }
-    <span class="kw">public function</span> <span class="fn">__invoke</span>(): <span class="kw">string</span> {
-        <span class="kw">return</span> <span class="str">'Hello World'</span>; <span class="cm">// auto‑wrapped to HTML</span>
-    }
-}</code></pre>
-<p>Parameters auto‑populated from route <code>{params}</code>. Add a <code>Request $request</code> parameter for full request access.</p>
-
-<h2 id="http-session">Session</h2>
-<pre><code><span class="cm">// Lazy singleton — no session_start() until first use</span>
-<span class="var">$session</span> = <span class="var">$app</span>->container->make(Session::<span class="kw">class</span>);
-
-<span class="var">$session</span> = <span class="kw">new</span> Session([<span class="str">'cookie_samesite'</span> => <span class="str">'Strict'</span>]);
-<span class="var">$session</span>->set(<span class="str">'user_id'</span>, <span class="num">42</span>);
-<span class="var">$session</span>->get(<span class="str">'user_id'</span>);
-<span class="var">$session</span>->has(<span class="str">'user_id'</span>);
-<span class="var">$session</span>->remove(<span class="str">'user_id'</span>);
-<span class="var">$session</span>->flash(<span class="str">'success'</span>, <span class="str">'Saved!'</span>);
-<span class="var">$session</span>->regenerate();
-
-<span class="cm">// CSRF — rotated after successful validation</span>
-<span class="var">$token</span> = <span class="var">$session</span>->csrfToken();
-<span class="var">$login</span> = <span class="var">$session</span>->csrfToken(<span class="str">'login'</span>); <span class="cm">// per‑form isolation</span>
-<span class="var">$session</span>->validateCsrf(<span class="var">$login</span>, <span class="str">'login'</span>);</code></pre>
-
-<h2 id="test-client">HTTP Test Client</h2>
-<pre><code><span class="kw">use</span> Atom\Test\HttpClient;
-
-<span class="var">$client</span> = <span class="kw">new</span> HttpClient(<span class="var">$app</span>);
-
-<span class="cm">// GET with assertions</span>
-<span class="var">$client</span>->get(<span class="str">'/users/42'</span>)
-    ->assertOk()
-    ->assertJson([<span class="str">'id'</span> => <span class="num">42</span>]);
-
-<span class="cm">// POST with body</span>
-<span class="var">$client</span>->post(<span class="str">'/users'</span>, [<span class="str">'name'</span> => <span class="str">'Alice'</span>])
-    ->assertCreated();
-
-<span class="cm">// All HTTP methods supported</span>
-<span class="var">$client</span>->put(<span class="str">'/users/1'</span>, [<span class="str">'name'</span> => <span class="str">'Bob'</span>])->assertOk();
-<span class="var">$client</span>->delete(<span class="str">'/users/1'</span>)->assertNoContent();
-
-<span class="cm">// Status assertions</span>
-<span class="var">$client</span>->get(<span class="str">'/nonexistent'</span>)->assertNotFound();
-<span class="var">$client</span>->get(<span class="str">'/admin'</span>)->assertForbidden();
-<span class="var">$client</span>->get(<span class="str">'/error'</span>)->assertServerError();
-
-<span class="cm">// Content checks</span>
-<span class="var">$client</span>->get(<span class="str">'/'</span>)->assertBodyContains(<span class="str">'Welcome'</span>);
-
-<span class="cm">// Raw response</span>
-<span class="var">$response</span> = <span class="var">$client</span>->get(<span class="str">'/api/data'</span>)->getResponse();</code></pre>
-
-<h2 id="tpl-syntax">Template syntax &amp; filters</h2>
-<pre><code><span class="cm">{# comment #}</span>
-{{ user.name | e }}
-{{ html | raw }}
-{{ title | upper | raw }}
-{{ count | default(0) }}
-{{ data | json }}
-{{ items.0 }}</code></pre>
-<div class="flex">
-<span class="tag">escape</span><span class="tag">e</span><span class="tag">upper</span><span class="tag">lower</span><span class="tag">trim</span><span class="tag">length</span><span class="tag">nl2br</span><span class="tag">json</span><span class="tag">default</span><span class="tag">raw</span>
-</div>
-<p><code>default</code> filter shows fallback for <code>null</code>, <code>false</code>, <code>''</code>, and <code>[]</code>. Nested braces <code>{{ func({a: 1}) }}</code> supported. Auto‑escaping applied unless <code>raw|escape|e|json|nl2br</code> used.</p>
-
-<h2 id="tpl-control">Control flow</h2>
-<pre><code>{% if user.admin %}
-  &lt;p&gt;Admin&lt;/p&gt;
-{% elseif user.active %}
-  &lt;p&gt;Active&lt;/p&gt;
-{% else %}
-  &lt;p&gt;Inactive&lt;/p&gt;
-{% endif %}
-
-{% for item in items %}
-  &lt;li&gt;{{ item | e }}&lt;/li&gt;
-{% endfor %}
-
-{% for key, val in data %}
-  {{ key }}: {{ val }}
-{% endfor %}
-
-{% set total = price * qty %}
-{% include "partials/nav.twig" %}</code></pre>
-<p>For‑loop variables are cleaned up after <code>endfor</code>. Shadowed variables (same name as outer context) are saved and restored. Unclosed tags throw <code>RuntimeException</code>.</p>
-<pre><code>{{ title }}                    <span class="cm">{# "My Page" #}</span>
-{% for title in items %}
-  [{{ title }}]                <span class="cm">{# iterated #}</span>
-{% endfor %}
-{{ title }}                    <span class="cm">{# "My Page" — restored #}</span></code></pre>
-
-<h3 id="tpl-raw">Raw blocks</h3>
-<pre><code>{% raw %}&lt;script&gt;{{ not_parsed }}&lt;/script&gt;{% endraw %}</code></pre>
-
-<h2 id="tpl-inherit">Inheritance</h2>
-<pre><code><span class="cm">{# layout.twig #}</span>
-&lt;html&gt;
-&lt;head&gt;&lt;title&gt;{% block title %}Default{% endblock %}&lt;/title&gt;&lt;/head&gt;
-&lt;body&gt;{% block body %}{% endblock %}&lt;/body&gt;
-&lt;/html&gt;
-
-<span class="cm">{# page.twig #}</span>
-{% extends "layout.twig" %}
-{% block title %}{{ page.title | e }}{% endblock %}
-{% block body %}&lt;p&gt;{{ page.content | raw }}&lt;/p&gt;{% endblock %}</code></pre>
-
-<h2 id="tpl-custom">Custom filters &amp; globals</h2>
-<pre><code><span class="var">$app</span>->view->addFilter(<span class="str">'markdown'</span>, <span class="kw">fn</span>(<span class="var">$v</span>) => parseMarkdown(<span class="var">$v</span>));
-<span class="var">$app</span>->view->addGlobal(<span class="str">'app_name'</span>, <span class="str">'MyApp'</span>);
-<span class="var">$app</span>->view->addGlobal(<span class="str">'year'</span>, date(<span class="str">'Y'</span>));</code></pre>
-
-<h2 id="val-dto">Validation — DTO definition</h2>
-<pre><code><span class="kw">use</span> Atom\Validation\{Required, Email, Min, Max, Regex, Integer, In, Ip, FloatVal, Boolean, Uuid, Each};
-
-<span class="kw">final class</span> CreateUser {
-    <span class="kw">#[</span><span class="fn">Required</span><span class="kw">]</span> <span class="kw">public</span> <span class="kw">string</span> <span class="var">$name</span> = <span class="str">''</span>;
-    <span class="kw">#[</span><span class="fn">Required</span><span class="kw">]</span> <span class="kw">#[</span><span class="fn">Email</span>(<span class="str">unicode</span>: <span class="kw">true</span>)<span class="kw">]</span> <span class="kw">public</span> <span class="kw">string</span> <span class="var">$email</span> = <span class="str">''</span>;
-    <span class="kw">#[</span><span class="fn">Min</span>(<span class="num">8</span>)<span class="kw">]</span> <span class="kw">#[</span><span class="fn">Max</span>(<span class="num">128</span>)<span class="kw">]</span> <span class="kw">public</span> <span class="kw">string</span> <span class="var">$password</span> = <span class="str">''</span>;
-    <span class="kw">#[</span><span class="fn">Regex</span>(<span class="str">'/^[a-z0-9_]{3,20}$/'</span>)<span class="kw">]</span> <span class="kw">public</span> <span class="kw">string</span> <span class="var">$username</span> = <span class="str">''</span>;
-    <span class="kw">#[</span><span class="fn">Integer</span>(<span class="str">min</span>: <span class="num">0</span>, <span class="str">max</span>: <span class="num">150</span>)<span class="kw">]</span> <span class="kw">public</span> <span class="kw">int</span> <span class="var">$age</span> = <span class="num">0</span>;
-    <span class="kw">#[</span><span class="fn">In</span>([<span class="str">'admin'</span>, <span class="str">'user'</span>, <span class="str">'guest'</span>])<span class="kw">]</span> <span class="kw">public</span> <span class="kw">string</span> <span class="var">$role</span> = <span class="str">'user'</span>;
-    <span class="kw">#[</span><span class="fn">Ip</span>(<span class="str">noPrivate</span>: <span class="kw">true</span>)<span class="kw">]</span> <span class="kw">public</span> <span class="kw">string</span> <span class="var">$publicIp</span> = <span class="str">''</span>;
-    <span class="kw">#[</span><span class="fn">FloatVal</span>(<span class="str">min</span>: <span class="num">0.0</span>, <span class="str">max</span>: <span class="num">100.0</span>)<span class="kw">]</span> <span class="kw">public</span> <span class="kw">float</span> <span class="var">$score</span> = <span class="num">0.0</span>;
-    <span class="kw">#[</span><span class="fn">Boolean</span><span class="kw">]</span> <span class="kw">public</span> <span class="kw">bool</span> <span class="var">$active</span> = <span class="kw">true</span>;
-    <span class="kw">#[</span><span class="fn">Uuid</span><span class="kw">]</span> <span class="kw">public</span> <span class="kw">string</span> <span class="var">$id</span> = <span class="str">''</span>;
-}</code></pre>
-
-<h2 id="val-nested">Nested array validation</h2>
-<pre><code><span class="kw">final class</span> OrderItem {
-    <span class="kw">#[</span><span class="fn">Required</span><span class="kw">]</span> <span class="kw">public</span> <span class="kw">string</span> <span class="var">$sku</span> = <span class="str">''</span>;
-    <span class="kw">#[</span><span class="fn">Min</span>(<span class="num">1</span>)<span class="kw">]</span> <span class="kw">public</span> <span class="kw">int</span> <span class="var">$qty</span> = <span class="num">0</span>;
-}
-
-<span class="kw">final class</span> CreateOrder {
-    <span class="kw">#[</span><span class="fn">Required</span><span class="kw">]</span> <span class="kw">public</span> <span class="kw">string</span> <span class="var">$customer</span> = <span class="str">''</span>;
-    <span class="kw">#[</span><span class="fn">Each</span>(OrderItem::<span class="kw">class</span>)<span class="kw">]</span> <span class="kw">public</span> <span class="kw">array</span> <span class="var">$items</span> = [];
-}
-<span class="cm">// Errors returned as [0].sku, [1].qty, etc.</span></code></pre>
-
-<h2 id="val-request">Request validation</h2>
-<pre><code><span class="kw">try</span> {
-    <span class="var">$dto</span> = <span class="var">$request</span>->validate(CreateUser::<span class="kw">class</span>);
-} <span class="kw">catch</span> (ValidationException <span class="var">$e</span>) {
-    Response::json(<span class="var">$e</span>->errors, StatusCode::BAD_REQUEST)->send();
-}</code></pre>
-
-<h2 id="val-ref">Attribute reference</h2>
-<table>
-<tr><th>Attribute</th><th>Filter / Logic</th></tr>
-<tr><td><code>#[Required]</code></td><td>Non‑null, non‑empty string, non‑[]</td></tr>
-<tr><td><code>#[Email(unicode: true)]</code></td><td>FILTER_VALIDATE_EMAIL (RFC 822) + UNICODE flag</td></tr>
-<tr><td><code>#[Regex('/pat/')]</code></td><td>PCRE match, handles backtrack limit</td></tr>
-<tr><td><code>#[Min(N)]</code></td><td>String length ≥ N or numeric value ≥ N</td></tr>
-<tr><td><code>#[Max(N)]</code></td><td>String length ≤ N or numeric value ≤ N</td></tr>
-<tr><td><code>#[Integer(min, max)]</code></td><td>FILTER_VALIDATE_INT + optional range</td></tr>
-<tr><td><code>#[Between(min, max)]</code></td><td>Numeric or string length range</td></tr>
-<tr><td><code>#[In(['a','b'])]</code></td><td>Strict comparison against list</td></tr>
-<tr><td><code>#[Url]</code></td><td>FILTER_VALIDATE_URL (RFC 2396)</td></tr>
-<tr><td><code>#[Nullable]</code></td><td>Skip when null</td></tr>
-<tr><td><code>#[Confirmed]</code></td><td>Must match <code>{field}_confirmation</code></td></tr>
-<tr><td><code>#[Ip(onlyV4, onlyV6, noReserved, noPrivate, global)]</code></td><td>FILTER_VALIDATE_IP + flags</td></tr>
-<tr><td><code>#[Domain(hostname: true)]</code></td><td>FILTER_VALIDATE_DOMAIN + HOSTNAME flag</td></tr>
-<tr><td><code>#[Mac]</code></td><td>FILTER_VALIDATE_MAC</td></tr>
-<tr><td><code>#[FloatVal(min, max)]</code></td><td>FILTER_VALIDATE_FLOAT + optional range</td></tr>
-<tr><td><code>#[Boolean]</code></td><td>FILTER_VALIDATE_BOOL (1/0/true/false/on/off/yes/no)</td></tr>
-<tr><td><code>#[Uuid]</code></td><td>XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX format</td></tr>
-<tr><td><code>#[Each(Class)]</code></td><td>Validate each array element as nested DTO</td></tr>
-</table>
-<p>All attributes accept custom messages: <code>#[Required('Name is required')]</code>.</p>
-
-<h2 id="mw-pipeline">Middleware pipeline</h2>
-<pre><code><span class="kw">class</span> Auth <span class="kw">implements</span> MiddlewareInterface {
-    <span class="kw">public function</span> <span class="fn">handle</span>(Request <span class="var">$req</span>, Closure <span class="var">$next</span>): Response {
-        <span class="kw">if</span> (!<span class="var">$req</span>->bearer) {
-            <span class="kw">return new</span> Response(<span class="str">'Unauthorized'</span>, StatusCode::UNAUTHORIZED);
-        }
-        <span class="kw">return</span> <span class="var">$next</span>(<span class="var">$req</span>);
-    }
-}
-
-<span class="cm">// Object, string (DI-resolved), or Closure</span>
-<span class="var">$r</span>->get(<span class="str">'/secure'</span>, <span class="str">'Controller@action'</span>, <span class="str">''</span>, [<span class="str">'Auth'</span>]);
-<span class="var">$r</span>->get(<span class="str">'/debug'</span>, <span class="str">'DebugController@index'</span>, <span class="str">''</span>, [
-    <span class="kw">fn</span>(Request <span class="var">$req</span>, Closure <span class="var">$next</span>) => <span class="var">$next</span>(<span class="var">$req</span>)->withHeader(<span class="str">'X-Debug'</span>, <span class="str">'1'</span>)
-]);</code></pre>
-
-<h2 id="mw-cors">CORS middleware</h2>
-<pre><code><span class="kw">use</span> Atom\Middleware\Cors;
-
-<span class="cm">// Default: allow *, all methods, Content-Type + Authorization</span>
-<span class="var">$app</span>->router->group(<span class="str">'/api'</span>, [Cors::<span class="kw">class</span>], <span class="kw">fn</span>(<span class="var">$r</span>) => { ... });
-
-<span class="var">$app</span>->router->group(<span class="str">'/api'</span>, [<span class="kw">new</span> Cors(
-    <span class="str">allowOrigin</span>: <span class="str">'https://example.com'</span>,
-    <span class="str">allowMethods</span>: <span class="str">'GET,POST,PATCH'</span>,
-    <span class="str">allowHeaders</span>: <span class="str">'X-API-Key,Content-Type'</span>,
-    <span class="str">allowCredentials</span>: <span class="kw">true</span>,
-    <span class="str">exposeHeaders</span>: <span class="str">'X-Total-Count'</span>,
-)], <span class="kw">fn</span>(<span class="var">$r</span>) => { ... });</code></pre>
-<p>Handles OPTIONS preflight. Reflects Origin when <code>allowOrigin: '*'</code>. <code>* + credentials</code> throws <code>InvalidArgumentException</code> per CORS spec.</p>
-
-<h2 id="mw-csrf">CSRF middleware</h2>
-<pre><code><span class="kw">use</span> Atom\Middleware\Csrf;
-
-<span class="var">$app</span>->router->group(<span class="str">''</span>, [Csrf::<span class="kw">class</span>], <span class="kw">fn</span>(<span class="var">$r</span>) => { ... });
-
-<span class="cm">// Template: &lt;input type="hidden" name="_csrf" value="{{ _csrf }}"&gt;</span>
-<span class="cm">// Or header: X-CSRF-Token: &lt;token&gt;</span>
-<span class="cm">// Validated on POST/PUT/PATCH/DELETE - 403 on mismatch</span>
-<span class="cm">// Token rotated after successful validation</span></code></pre>
-
-<h2 id="mw-ratelimit">Rate Limiter</h2>
-<pre><code><span class="kw">use</span> Atom\Middleware\RateLimit;
-
-<span class="var">$app</span>->router->group(<span class="str">'/api'</span>, [<span class="kw">new</span> RateLimit(<span class="str">max</span>: <span class="num">100</span>, <span class="str">window</span>: <span class="num">60</span>)], <span class="kw">fn</span>(<span class="var">$r</span>) => { ... });</code></pre>
-<p>Per‑IP‑and‑path tracking. Exceeded limit → 429 Too Many Requests.</p>
-
-<h2 id="di-bindings">Container bindings</h2>
-<pre><code><span class="cm">// Interface binding</span>
-<span class="var">$app</span>->container->bind(LoggerInterface::<span class="kw">class</span>, FileLogger::<span class="kw">class</span>);
-
-<span class="cm">// Singleton</span>
-<span class="var">$app</span>->container->singleton(Database::<span class="kw">class</span>, <span class="kw">fn</span>() => <span class="kw">new</span> Database(<span class="var">$config</span>->get(<span class="str">'DB_DSN'</span>)));
-
-<span class="cm">// Pre‑built instance</span>
-<span class="var">$app</span>->container->instance(<span class="str">'config'</span>, <span class="var">$config</span>);
-
-<span class="cm">// Check registration</span>
-<span class="var">$app</span>->container->has(Database::<span class="kw">class</span>); <span class="cm">// bool</span></code></pre>
-
-<h2 id="di-autowire">Autowiring</h2>
-<pre><code><span class="kw">class</span> UserService {
-    <span class="kw">public function</span> <span class="fn">__construct</span>(
-        <span class="kw">private</span> Database <span class="var">$db</span>,
-        <span class="kw">private</span> LoggerInterface <span class="var">$log</span>,
-    ) {}
-}
-<span class="var">$service</span> = <span class="var">$app</span>->container->make(UserService::<span class="kw">class</span>);
-<span class="cm">// Database and LoggerInterface auto‑resolved (requires interface→concrete binding)</span></code></pre>
-<p>Circular dependencies detected with descriptive error messages.</p>
-
-<h2 id="ref-database">Database</h2>
-<pre><code><span class="kw">use</span> Atom\Database\Database;
-
-<span class="var">$db</span> = <span class="kw">new</span> Database(<span class="var">$config</span>->get(<span class="str">'DB_DSN'</span>));
-<span class="cm">// SQLite: 'sqlite:/path/to/db.sqlite'</span>
-<span class="cm">// MySQL:  'mysql:host=localhost;dbname=app;charset=utf8mb4', user, pass</span>
-
-<span class="var">$db</span>->all(<span class="str">'SELECT * FROM users WHERE active = ?'</span>, [<span class="num">1</span>]);
-<span class="var">$db</span>->one(<span class="str">'SELECT * FROM users WHERE id = ?'</span>, [<span class="var">$id</span>]);
-<span class="var">$db</span>->single(<span class="str">'SELECT COUNT(*) FROM users'</span>);
-<span class="var">$db</span>->run(<span class="str">'UPDATE users SET name = ? WHERE id = ?'</span>, [...] );
-<span class="var">$db</span>->lastId();
-
-<span class="cm">// Transactions</span>
-<span class="var">$db</span>->beginTransaction();
-<span class="var">$db</span>->commit();
-<span class="var">$db</span>->rollback();</code></pre>
-
-<h2 id="ref-logger">Logger</h2>
-<pre><code><span class="kw">use</span> Atom\Support\Logger;
-
-<span class="var">$log</span> = <span class="kw">new</span> Logger(<span class="str">'/var/log/app.log'</span>);
-<span class="var">$log</span>->debug(<span class="str">'query'</span>, [<span class="str">'sql'</span> => <span class="var">$sql</span>, <span class="str">'ms'</span> => <span class="num">12.5</span>]);
-<span class="var">$log</span>->info(<span class="str">'login'</span>, [<span class="str">'user'</span> => <span class="num">42</span>]);
-<span class="var">$log</span>->warn(<span class="str">'rate limit'</span>);
-<span class="var">$log</span>->error(<span class="str">'payment failed'</span>);
-<span class="var">$log</span>->critical(<span class="str">'disk full'</span>);
-<span class="var">$log</span>->alert(<span class="str">'db down'</span>);
-<span class="var">$log</span>->emergency(<span class="str">'outage'</span>);
-
-<span class="cm">// LEVELS: DEBUG(0) INFO(1) WARN(2) ERROR(3) CRITICAL(4) ALERT(5) EMERGENCY(6)</span>
-<span class="var">$log</span> = <span class="kw">new</span> Logger(<span class="str">'/var/log/app.log'</span>, Logger::WARN);
-
-<span class="cm">// Rotation &amp; clear</span>
-<span class="var">$log</span>->rotate(); <span class="cm">// rename → app_20260101_120000.log</span>
-<span class="var">$log</span>->clear();  <span class="cm">// delete file entirely</span>
-
-<span class="cm">// Auto‑rotation by size</span>
-<span class="var">$log</span> = <span class="kw">new</span> Logger(<span class="str">'/var/log/app.log'</span>, <span class="str">maxSize</span>: <span class="num">1_048_576</span>);</code></pre>
-
-<h2 id="ref-paginator">Paginator</h2>
-<pre><code><span class="kw">use</span> Atom\Support\Paginator;
-
-<span class="var">$p</span> = Paginator::from(<span class="var">$req</span>, <span class="str">defaultPerPage</span>: <span class="num">20</span>);
-
-<span class="cm">// SQL helper</span>
-<span class="var">$sql</span> = <span class="str">"SELECT * FROM posts "</span> . <span class="var">$p</span>->sqlLimit();
-<span class="cm">// → LIMIT 20 OFFSET 0</span>
-
-<span class="cm">// Wrap results</span>
-<span class="var">$result</span> = <span class="var">$p</span>->paginate(<span class="var">$items</span>, <span class="var">$totalCount</span>);
-<span class="cm">// → ['data' => [...], 'page' => 1, 'perPage' => 20, 'total' => 150, 'pages' => 8]</span>
-
-<span class="cm">// Query params: ?page=2&per_page=10</span>
-<span class="cm">// page clamped ≥ 1, per_page clamped 1..100</span></code></pre>
-
-<h2 id="ref-encrypt">Encryption</h2>
-<pre><code><span class="kw">use</span> Atom\Support\Encrypt;
-
-<span class="var">$encrypted</span> = Encrypt::encrypt(<span class="str">'sensitive data'</span>, <span class="var">$app</span>->config->get(<span class="str">'APP_KEY'</span>));
-<span class="var">$plain</span>     = Encrypt::decrypt(<span class="var">$encrypted</span>, <span class="var">$app</span>->config->get(<span class="str">'APP_KEY'</span>));
-
-<span class="cm">// AES‑256‑GCM with random IV each encryption</span>
-<span class="cm">// Wrong key or tampered payload → RuntimeException</span></code></pre>
-
-<h2 id="ref-cli">CLI Console</h2>
-<pre><code>php bin/atom list      <span class="cm"># show commands with descriptions</span>
-php bin/atom help      <span class="cm"># alias for list</span>
-php bin/atom routes    <span class="cm"># list registered routes</span>
-php bin/atom cache     <span class="cm"># clear compiled cache</span></code></pre>
-<pre><code><span class="kw">use</span> Atom\Console\Console;
-
-<span class="var">$console</span> = <span class="kw">new</span> Console(<span class="var">$app</span>);
-<span class="var">$console</span>->add(<span class="str">'db:migrate'</span>, <span class="kw">function</span>(<span class="kw">array</span> <span class="var">$args</span>, <span class="kw">array</span> <span class="var">$options</span>): <span class="kw">int</span> { ...
-    <span class="kw">return</span> <span class="num">0</span>;
-}, <span class="str">'Run database migrations'</span>);
-<span class="var">$console</span>->run(<span class="var">$argv</span>);
-
-<span class="cm">// Options via PCRE: --flag, --key=value</span>
-php bin/atom db:migrate --force --env=production
-
-<span class="cm">// NO_COLOR support</span>
-NO_COLOR=1 php bin/atom routes       <span class="cm"># environment variable</span>
-php bin/atom routes --no-color        <span class="cm"># command-line flag</span></code></pre>
-
-<h2 id="ref-env">.env &amp; Config</h2>
-<pre><code><span class="cm">// .env file</span>
-APP_DEBUG=true
-APP_NAME=MyApp
-APP_ENV=production
-APP_CACHE_DIR=/tmp/cache
-APP_VIEWS_DIR=/var/views
-APP_TIMEZONE=Europe/Moscow
-APP_LOG_FILE=/var/log/app.log
-APP_LOG_LEVEL=WARN
-APP_LOG_MAX_SIZE=1048576
-DB_DSN=mysql:host=localhost;dbname=app
-
-<span class="cm">// .env.production overrides .env (loaded when APP_ENV=production)</span>
-APP_DEBUG=false
-APP_LOG_LEVEL=ERROR
-
-<span class="cm">// Load</span>
-<span class="var">$config</span> = Config::fromEnv(__DIR__ . <span class="str">'/.env'</span>);
-<span class="var">$config</span>->debug;             <span class="cm">// false (overridden)</span>
-<span class="var">$config</span>->appName;           <span class="cm">// MyApp</span>
-<span class="var">$config</span>->timezone;          <span class="cm">// Europe/Moscow</span>
-<span class="var">$config</span>->logLevel;          <span class="cm">// 3 (ERROR)</span>
-<span class="var">$config</span>->get(<span class="str">'DB_DSN'</span>);     <span class="cm">// mysql:host=...</span>
-<span class="var">$config</span>->get(<span class="str">'MISSING'</span>, <span class="str">'default'</span>); <span class="cm">// default</span></code></pre>
-
-<h2 id="ref-regex">Regex utility</h2>
-<pre><code><span class="kw">use</span> Atom\Support\Regex;
-
-Regex::match(<span class="str">'#(\d+)#'</span>, <span class="str">'abc123'</span>);          <span class="cm">// → ['123'] | null</span>
-Regex::matchAll(<span class="str">'#(\w+)#'</span>, <span class="str">'a b c'</span>);       <span class="cm">// → [['a','b','c']]</span>
-Regex::replace(<span class="str">'#\s+#'</span>, <span class="str">'-'</span>, <span class="str">'a b'</span>);      <span class="cm">// → 'a-b'</span>
-Regex::split(<span class="str">'#,#'</span>, <span class="str">'a,b,c'</span>);              <span class="cm">// → ['a','b','c']</span>
-Regex::quote(<span class="str">'foo.bar'</span>);                    <span class="cm">// → 'foo\.bar'</span>
-Regex::assert(<span class="str">'#valid_pattern#'</span>);           <span class="cm">// throws on bad regex</span></code></pre>
-
-<h2 id="ref-status">Status codes</h2>
-<div class="flex">
-<span class="tag">200 OK</span><span class="tag">201 CREATED</span><span class="tag">202 ACCEPTED</span><span class="tag">204 NO_CONTENT</span>
-<span class="tag">301 MOVED</span><span class="tag">302 FOUND</span><span class="tag">303 SEE_OTHER</span><span class="tag">304 NOT_MODIFIED</span>
-<span class="tag">307 TEMPORARY_REDIRECT</span><span class="tag">308 PERMANENT_REDIRECT</span>
-<span class="tag">400 BAD_REQUEST</span><span class="tag">401 UNAUTHORIZED</span><span class="tag">403 FORBIDDEN</span><span class="tag">404 NOT_FOUND</span>
-<span class="tag">405 METHOD_NOT_ALLOWED</span><span class="tag">422 UNPROCESSABLE_ENTITY</span><span class="tag">429 TOO_MANY_REQUESTS</span>
-<span class="tag">500 SERVER_ERROR</span><span class="tag">503 SERVICE_UNAVAILABLE</span>
-</div>
-
 <h2 id="ref-structure">Project structure</h2>
 <pre><code>atom/
 ├── src/Atom/
@@ -696,9 +154,7 @@ Regex::assert(<span class="str">'#valid_pattern#'</span>);           <span class
 ├── docs/index.html
 └── composer.json</code></pre>
 
-<footer>
-<p>Atom · PHP 8.5 · GPL-3.0 · 613 tests · PCRE‑powered</p>
-</footer>
+<footer>Atom — PHP 8.5 micro‑framework · zero runtime dependencies</footer>
 
 </div>
 </body>

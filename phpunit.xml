@@ -4,7 +4,7 @@
          bootstrap="vendor/autoload.php"
          colors="true"
          cacheDirectory=".phpunit.cache"
-         requireCoverageMetadata="false">
+         requireCoverageMetadata="true">
     <testsuites>
         <testsuite name="Atom Framework Test Suite">
             <directory>tests</directory>

@@ -4,6 +4,7 @@ namespace Atom;
 
 final readonly class Constants
 {
+    /** Private constructor prevents instantiation of the constants class */
     private function __construct() {}
 
     public const DIR_PERMISSIONS = 0755;

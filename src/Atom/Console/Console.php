@@ -62,6 +62,7 @@ final class Console
         };
     }
 
+    /** Prints available commands list */
     private function listCommands(): int
     {
         $this->out('bold', "Atom CLI\n");
@@ -80,6 +81,7 @@ final class Console
         return 0;
     }
 
+    /** Prints registered routes table */
     private function listRoutes(): int
     {
         $routes = $this->app->router->routes();
@@ -93,6 +95,7 @@ final class Console
         return 0;
     }
 
+    /** Clears compiled cache files */
     private function clearCache(): int
     {
         $dir = $this->app->config->cacheDir;
@@ -117,6 +120,7 @@ final class Console
         return 0;
     }
 
+    /** @param list<string> $args @param array<string,string|true> $options */
     private function executeCommand(string $name, array $args, array $options): int
     {
         if (!isset($this->commands[$name])) {
@@ -132,12 +136,14 @@ final class Console
         }
     }
 
+    /** Applies ANSI color escape sequences when --no-color is not set */
     private function color(string $c, string $text): string
     {
         if ($this->noColor) return $text;
         return (self::COLOR[$c] ?? '') . $text . self::COLOR['reset'];
     }
 
+    /** Outputs colored text to stdout */
     private function out(string $c, string $text): void
     {
         echo $this->color($c, $text);

@@ -69,6 +69,7 @@ final class Database
         return $this->pdo;
     }
 
+    /** @param array<string,mixed> $params */
     private function execute(string $sql, array $params): PDOStatement
     {
         $stmt = $this->pdo->prepare($sql);

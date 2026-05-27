@@ -98,6 +98,7 @@ final class HttpClient
         return $this->response;
     }
 
+    /** Dispatches the request through the router and returns the response */
     private function captureResponse(Request $req): Response
     {
         try {

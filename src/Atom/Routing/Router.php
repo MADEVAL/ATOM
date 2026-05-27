@@ -211,6 +211,7 @@ final class Router
         return Pipeline::run($meta['middleware'], $request, $handler, $this->container);
     }
 
+    /** @return list<string> */
     private function getAllowedMethods(string $uri): array
     {
         $compiled = $this->getCompiled();
@@ -237,6 +238,7 @@ final class Router
         );
     }
 
+    /** @return array{regex:string, map:array<int,array{controller:string,action:string,name:string,middleware:array,route:CompiledRoute}>, altRegex:string} */
     private function getCompiled(): array
     {
         if ($this->compiled !== null) return $this->compiled;
@@ -275,6 +277,7 @@ final class Router
         return $this->compiled;
     }
 
+    /** @return ?string Extracts fully-qualified class name from a PHP file */
     private function classFromFile(string $file): ?string
     {
         $code = file_get_contents($file);

@@ -13,8 +13,10 @@ final class Request
     public array $server;
     public array $headers;
 
+    private const ALLOWED_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'];
+
     public string $method  { get => ($this->server['REQUEST_METHOD'] ?? 'GET') === 'POST'
-        ? strtoupper(trim(is_string($this->body['_method'] ?? null) ? $this->body['_method'] : 'POST'))
+        ? self::resolveSpoofedMethod(is_string($this->body['_method'] ?? null) ? $this->body['_method'] : '')
         : strtoupper($this->server['REQUEST_METHOD'] ?? 'GET'); }
     public string $path    { get => ($this->server['PATH_INFO'] ?? '') !== '' ? $this->server['PATH_INFO'] : (parse_url($this->uri, PHP_URL_PATH) ?: '/'); }
     public string $uri     { get => $this->server['REQUEST_URI'] ?? '/'; }
@@ -100,6 +102,7 @@ final class Request
         return $dto;
     }
 
+    /** @param array<string,mixed> $server @return array<string,string> */
     private function extractHeaders(array $server): array
     {
         $out = [];
@@ -111,6 +114,14 @@ final class Request
         return $out;
     }
 
+    /** Resolves a form-method-override value to a valid HTTP method */
+    private static function resolveSpoofedMethod(string $method): string
+    {
+        $method = strtoupper(trim($method));
+        return in_array($method, self::ALLOWED_METHODS, true) ? $method : 'POST';
+    }
+
+    /** @param array<string,mixed> $server @return array<string,mixed> */
     private function parseJsonBody(array $server): array
     {
         if (!isset($server['HTTP_CONTENT_TYPE']) || !str_starts_with($server['HTTP_CONTENT_TYPE'], 'application/json')) {

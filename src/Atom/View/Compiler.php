@@ -61,6 +61,7 @@ final class Compiler
         PHP;
     }
 
+    /** Compiles template body {{ }} and {% %} tags into PHP */
     private function compileBody(string $src): string
     {
         $out = '';
@@ -104,6 +105,7 @@ final class Compiler
         return $out;
     }
 
+    /** Compiles an expression with optional pipe filters and auto-escaping */
     private function compileExpression(string $expr, bool $autoEscape = false): string
     {
         $parts = Regex::split('#\s*\|\s*#', $expr);
@@ -128,6 +130,7 @@ final class Compiler
         return $code;
     }
 
+    /** Compiles a template variable with dot-notation support into PHP code */
     private function compileVariable(string $v): string
     {
         $v = trim($v);
@@ -147,6 +150,7 @@ final class Compiler
         return $result;
     }
 
+    /** Compiles a {% %} control-flow tag into PHP */
     private function compileTag(string $tag): string
     {
         return match (true) {
@@ -174,6 +178,7 @@ final class Compiler
         };
     }
 
+    /** Compiles {% for var in expr %} opening tag */
     private function compileFor(string $var, string $expr): string
     {
         $shadowKey = '_prev_' . $var;
@@ -181,6 +186,7 @@ final class Compiler
         return '<?php if(isset($this->ctx[\'' . $var . '\'])){$this->ctx[\'' . $shadowKey . '\']=$this->ctx[\'' . $var . '\'];} foreach ((' . $this->compileExpression($expr) . ') ?? [] as $' . $var . '): $this->ctx[\'' . $var . '\'] = $' . $var . '; ?>';
     }
 
+    /** Compiles {% for key, val in expr %} opening tag */
     private function compileForKeyVal(string $key, string $val, string $expr): string
     {
         $shadowKey = '_prev_' . $key;
@@ -189,6 +195,7 @@ final class Compiler
         return '<?php if(isset($this->ctx[\'' . $key . '\'])){$this->ctx[\'' . $shadowKey . '\']=$this->ctx[\'' . $key . '\'];} if(isset($this->ctx[\'' . $val . '\'])){$this->ctx[\'' . $shadowVal . '\']=$this->ctx[\'' . $val . '\'];} foreach ((' . $this->compileExpression($expr) . ') ?? [] as $' . $key . ' => $' . $val . '): $this->ctx[\'' . $key . '\'] = $' . $key . '; $this->ctx[\'' . $val . '\'] = $' . $val . '; ?>';
     }
 
+    /** Compiles {% endfor %} closing tag with variable shadow cleanup */
     private function compileEndfor(): string
     {
         if ($this->forStack === []) {
@@ -206,5 +213,6 @@ final class Compiler
         return '<?php endforeach; ' . $cleanup . ' ?>';
     }
 
+    /** Shorthand to safely export a string for PHP source code */
     private function q(string $s): string { return var_export($s, true); }
 }

@@ -1,0 +1,10 @@
+parameters:
+    level: max
+    paths:
+        - src/
+    bootstrapFiles:
+        - vendor/autoload.php
+    parallel:
+        maximumNumberOfProcesses: 4
+    treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: false

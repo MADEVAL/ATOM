@@ -3,7 +3,6 @@ declare(strict_types=1);
 namespace Atom\Tests\Routing;
 
 use Atom\Routing\Route;
-use Atom\Routing\MatchedRoute;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -11,7 +10,6 @@ use ReflectionMethod;
 use Attribute;
 
 #[CoversClass(Route::class)]
-#[CoversClass(MatchedRoute::class)]
 final class RouteTest extends TestCase
 {
     #[Test]
@@ -44,22 +42,6 @@ final class RouteTest extends TestCase
     {
         $ref = new \ReflectionClass(Route::class);
         $this->assertTrue($ref->isReadOnly());
-    }
-
-    #[Test]
-    public function matched_route_stores_all_data(): void
-    {
-        $route = new Route('/test');
-        $matched = new MatchedRoute(
-            route: $route,
-            params: ['id' => '42'],
-            controller: 'App\\Controllers\\TestController',
-            action: 'show',
-        );
-        $this->assertSame($route, $matched->route);
-        $this->assertSame(['id' => '42'], $matched->params);
-        $this->assertSame('App\\Controllers\\TestController', $matched->controller);
-        $this->assertSame('show', $matched->action);
     }
 
     #[Test]

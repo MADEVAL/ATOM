@@ -177,7 +177,6 @@ src/Atom/
 ├── Routing/
 │   ├── Route.php           # #[Route] attribute
 │   ├── CompiledRoute.php   # internal representation
-│   ├── MatchedRoute.php    # match result
 │   ├── RouteCompiler.php   # single PCRE regex
 │   └── Router.php          # dispatch, groups, url(), cache, routes(), health()
 ├── Support/

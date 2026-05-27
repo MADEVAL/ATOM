@@ -59,15 +59,7 @@ final class Session
     {
         $key = $form !== '' ? "_csrf_{$form}" : '_csrf';
         if (!isset($_SESSION[$key])) {
-            try {
-                $_SESSION[$key] = bin2hex(random_bytes(\Atom\Constants::CSRF_RANDOM_BYTES));
-            } catch (\Throwable) {
-                try {
-                    $_SESSION[$key] = bin2hex(uniqid('csrf', true) . random_int(0, PHP_INT_MAX));
-                } catch (\Throwable) {
-                    $_SESSION[$key] = bin2hex(hash('sha256', uniqid('csrf', true) . microtime(), true));
-                }
-            }
+            $_SESSION[$key] = bin2hex(random_bytes(\Atom\Constants::CSRF_RANDOM_BYTES));
         }
         return $_SESSION[$key];
     }

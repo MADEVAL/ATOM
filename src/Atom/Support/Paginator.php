@@ -13,6 +13,7 @@ final class Paginator
     public int $pages = 0;
     public array $items = [];
 
+    /** Private constructor; use Paginator::from() factory instead */
     private function __construct(int $page, int $perPage)
     {
         $this->page = $page;

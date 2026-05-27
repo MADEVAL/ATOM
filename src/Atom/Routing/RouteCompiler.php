@@ -26,26 +26,7 @@ final readonly class RouteCompiler
         $id    = 0;
 
         foreach ($routes as $route) {
-            // Split path into literal segments and parameter placeholders, quote literals
-            $compiled = Regex::replace(
-                '#\{([a-zA-Z_][a-zA-Z0-9_]*)(?::([^}]+))?\}#',
-                function (array $m) use ($patterns): string {
-                    $name = $m[1];
-                    $custom = $m[2] ?? '';
-                    $pattern = $custom !== '' ? $custom : ($patterns[$name] ?? '[^/]+');
-                    return "(?<{$name}>{$pattern})";
-                },
-                $route->path,
-            );
-            // Escape PCRE meta-chars in literal parts (outside (?<name>...) groups)
-            $segments = Regex::split('#(\(\?<[^>]+>[^)]*\)|\(\?:)#', $compiled, PREG_SPLIT_DELIM_CAPTURE);
-            $compiled = implode(array_map(
-                fn(string $s, int $i): string => $i % 2 === 0 ? Regex::quote($s) : $s,
-                $segments,
-                array_keys($segments),
-            ));
-            // Escape slashes
-            $regex = Regex::replace('#(?<!\\\\)/#', '\\/', $compiled);
+            $regex = self::compilePath($route->path, $patterns);
             foreach ($route->methods as $method) {
                 $parts[] = "(?<METHOD>{$method}){$regex}(*:{$id})";
                 $map[$id] = [
@@ -67,5 +48,37 @@ final readonly class RouteCompiler
         }
 
         return ['regex' => $regex, 'map' => $map];
+    }
+
+    /**
+     * @param array<string,string> $patterns
+     */
+    private static function compilePath(string $path, array $patterns): string
+    {
+        $result = '';
+        $offset = 0;
+
+        while (preg_match(
+            '#\{([a-zA-Z_][a-zA-Z0-9_]*)(?::([^}]+))?\}#',
+            $path,
+            $matches,
+            PREG_OFFSET_CAPTURE,
+            $offset,
+        )) {
+            $matchPos = $matches[0][1];
+            $matchLen = strlen($matches[0][0]);
+
+            $result .= Regex::quote(substr($path, $offset, $matchPos - $offset));
+
+            $name = $matches[1][0];
+            $custom = $matches[2][0] ?? '';
+            $pattern = $custom !== '' ? $custom : ($patterns[$name] ?? '[^/]+');
+            $result .= "(?<{$name}>{$pattern})";
+
+            $offset = $matchPos + $matchLen;
+        }
+
+        $result .= Regex::quote(substr($path, $offset));
+        return Regex::replace('#(?<!\\\\)/#', '\\/', $result);
     }
 }

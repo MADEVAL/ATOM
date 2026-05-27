@@ -3,138 +3,7 @@ declare(strict_types=1);
 namespace Atom\Validation;
 
 use Atom\Support\Regex as Pcre;
-use Attribute;
 use ReflectionClass;
-
-#[Attribute(Attribute::TARGET_PROPERTY)]
-final readonly class Required
-{
-    public function __construct(public string $message = 'Required') {}
-}
-
-#[Attribute(Attribute::TARGET_PROPERTY)]
-final readonly class Regex
-{
-    public function __construct(public string $pattern, public string $message = 'Invalid format') {}
-}
-
-#[Attribute(Attribute::TARGET_PROPERTY)]
-final readonly class Email
-{
-    public function __construct(
-        public string $message = 'Invalid email',
-        public bool $unicode = true,
-    ) {}
-}
-
-#[Attribute(Attribute::TARGET_PROPERTY)]
-final readonly class Min
-{
-    public function __construct(public int $value, public string $message = 'Too short') {}
-}
-
-#[Attribute(Attribute::TARGET_PROPERTY)]
-final readonly class Max
-{
-    public function __construct(public int $value, public string $message = 'Too long') {}
-}
-
-#[Attribute(Attribute::TARGET_PROPERTY)]
-final readonly class Integer
-{
-    public function __construct(
-        public string $message = 'Must be an integer',
-        public ?int $min = null,
-        public ?int $max = null,
-    ) {}
-}
-
-#[Attribute(Attribute::TARGET_PROPERTY)]
-final readonly class Between
-{
-    public function __construct(public int $min, public int $max, public string $message = 'Out of range') {}
-}
-
-#[Attribute(Attribute::TARGET_PROPERTY)]
-final readonly class In
-{
-    /** @param list<string|int> $values */
-    public function __construct(public array $values, public string $message = 'Invalid value') {}
-}
-
-#[Attribute(Attribute::TARGET_PROPERTY)]
-final readonly class Url
-{
-    public function __construct(public string $message = 'Invalid URL') {}
-}
-
-#[Attribute(Attribute::TARGET_PROPERTY)]
-final readonly class Nullable
-{
-}
-
-#[Attribute(Attribute::TARGET_PROPERTY)]
-final readonly class Confirmed
-{
-    public function __construct(public string $message = 'Confirmation does not match') {}
-}
-
-#[Attribute(Attribute::TARGET_PROPERTY)]
-final readonly class Ip
-{
-    public function __construct(
-        public string $message = 'Invalid IP address',
-        public bool $onlyV4 = false,
-        public bool $onlyV6 = false,
-        public bool $noReserved = false,
-        public bool $noPrivate = false,
-        public bool $global = false,
-    ) {}
-}
-
-#[Attribute(Attribute::TARGET_PROPERTY)]
-final readonly class Uuid
-{
-    public function __construct(public string $message = 'Invalid UUID') {}
-}
-
-#[Attribute(Attribute::TARGET_PROPERTY)]
-final readonly class Boolean
-{
-    public function __construct(public string $message = 'Must be a boolean') {}
-}
-
-#[Attribute(Attribute::TARGET_PROPERTY | Attribute::IS_REPEATABLE)]
-final readonly class Each
-{
-    /** @param class-string $class */
-    public function __construct(public string $class, public string $message = 'Invalid items') {}
-}
-
-#[Attribute(Attribute::TARGET_PROPERTY)]
-final readonly class Domain
-{
-    public function __construct(
-        public string $message = 'Invalid domain',
-        public bool $hostname = false,
-    ) {}
-}
-
-#[Attribute(Attribute::TARGET_PROPERTY)]
-final readonly class Mac
-{
-    public function __construct(public string $message = 'Invalid MAC address') {}
-}
-
-#[Attribute(Attribute::TARGET_PROPERTY)]
-final readonly class FloatVal
-{
-    public function __construct(
-        public string $message = 'Must be a float',
-        public ?float $min = null,
-        public ?float $max = null,
-    ) {}
-}
 
 final class Validator
 {
@@ -320,11 +189,25 @@ final class Validator
     {
         $ref = new \ReflectionClass($class);
         $ctor = $ref->getConstructor();
+
         if ($ctor !== null && $ctor->getNumberOfRequiredParameters() > 0) {
-            $dto = $ref->newInstanceWithoutConstructor();
+            $args = [];
+            $resolvable = true;
+            foreach ($ctor->getParameters() as $p) {
+                if (array_key_exists($p->getName(), $data)) {
+                    $args[] = $data[$p->getName()];
+                } elseif ($p->isDefaultValueAvailable()) {
+                    $args[] = $p->getDefaultValue();
+                } else {
+                    $resolvable = false;
+                    break;
+                }
+            }
+            $dto = $resolvable ? $ref->newInstanceArgs($args) : $ref->newInstanceWithoutConstructor();
         } else {
             $dto = $ref->newInstance();
         }
+
         foreach ($ref->getProperties(\ReflectionProperty::IS_PUBLIC) as $prop) {
             $pname = $prop->getName();
             if (array_key_exists($pname, $data)) {
@@ -334,4 +217,3 @@ final class Validator
         return $dto;
     }
 }
-

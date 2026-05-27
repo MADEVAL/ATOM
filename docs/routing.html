@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Atom - Routing</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav id="sidebar">
+<h2>Atom</h2>
+<a href="index.html#quickstart">Quick start</a>
+<a href="index.html#architecture">Architecture</a>
+<a href="index.html#config">Config</a>
+<a href="index.html#scope">Scope</a>
+
+<h2>Routing</h2>
+<a href="routing.html#routing-routes">Route patterns</a>
+<a href="routing.html#routing-groups">Groups &amp; middleware</a>
+<a href="routing.html#routing-named">URL generation</a>
+<a href="routing.html#routing-health">Health check</a>
+<a href="routing.html#routing-attributes">Attribute routes</a>
+<a href="routing.html#routing-perf">Performance</a>
+
+<h2>HTTP</h2>
+<a href="http.html#http-request">Request</a>
+<a href="http.html#http-files">File uploads</a>
+<a href="http.html#http-response">Response</a>
+<a href="http.html#http-controllers">Controllers</a>
+<a href="http.html#http-session">Session</a>
+
+<h2>Testing</h2>
+<a href="testing.html#test-client">HTTP Test Client</a>
+
+<h2>Templates</h2>
+<a href="templates.html#tpl-syntax">Syntax &amp; filters</a>
+<a href="templates.html#tpl-control">Control flow</a>
+<a href="templates.html#tpl-raw">Raw blocks</a>
+<a href="templates.html#tpl-inherit">Inheritance</a>
+<a href="templates.html#tpl-custom">Custom filters &amp; globals</a>
+
+<h2>Validation</h2>
+<a href="validation.html#val-dto">DTO definition</a>
+<a href="validation.html#val-nested">Nested arrays</a>
+<a href="validation.html#val-request">Request validation</a>
+<a href="validation.html#val-ref">Attribute reference</a>
+
+<h2>Middleware</h2>
+<a href="middleware.html#mw-pipeline">Pipeline</a>
+<a href="middleware.html#mw-cors">CORS</a>
+<a href="middleware.html#mw-csrf">CSRF</a>
+<a href="middleware.html#mw-ratelimit">Rate Limiter</a>
+
+<h2>Container</h2>
+<a href="container.html#di-bindings">Bindings</a>
+<a href="container.html#di-autowire">Autowiring</a>
+
+<h2>Reference</h2>
+<a href="reference.html#ref-database">Database</a>
+<a href="reference.html#ref-logger">Logger</a>
+<a href="reference.html#ref-paginator">Paginator</a>
+<a href="reference.html#ref-encrypt">Encryption</a>
+<a href="reference.html#ref-cli">CLI Console</a>
+<a href="reference.html#ref-env">.env &amp; Config</a>
+<a href="reference.html#ref-regex">Regex utility</a>
+<a href="reference.html#ref-status">Status codes</a>
+<a href="index.html#ref-structure">Project structure</a>
+</nav>
+
+<div id="main">
+
+<h2 id="routing-routes">Route patterns</h2>
+<pre><code><span class="var">$app</span>->router->get(<span class="str">'/users/{id}'</span>, <span class="str">'UserController@show'</span>);
+<span class="var">$app</span>->router->post(<span class="str">'/posts/{slug}'</span>, <span class="str">'PostController@create'</span>);
+<span class="var">$app</span>->router->put(<span class="str">'/items/{id:\d+}'</span>, <span class="str">'ItemController@update'</span>);
+<span class="var">$app</span>->router->patch(<span class="str">'/users/{id}'</span>, <span class="str">'UserController@patch'</span>);
+<span class="var">$app</span>->router->delete(<span class="str">'/files/{hash:[a-f0-9]{32}}'</span>, <span class="str">'FileController@remove'</span>);
+<span class="var">$app</span>->router->any(<span class="str">'/webhook'</span>, <span class="str">'WebhookController@handle'</span>);
+<span class="var">$app</span>->router->match([<span class="str">'GET'</span>, <span class="str">'POST'</span>], <span class="str">'/multi'</span>, <span class="str">'MultiController@handle'</span>);</code></pre>
+<table>
+<tr><th>Token</th><th>PCRE</th><th>Matches</th></tr>
+<tr><td><code>{id}</code></td><td><code>[0-9]+</code></td><td><code>42</code></td></tr>
+<tr><td><code>{slug}</code></td><td><code>[a-z0-9\-]+</code></td><td><code>hello-world</code></td></tr>
+<tr><td><code>{any}</code></td><td><code>[^/]+</code></td><td><code>anything</code></td></tr>
+<tr><td><code>{all}</code></td><td><code>.+</code></td><td><code>path/to/file</code></td></tr>
+<tr><td colspan="3"><code>{name:custom-pcre}</code> - inline regex; <code>addPattern()</code> for named patterns</td></tr>
+</table>
+<p>Duplicate route names throw <code>InvalidArgumentException</code>. Named routes use O(1) hash map lookup.</p>
+
+<h2 id="routing-groups">Groups &amp; middleware</h2>
+<pre><code><span class="var">$app</span>->router->group(<span class="str">'/admin'</span>, [<span class="str">'Auth'</span>, <span class="str">'AdminOnly'</span>], <span class="kw">fn</span>(<span class="var">$r</span>) => {
+    <span class="var">$r</span>->get(<span class="str">'/dashboard'</span>, <span class="str">'AdminController@index'</span>);
+    <span class="var">$r</span>->group(<span class="str">'/users'</span>, [<span class="str">'Throttle'</span>], <span class="kw">fn</span>(<span class="var">$r</span>) => {
+        <span class="var">$r</span>->get(<span class="str">'/{id}'</span>, <span class="str">'AdminController@edit'</span>);
+    });
+});</code></pre>
+
+<h3>Route name prefixing</h3>
+<pre><code><span class="var">$app</span>->router->namePrefix(<span class="str">'admin.'</span>, <span class="kw">fn</span>(<span class="var">$r</span>) => {
+    <span class="var">$r</span>->get(<span class="str">'/dashboard'</span>, <span class="str">'AdminController@index'</span>, <span class="str">'dashboard'</span>);
+}); <span class="cm">// Route name: admin.dashboard</span></code></pre>
+
+<h2 id="routing-named">URL generation</h2>
+<pre><code><span class="var">$app</span>->router->get(<span class="str">'/users/{id}'</span>, <span class="str">'UserController@show'</span>, <span class="str">'user.show'</span>);
+<span class="var">$app</span>->router->url(<span class="str">'user.show'</span>, [<span class="str">'id'</span> => <span class="num">42</span>]); <span class="cm">// → /users/42</span></code></pre>
+
+<h2 id="routing-health">Health check</h2>
+<pre><code><span class="var">$app</span>->router->health(<span class="str">'/health'</span>, <span class="kw">fn</span>() => [
+    <span class="str">'database'</span> => <span class="var">$db</span>->raw()->query(<span class="str">'SELECT 1'</span>) !== <span class="kw">false</span>,
+    <span class="str">'cache'</span>    => <span class="kw">true</span>,
+]);
+<span class="cm">// GET /health → 200 {"database":true,"cache":true}</span>
+<span class="cm">// Any false → 503</span></code></pre>
+
+<h2 id="routing-attributes">Attribute routes</h2>
+<pre><code><span class="kw">use</span> Atom\Routing\Route;
+
+<span class="kw">class</span> ApiController {
+    <span class="kw">#[</span><span class="fn">Route</span>(<span class="str">'/api/items'</span>, [<span class="str">'GET'</span>], <span class="str">'items.list'</span>)<span class="kw">]</span>
+    <span class="kw">#[</span><span class="fn">Route</span>(<span class="str">'/api/items/{id}'</span>, [<span class="str">'GET'</span>,<span class="str">'DELETE'</span>], <span class="str">'items.crud'</span>)<span class="kw">]</span>
+    <span class="kw">public function</span> <span class="fn">handle</span>(Request <span class="var">$request</span>): string { ... }
+}
+
+<span class="var">$app</span>->router->loadFromAttributes(__DIR__ . <span class="str">'/Controllers'</span>);</code></pre>
+<p>Attribute routes support <code>url()</code> and duplicate name detection.</p>
+
+<h2 id="routing-perf">Performance</h2>
+<p>All routes compile into <strong>one</strong> PCRE regex using branch-reset <code>(?|...)</code> and <code>(*MARK)</code>. 10&thinsp;000 routes = one JIT‑compiled regex call. 405 Method Not Allowed is O(1) via <code>altRegex</code>. URL generation is O(1) via hash map.</p>
+<pre><code><span class="cm">// Compiled: #^(?|(?&lt;METHOD&gt;GET)\/users\/(?&lt;id&gt;[0-9]+)(*:0)|...)$#xs</span>
+<span class="kw">if</span> (!preg_match(<span class="var">$compiled</span>[<span class="str">'regex'</span>], <span class="var">$method</span> . <span class="var">$uri</span>, <span class="var">$m</span>)) {
+    <span class="kw">return</span> <span class="kw">new</span> Response(<span class="str">'Not Found'</span>, StatusCode::NOT_FOUND);
+}
+<span class="var">$id</span> = (<span class="kw">int</span>) <span class="var">$m</span>[<span class="str">'MARK'</span>]; <span class="cm">// → route index</span>
+<span class="var">$params</span> = array_filter(<span class="var">$m</span>, <span class="str">'is_string'</span>, ARRAY_FILTER_USE_KEY);</code></pre>
+<p>Cache invalidation: <code>$app->router->clearCache()</code>. Corrupted cache files are auto-detected and regenerated.</p>
+
+<footer>Atom — PHP 8.5 micro‑framework · zero runtime dependencies</footer>
+
+</div>
+</body>
+</html>

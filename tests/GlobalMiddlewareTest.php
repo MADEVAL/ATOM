@@ -5,10 +5,13 @@ namespace Atom\Tests;
 use Atom\Application;
 use Atom\Config;
 use Atom\Http\{Request, Response, StatusCode};
-use Atom\Middleware\RateLimit;
+use Atom\Middleware\{Pipeline, RateLimit};
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 
+#[CoversClass(Application::class)]
+#[CoversClass(Pipeline::class)]
 final class GlobalMiddlewareTest extends TestCase
 {
     private Application $app;

@@ -11,8 +11,19 @@ use Atom\Support\{Logger, Regex};
 use Atom\Validation\{Required, Email, Regex as VRegex, Min, Max, Integer, Between, In, Url, Nullable, Confirmed, Validator};
 use Atom\View\{Engine, Template};
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 
+#[CoversClass(Request::class)]
+#[CoversClass(Response::class)]
+#[CoversClass(Session::class)]
+#[CoversClass(UploadedFile::class)]
+#[CoversClass(Cors::class)]
+#[CoversClass(Pipeline::class)]
+#[CoversClass(Router::class)]
+#[CoversClass(Logger::class)]
+#[CoversClass(Regex::class)]
+#[CoversClass(Validator::class)]
 final class FuzzTest extends TestCase
 {
     // ──────────────────────── REQUEST ────────────────────────
@@ -48,7 +59,7 @@ final class FuzzTest extends TestCase
             body: ['_method' => ' EXPLOIT '],
             server: ['REQUEST_METHOD' => 'POST'],
         );
-        $this->assertSame('EXPLOIT', $req->method);
+        $this->assertSame('POST', $req->method);
     }
 
     #[Test]

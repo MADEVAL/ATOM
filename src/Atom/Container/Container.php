@@ -57,6 +57,7 @@ final class Container
         }
     }
 
+    /** @param array<string,mixed> $params */
     private function autowire(string $class, array $params): object
     {
         $ref = new ReflectionClass($class);

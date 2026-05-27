@@ -44,6 +44,7 @@ final class Logger
         rename($this->file, $rotated);
     }
 
+    /** @param array<string,mixed> $ctx */
     private function log(int $level, string $msg, array $ctx): void
     {
         if ($level < $this->minLevel) return;
@@ -51,8 +52,9 @@ final class Logger
             $level = self::ERROR;
         }
 
-        if ($this->maxSize > 0 && is_file($this->file) && filesize($this->file) >= $this->maxSize) {
-            $this->rotate();
+        $dir = dirname($this->file);
+        if (!is_dir($dir) && !@mkdir($dir, \Atom\Constants::DIR_PERMISSIONS, true) && !is_dir($dir)) {
+            throw new \RuntimeException("Logger: cannot create directory '{$dir}'");
         }
 
         $ctxStr = '';
@@ -70,12 +72,32 @@ final class Logger
             $msg,
             $ctxStr,
         );
-        $dir = dirname($this->file);
-        if (!is_dir($dir) && !@mkdir($dir, \Atom\Constants::DIR_PERMISSIONS, true) && !is_dir($dir)) {
-            throw new \RuntimeException("Logger: cannot create directory '{$dir}'");
+
+        $fp = @fopen($this->file, 'c+');
+        if ($fp === false) {
+            throw new \RuntimeException("Logger: failed to open '{$this->file}'");
         }
-        if (file_put_contents($this->file, $line, FILE_APPEND | LOCK_EX) === false) {
-            throw new \RuntimeException("Logger: failed to write to '{$this->file}'");
+        if (flock($fp, LOCK_EX)) {
+            clearstatcache(true, $this->file);
+            if ($this->maxSize > 0 && is_file($this->file) && filesize($this->file) >= $this->maxSize) {
+                flock($fp, LOCK_UN);
+                fclose($fp);
+                $this->rotate();
+                $fp = @fopen($this->file, 'c+');
+                if ($fp === false) {
+                    throw new \RuntimeException("Logger: failed to open '{$this->file}' after rotation");
+                }
+                flock($fp, LOCK_EX);
+            }
+            fseek($fp, 0, SEEK_END);
+            if (fwrite($fp, $line) === false) {
+                throw new \RuntimeException("Logger: failed to write to '{$this->file}'");
+            }
+            flock($fp, LOCK_UN);
+        } else {
+            fclose($fp);
+            throw new \RuntimeException("Logger: failed to acquire lock on '{$this->file}'");
         }
+        fclose($fp);
     }
 }

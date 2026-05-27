@@ -33,6 +33,7 @@ final readonly class Encrypt
         return $plain;
     }
 
+    /** Derives a 256-bit encryption key via SHA-256 */
     private static function deriveKey(string $key): string
     {
         return hash('sha256', $key, true);

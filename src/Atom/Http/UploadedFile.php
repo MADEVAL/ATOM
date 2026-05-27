@@ -6,6 +6,7 @@ use Atom\Support\Regex;
 
 final class UploadedFile
 {
+    /** @param ?array{name:string,type:string,tmp_name:string,error:int,size:int} $meta */
     private function __construct(
         private ?array $meta,
     ) {}

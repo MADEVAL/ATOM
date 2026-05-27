@@ -67,6 +67,7 @@ final class Engine
         return $cls;
     }
 
+    /** @return array<string,callable> */
     private function defaultFilters(): array
     {
         return [

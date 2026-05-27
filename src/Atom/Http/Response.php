@@ -85,6 +85,9 @@ final class Response
         $secure = $isHttps ?? (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
         if (!headers_sent()) {
             http_response_code($this->status->value);
+            header('X-Content-Type-Options: nosniff');
+            header('X-Frame-Options: SAMEORIGIN');
+            header('Referrer-Policy: strict-origin-when-cross-origin');
             foreach ($this->headers as $k => $v) {
                 $k = Regex::replace('#[\r\n]+#', '', $k);
                 $v = Regex::replace('#[\r\n]+#', '', $v);
